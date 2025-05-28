@@ -19,7 +19,7 @@ import { FaEye } from "react-icons/fa";
 import styled from 'styled-components';
 import { formatDistanceToNow } from 'date-fns';
 import { GiKenya } from "react-icons/gi";
-import { getUserIdFromToken } from '../../../handler/tokenDecorder';
+
 import   RiderRegistration    from   '../../modals/riderRegistration'
 
 import popSound from '../../../../public/audio/cliks.mp3';
@@ -104,6 +104,10 @@ const StoryItem = styled.div`
   }
 `;
 
+import { jwtDecode } from "jwt-decode"; // ✅ fixed
+
+
+
 const FoodPlatform = (   food ) => {
 
   
@@ -131,7 +135,7 @@ const FoodPlatform = (   food ) => {
     new Audio(popSound).play();
   };
   
-  // 
+
 
   
   const colors = {
@@ -170,28 +174,43 @@ const FoodPlatform = (   food ) => {
     filters: { area: 'all', specialty: 'all', mealType: 'all' }
   });
 
- const  BASE_URL   =   "http://localhost:8000/apiV1/smartcity-ke"
-//  https://neuro-apps-api-express-js-production-redy.onrender.com/apiV1/smartcity-ke
+ const  BASE_URL   =   "https://neuro-apps-api-express-js-production-redy.onrender.com/apiV1/smartcity-ke"
+// 
   const [showRiderReg, setShowRiderReg] = useState(false);
-
-
   const [userId, setUserId] = useState(null);
   const [notifications, setNotifications] = useState([]);
 
   useEffect(() => {
-    const userId = getUserIdFromToken();
-    setUserId(userId);
-    Notification.requestPermission().then(perm => {
-      if(perm === 'granted') new Notification('Notifications Enabled');
+    const getUserIdFromToken = () => {
+      const token = localStorage.getItem("token");
+      if (!token) return null;
+
+      try {
+        const decoded = jwtDecode(token);
+        return decoded?.id || decoded?.userId || decoded?._id || null;
+      } catch (error) {
+        console.error("Invalid token:", error);
+        return null;
+      }
+    };
+
+    const id = getUserIdFromToken();
+    setUserId(id);
+    console.log("User ID:", id);
+
+    // Request Notification Permission
+    Notification.requestPermission().then((perm) => {
+      if (perm === "granted") {
+        new Notification("Notifications Enabled");
+      }
     });
   }, []);
 
   const showNotification = (title, body) => {
-    if(Notification.permission === 'granted') {
+    if (Notification.permission === "granted") {
       new Notification(title, { body });
     }
   };
-
   
   const loadData = async () => {
     try {
@@ -252,30 +271,32 @@ const FoodPlatform = (   food ) => {
     fetchData();
   }, []);
 
-const handleLike = async (foodId, userId) => {
-  try {
-    playSound();
 
+  const handleLike = async (foodId) => {
+  if (!userId) {
+    console.warn("User ID is not available.");
+    return;
+  }
+
+  try {
     const response = await fetch(`${BASE_URL}/food/${foodId}/like`, {
       method: 'PUT',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ userId }) // Send user ID in the body
+      body: JSON.stringify({ userId }),  // <- Ensure this line is correct
     });
 
-    console.log(userId)
+    const data = await response.json();
+    console.log(data);
 
     if (response.ok) {
-      setState(prev => ({
-        ...prev,
-        foods: prev.foods.map(food => 
-          food.id === foodId ? { ...food, likes: food.likes + 1 } : food
-        )
-      }));
+      // Update your UI here
+    } else {
+      console.error("Failed to like food");
     }
   } catch (error) {
-    console.error('Error liking food:', error);
+    console.error("Error liking food:", error);
   }
 };
 

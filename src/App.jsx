@@ -143,7 +143,7 @@ function App() {
         <NavLink to="/download">
           <FiDownload /> Get App
         </NavLink>
-        <NavLink to="/favorites">
+        <NavLink to="/favourites">
           <FiHeart /> Saved
         </NavLink>
 

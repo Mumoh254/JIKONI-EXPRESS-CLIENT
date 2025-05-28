@@ -4,7 +4,7 @@ import { Row, Col, Card, Spinner, Carousel, Badge, Button } from 'react-bootstra
 import { HeartFill, GeoAlt, StarFill, CashCoin } from 'react-bootstrap-icons';
 
 const SavedFoods = ({ user }) => {
-  const BASE_URL = "https://neuro-apps-api-express-js-production-redy.onrender.com/apiV1/smartcity-ke";
+  const BASE_URL = "http://localhost:8000/apiV1/smartcity-ke";
   const [savedFoods, setSavedFoods] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -16,7 +16,7 @@ const SavedFoods = ({ user }) => {
           throw new Error('User not authenticated');
         }
 
-        const response = await fetch(`${BASE_URL}/user/${user.id}/saved-foods`, {
+        const response = await fetch(`${BASE_URL}/user/smart_ke_WT_536237943/saved-foods`, {
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`
           }
