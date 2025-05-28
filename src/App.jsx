@@ -22,7 +22,7 @@ const AppContainer = styled.div`
 `;
 
 const MainContent = styled.main`
-  padding: 1rem;
+  padding: 1rem   0rem;
   padding-bottom: 80px;
 `;
 const BottomNav = styled.nav`

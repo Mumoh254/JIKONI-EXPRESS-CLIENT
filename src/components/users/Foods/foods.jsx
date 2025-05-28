@@ -981,10 +981,12 @@ const RiderRegistrationModal = ({ show, onClose, onSubmit, userId }) => {
     <Form.Control name="title" required />
   </Form.Group>
 
+
   <Form.Group>
     <Form.Label>Description</Form.Label>
     <Form.Control name="description" as="textarea" required />
   </Form.Group>
+
 
   <Form.Group>
     <Form.Label>Price</Form.Label>
@@ -1096,11 +1098,11 @@ const RiderRegistrationModal = ({ show, onClose, onSubmit, userId }) => {
          // User Marketplace
        <div className="py-4 container-xl">
   {/* Stories Section */}
-  <div className="stories-fixed-section bg-white shadow-sm z-3 py-3">
-    <h4 className="mb-3 fw-bold px-3" style={{ color: '#FF4532' }}>🍴 Jikoni Express Stories</h4>
+  <div className="stories-fixed-section bg-white shadow-sm ">
+    <h4 className="mb-3 fw-bold " style={{ color: '#FF4532' }}>🍴 Jikoni Express Stories</h4>
 
     <div className="stories-container">
-      <div className="stories-scroll px-3">
+      <div className="stories-scroll ">
         {/* Add Story Button - Strict Addition */}
         <div 
           className="story-item" 
@@ -1129,7 +1131,7 @@ const RiderRegistrationModal = ({ show, onClose, onSubmit, userId }) => {
             key={food.id}
             className="story-item"
             onClick={() => navigate(`/chef/${food.chefId}`)}
-            style={{ marginRight: '1.5rem' }}
+            style={{ marginRight: '1rem' }}
           >
             <div className="story-image-wrapper position-relative">
               <div className="story-gradient-border">
@@ -1142,7 +1144,7 @@ const RiderRegistrationModal = ({ show, onClose, onSubmit, userId }) => {
               <div className="story-details">
                 <span className="chef-name">{food.chef.user.Name}</span>
                 <Badge pill className="location-badge">
-                  <GeoAlt size={12} className="me-1" />
+                  <GeoAlt size={10} className="me-1 p-1" />
                   <span className="area-name">{food.area}</span>
                 </Badge>
               </div>
@@ -1155,13 +1157,13 @@ const RiderRegistrationModal = ({ show, onClose, onSubmit, userId }) => {
   <style jsx>{`
     .stories-container {
       position: relative;
-      padding: 0 1rem;
+      padding: 0 0rem;
     }
 
       .add-story-plus {
         position: absolute;
-        bottom: 5px;
-        right: 5px;
+        bottom: 15px;
+        right: 1px;
         background: #FF4532;
         width: 20px;
         height: 20px;
@@ -1182,7 +1184,7 @@ const RiderRegistrationModal = ({ show, onClose, onSubmit, userId }) => {
     }
 
     .stories-scroll::-webkit-scrollbar {
-      height: 6px;
+      height: 3px;
       background-color: #f5f5f5;
     }
 
@@ -1288,7 +1290,7 @@ const RiderRegistrationModal = ({ show, onClose, onSubmit, userId }) => {
       {/* Food Grid */}
 {/* Food Grid */}
 <div className="food-platform" style={{ backgroundColor: colors.light }}>
-  <Row className="g-4 p-3">
+  <Row className="g-4 py-2">
     {state.foods.map(food => (
       <Col key={food.id} xs={12} md={6} lg={4} xl={4}> {/* Responsive columns */}
         <Card className="h-100 shadow-lg border-0 overflow-hidden food-card">
