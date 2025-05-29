@@ -11,7 +11,7 @@ import {
 } from 'react-icons/fi';
 import { FaUserTie } from 'react-icons/fa'; // or any chef-like representation
 
-
+import { Link } from 'react-router-dom';
 import { NavLink } from 'react-router-dom';
 import styled, { keyframes } from 'styled-components';
 import nairobiImage from '/images/food.png';
@@ -31,7 +31,7 @@ const pulse = keyframes`
 `;
 
 const HeroSection = styled.div`
-  background: linear-gradient(45deg, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.7) 100%),
+  background: linear-gradient(45deg, rgba(0,0,0,0.85) 0%, rgba(0, 0, 0, 0.54) 100%),
     url(${nairobiImage});
   background-size: cover;
   background-position: center;
@@ -184,24 +184,39 @@ const LandingPage = () => {
       text: "Get paid securely through Welt Tallis blockchain"
     }
   ];
+const steps = [
+  {
+    number: '1',
+    title: "Create Your Profile",
+    text: "Set up your chef profile in minutes"
+  },
+  {
+    number: '2',
+    title: "Post Your Dishes",
+    text: "Share photos and set your prices"
+  },
+  {
+    number: '3',
+    title: "Start Earning",
+    text: "Receive orders and get paid instantly"
+  },
+  {
+    number: '4',
+    title: "Join as a Liquor Seller",
+    text: "Register to showcase and sell your liquor selections"
+  },
+  {
+    number: '5',
+    title: "Post Liquor Products",
+    text: "Upload images, set prices, and list your bottles"
+  },
+  {
+    number: '6',
+    title: "Earn from Liquor Sales",
+    text: "Get paid directly when customers place orders"
+  }
+];
 
-  const steps = [
-    {
-      number: '1',
-      title: "Create Your Profile",
-      text: "Set up your chef profile in minutes"
-    },
-    {
-      number: '2',
-      title: "Post Your Dishes",
-      text: "Share photos and set your prices"
-    },
-    {
-      number: '3',
-      title: "Start Earning",
-      text: "Receive orders and get paid instantly"
-    }
-  ];
 
   return (
     <Container fluid className="px-4">
@@ -212,9 +227,11 @@ const LandingPage = () => {
           <Button variant="light" size="lg" className="rounded-pill px-4">
             Start Cooking <FaUserTie  />
           </Button>
-          <Button variant="outline-light" size="lg" className="rounded-pill px-4">
-            Explore Meals
-          </Button>
+         <Link to="/culture/foods">
+  <Button variant="outline-light" size="lg" className="rounded-pill px-4">
+    Explore Meals
+  </Button>
+</Link>
         </div>
       </HeroSection>
 
@@ -250,9 +267,11 @@ const LandingPage = () => {
           <Button variant="light" size="lg" className="rounded-pill px-4">
             Become a Chef
           </Button>
-          <Button variant="outline-light" size="lg" className="rounded-pill px-4">
-            Download App
-          </Button>
+       <Link to="/jikoni/express/download">
+  <Button variant="outline-light" size="lg" className="rounded-pill px-4">
+    Download App
+  </Button>
+</Link>
         </div>
       </CtaSection>
     </Container>

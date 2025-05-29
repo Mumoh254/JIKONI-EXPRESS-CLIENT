@@ -1120,9 +1120,23 @@ const RiderRegistrationModal = ({ show, onClose, onSubmit, userId }) => {
                 <Plus size={28} className="text-white" />
               </div>
             </div>
-            <div className="story-details">
-              <span className="chef-name">Add Story</span>
-            </div>
+         <div
+  className="story-details"
+  onClick={() => {
+    const chefId = localStorage.getItem('chefId');
+    if (chefId) {
+      // Call your functionality for posting food
+      postFood();
+    } else {
+      // Show alert or modal to register as chef
+      alert('Please register as a chef first to add a story.');
+    }
+  }}
+  style={{ cursor: 'pointer' }}
+>
+  <span className="chef-name">Add Story</span>
+</div>
+
           </div>
         </div>
 

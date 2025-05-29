@@ -31,77 +31,91 @@ const BottomNav = styled.nav`
   left: 0;
   right: 0;
   z-index: 1000;
-  background: #ffffff;
+  background: linear-gradient(145deg, #dfe6e9, #ffffff); /* soft 3D gradient */
   display: flex;
   justify-content: space-around;
   padding: 0.8rem 0;
-  box-shadow: 0 -4px 20px rgba(0,0,0,0.08);
-  border-top: 1px solid #f1f5f9;
+  border-top: 1px solid #d1d9e6;
+
+  box-shadow:
+    inset 0 1px 2px rgba(255, 255, 255, 0.8),
+    0 -4px 12px rgba(0, 0, 0, 0.15),
+    0 4px 6px rgba(0, 0, 0, 0.05); /* 3D depth */
+
+  border-radius: 12px 12px 0 0;
 
   a {
     display: flex;
     flex-direction: column;
     align-items: center;
     padding: 0.5rem 1rem;
-    color:rgb(255, 13, 13);
+    color: rgb(255, 13, 13);
     text-decoration: none;
     font-size: 0.8rem;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.3s ease-in-out;
     position: relative;
-    
+
     &:hover {
-      transform: translateY(-3px);
+      transform: translateY(-4px);
       color: #4f46e5;
       
       svg {
-        transform: scale(1.15);
+        transform: scale(1.2);
+        filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.15));
       }
     }
-    
+
     &.active {
       color: #4f46e5;
-      font-weight: 500;
-      
+      font-weight: 600;
+
       &::after {
         content: '';
         position: absolute;
         bottom: 0;
         left: 50%;
         transform: translateX(-50%);
-        width: 24px;
-        height: 3px;
+        width: 26px;
+        height: 4px;
         background: #FF4532;
         border-radius: 2px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
       }
-      
+
       svg {
         color: #FF4532;
-        filter: drop-shadow(0 2px 4px #c3e703);
+        filter: drop-shadow(0 2px 6px #c3e703);
       }
     }
-    
-    svg {
-      font-size: 1.4rem;
-      font-weight:  bold;
-      margin-bottom: 0.4rem;
-      transition: all 0.3s ease;
-      color: #FF4532;
-    }
+
+   svg {
+  font-size: 1.6rem;
+  font-weight: bold;
+  margin-bottom: 0.4rem;
+  transition: all 0.3s ease;
+  color: #FF4532;
+  
+  /* 3D EFFECT */
+  filter: drop-shadow(1px 2px 2px rgba(0, 0, 0, 0.25));
+  transform: perspective(300px) translateZ(5px);
+}
+
   }
 
   @media (max-width: 480px) {
     padding: 0.6rem 0;
-    
+
     a {
       padding: 0.5rem;
       font-size: 0.7rem;
-      
+
       svg {
         font-size: 1.1rem;
       }
     }
   }
 `;
+
 
 function App() {
   const navigate = useNavigate();
@@ -128,33 +142,32 @@ function App() {
 
            
           <Route path="/login" element={<Login />} />
-          <Route path="/food" element={<FoodPlatform />} />
+          <Route path="/culture/foods" element={<FoodPlatform />} />
           <Route path="/chef/:id" element={<ChefProfile />} />
-          <Route path="/download" element={<Download />} />
-          <Route path="/favourites" element={<SavedFoods  />} />
+          <Route path="/jikoni/express/download" element={<Download />} />
+          <Route path="/saved/foods" element={<SavedFoods  />} />
          
         </Routes>
       </MainContent>
 
-      <BottomNav>
-        <NavLink to="/food">
-          <FiShoppingBag /> Foods
-        </NavLink>
-        <NavLink to="/download">
-          <FiDownload /> Get App
-        </NavLink>
-        <NavLink to="/favourites">
-          <FiHeart /> Saved
-        </NavLink>
+   <BottomNav>
+  <NavLink to="/culture/foods">
+    <FiShoppingBag /> Foods
+  </NavLink>
+  <NavLink to="/jikoni/express/download">
+    <FiDownload /> Get App
+  </NavLink>
+  <NavLink to="/saved/foods">
+    <FiHeart /> Saved
+  </NavLink>
+  <NavLink to="/register">
+    <FiHeart /> Register
+  </NavLink>
+  <NavLink to="/">
+    <FiShoppingBag /> Home
+  </NavLink>
+</BottomNav>
 
-            <NavLink to="/register">
-          <FiHeart /> Register
-        </NavLink>
-
-          <NavLink to="/">
-          <FiShoppingBag /> Home
-        </NavLink>
-      </BottomNav>
     </AppContainer>
   );
 }

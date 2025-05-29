@@ -9,3 +9,10 @@
   --accent-green: #C3E703;
   --accent-blue: #96D1C7;
 }
+
+
+svg {
+  background: linear-gradient(145deg, #ff7464, #ff4532);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
