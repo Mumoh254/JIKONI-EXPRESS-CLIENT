@@ -1346,146 +1346,160 @@ const RiderRegistrationModal = ({ show, onClose, onSubmit, userId }) => {
 
 
     <div className="food-platform" style={{ backgroundColor: colors.light }}>
-      {/* Pre-Order Modal */}
-   <Modal show={showPreOrderModal} onHide={() => setShowPreOrderModal(false)} centered>
-    <Modal.Header closeButton className="border-0 pb-0 bg-white">
-      <Modal.Title className="fw-bold text-dark">Pre-Order Your Meal</Modal.Title>
-    </Modal.Header>
-    
-    <Modal.Body className="bg-white">
-      {selectedFood && (
-        <div className="d-flex align-items-center mb-4">
-          <div className="me-3" style={{ 
-            width: '80px', 
-            height: '80px', 
-            overflow: 'hidden',
-            borderRadius: '12px' 
-          }}>
-            <img 
-              src={selectedFood.photoUrls[0]} 
-              alt={selectedFood.title}
-              className="w-100 h-100 object-fit-cover"
-            />
-          </div>
-          <div>
-            <h5 className="mb-1 fw-bold text-dark">{selectedFood.title}</h5>
-            <div className="d-flex align-items-center">
-              <span className="badge me-2" style={{
-                background: 'linear-gradient(45deg, #FF6B6B, #FF4532)',
-                color: '#fff',
-                border: 'none'
+      <Modal show={showPreOrderModal} onHide={() => setShowPreOrderModal(false)} centered>
+        <Modal.Header closeButton className="border-0 pb-0 bg-white">
+          <Modal.Title className="fw-bold text-dark">Pre-Order Your Meal</Modal.Title>
+        </Modal.Header>
+        
+        <Modal.Body className="bg-white py-4">
+          {selectedFood && (
+            <div className="d-flex align-items-center mb-4">
+              <div className="me-3" style={{ 
+                width: '80px', 
+                height: '80px', 
+                overflow: 'hidden',
+                borderRadius: '12px' 
               }}>
-                {selectedFood.mealType}
-              </span>
-              <span className="fw-bold text-danger">KES {selectedFood.price}</span>
+                <img 
+                  src={selectedFood.photoUrls[0]} 
+                  alt={selectedFood.title}
+                  className="w-100 h-100 object-fit-cover"
+                />
+              </div>
+              <div>
+                <h5 className="mb-1 fw-bold text-dark">{selectedFood.title}</h5>
+                <div className="d-flex align-items-center">
+                  <span className="badge me-2" style={{
+                    background: 'linear-gradient(45deg, #FF6B6B, #FF4532)',
+                    color: '#fff',
+                    border: 'none',
+                    padding: '0.4em 0.8em'
+                  }}>
+                    {selectedFood.mealType}
+                  </span>
+                  <span className="fw-bold text-danger">KES {selectedFood.price}</span>
+                </div>
+
+
+                
+              </div>
             </div>
-          </div>
-        </div>
-      )}
+          )}
 
-      <Form>
-        <Row className="g-3">
-          <Col md={6}>
-            <Form.Group controlId="preOrderDate">
-              <Form.Label className="fw-medium">Delivery Date</Form.Label>
-              <div className="input-group">
-                <span className="input-group-text bg-white">
-                  <Calendar size={18} className="text-muted" />
-                </span>
-                <Form.Control 
-                  type="date" 
-                  aria-label="Delivery Date"
-                  value={preOrderForm.date}
-                  onChange={(e) => setPreOrderForm({...preOrderForm, date: e.target.value})}
-                  min={new Date().toISOString().split('T')[0]}
-                />
-              </div>
-              <small className="text-muted">Select a date you want your meal delivered.</small>
-            </Form.Group>
-          </Col>
+          <Form>
+            <Row className="g-3">
+              <Col md={6}>
+                <Form.Group controlId="preOrderDate">
+                  <Form.Label className="fw-medium mb-2">Delivery Date</Form.Label>
+                  <div className="input-group border rounded-3 overflow-hidden">
+                    <span className="input-group-text bg-white border-0">
+                      <Calendar size={18} className="text-muted" />
+                    </span>
+                    <Form.Control 
+                      type="date" 
+                      aria-label="Delivery Date"
+                      value={preOrderForm.date}
+                      onChange={(e) => setPreOrderForm({...preOrderForm, date: e.target.value})}
+                      min={new Date().toISOString().split('T')[0]}
+                      className="border-0 py-2 px-3"
+                      style={{ outline: 'none', boxShadow: 'none' }}
+                    />
+                  </div>
+                  <small className="text-muted mt-1 d-block">Select delivery date</small>
+                </Form.Group>
+              </Col>
 
-          <Col md={6}>
-            <Form.Group controlId="preOrderTime">
-              <Form.Label className="fw-medium">Delivery Time</Form.Label>
-              <div className="input-group">
-                <span className="input-group-text bg-white">
-                  <Clock size={18} className="text-muted" />
-                </span>
-                <Form.Control 
-                  type="time" 
-                  aria-label="Delivery Time"
-                  value={preOrderForm.time}
-                  onChange={(e) => setPreOrderForm({...preOrderForm, time: e.target.value})}
-                />
-              </div>
-              <small className="text-muted">Choose a convenient time for delivery.</small>
-            </Form.Group>
-          </Col>
+              <Col md={6}>
+                <Form.Group controlId="preOrderTime">
+                  <Form.Label className="fw-medium mb-2">Delivery Time</Form.Label>
+                  <div className="input-group border rounded-3 overflow-hidden">
+                    <span className="input-group-text bg-white border-0">
+                      <Clock size={18} className="text-muted" />
+                    </span>
+                    <Form.Control 
+                      type="time" 
+                      aria-label="Delivery Time"
+                      value={preOrderForm.time}
+                      onChange={(e) => setPreOrderForm({...preOrderForm, time: e.target.value})}
+                      className="border-0 py-2 px-3"
+                      style={{ outline: 'none', boxShadow: 'none' }}
+                    />
+                  </div>
+                  <small className="text-muted mt-1 d-block">Choose convenient time</small>
+                </Form.Group>
+              </Col>
 
-          <Col md={6}>
-            <Form.Group controlId="servings">
-              <Form.Label className="fw-medium">Number of Servings</Form.Label>
-              <Form.Select 
-                aria-label="Number of Servings"
-                value={preOrderForm.servings}
-                onChange={(e) => setPreOrderForm({...preOrderForm, servings: parseInt(e.target.value)})}
-              >
-                {[1,2,3,4,5,6,7,8].map(num => (
-                  <option key={num} value={num}>{num} serving{num > 1 ? 's' : ''}</option>
-                ))}
-              </Form.Select>
-            </Form.Group>
-          </Col>
+              <Col md={6}>
+                <Form.Group controlId="servings">
+                  <Form.Label className="fw-medium mb-2">Number of Servings</Form.Label>
+                  <Form.Select 
+                    aria-label="Number of Servings"
+                    value={preOrderForm.servings}
+                    onChange={(e) => setPreOrderForm({...preOrderForm, servings: parseInt(e.target.value)})}
+                    className="py-2 px-3 border rounded-3"
+                    style={{ 
+                      height: 'calc(2.5rem + 10px)',
+                      boxShadow: 'none'
+                    }}
+                  >
+                    {[1,2,3,4,5,6,7,8].map(num => (
+                      <option key={num} value={num}>{num} serving{num > 1 ? 's' : ''}</option>
+                    ))}
+                  </Form.Select>
+                </Form.Group>
+              </Col>
 
-          <Col md={6}>
-            <Form.Group controlId="totalPrice">
-              <Form.Label className="fw-medium">Total Price</Form.Label>
-              <div className="d-flex align-items-center h-100">
-                <h4 className="mb-0 fw-bold text-danger">
-                  {selectedFood ? `KES ${(selectedFood.price * preOrderForm.servings).toFixed(2)}` : ''}
-                </h4>
-              </div>
-            </Form.Group>
-          </Col>
+              <Col md={6}>
+                <Form.Group controlId="totalPrice">
+                  <Form.Label className="fw-medium mb-2">Total Price</Form.Label>
+                  <div className="d-flex align-items-center justify-content-center h-100 bg-light rounded-3 py-2">
+                    <h4 className="mb-0 fw-bold text-danger">
+                      {selectedFood ? `KES ${(selectedFood.price * preOrderForm.servings).toFixed(2)}` : ''}
+                    </h4>
+                  </div>
+                </Form.Group>
+              </Col>
 
-          <Col xs={12}>
-            <Form.Group controlId="specialInstructions">
-              <Form.Label className="fw-medium">Special Instructions</Form.Label>
-              <Form.Control 
-                as="textarea" 
-                rows={3} 
-                placeholder="Any dietary restrictions or special requests..."
-                value={preOrderForm.instructions}
-                onChange={(e) => setPreOrderForm({...preOrderForm, instructions: e.target.value})}
-              />
-              <small className="text-muted">We’ll do our best to accommodate your request.</small>
-            </Form.Group>
-          </Col>
-        </Row>
-      </Form>
-    </Modal.Body>
+              <Col xs={12}>
+                <Form.Group controlId="specialInstructions">
+                  <Form.Label className="fw-medium mb-2">Special Instructions</Form.Label>
+                  <Form.Control 
+                    as="textarea" 
+                    rows={3} 
+                    placeholder="Any dietary restrictions or special requests..."
+                    value={preOrderForm.instructions}
+                    onChange={(e) => setPreOrderForm({...preOrderForm, instructions: e.target.value})}
+                    className="border rounded-3 p-3"
+                    style={{ boxShadow: 'none' }}
+                  />
+                  <small className="text-muted mt-1 d-block">We'll accommodate your requests</small>
+                </Form.Group>
+              </Col>
+            </Row>
+          </Form>
+        </Modal.Body>
 
-    <Modal.Footer className="bg-white border-0">
-      <Button 
-        variant="light" 
-        className="fw-medium"
-        onClick={() => setShowPreOrderModal(false)}
-      >
-        Cancel
-      </Button>
-      <Button 
-        className="px-4 fw-bold text-white"
-        style={{
-          background: 'linear-gradient(45deg, #FF6B6B, #FF4532)',
-          border: 'none'
-        }}
-        onClick={handleSubmitPreOrder}
-        disabled={!preOrderForm.date || !preOrderForm.time}
-      >
-        Confirm Pre-Order
-      </Button>
-    </Modal.Footer>
-  </Modal>
+        <Modal.Footer className="bg-white border-0 pt-0">
+          <Button 
+            variant="outline-secondary" 
+            className="fw-medium px-4 py-2 "
+            onClick={() => setShowPreOrderModal(false)}
+          >
+            Cancel
+          </Button>
+          <Button 
+            className="px-4 py-2 fw-bold text-white "
+            style={{
+              background: '#FF4532',
+              border: 'none'
+            }}
+            onClick={handleSubmitPreOrder}
+            disabled={!preOrderForm.date || !preOrderForm.time}
+          >
+            Confirm Pre-Order
+          </Button>
+        </Modal.Footer>
+      </Modal>
 
 
       {/* Food Grid */}

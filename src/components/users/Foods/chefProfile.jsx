@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { Row, Col, Card, Carousel, Badge, Button, Spinner, Tabs, Tab, Modal, Form } from 'react-bootstrap';
-import { StarHalf, CartPlus, GeoAlt, Clock, People, Envelope, PersonBadge  ,  StarFill , PinMapFill  ,   AwardFill , ClockHistory , CashCoin } from 'react-bootstrap-icons';
+import { Row, Col, Card, Carousel, Badge,  Button, Spinner, Tabs, Tab, Modal, Form } from 'react-bootstrap';
+import { StarHalf, CartPlus, GeoAlt, Clock,  EggFried   , People, Envelope, PersonBadge  ,    CheckCircleFill  ,  StarFill , PinMapFill  ,   AwardFill , ClockHistory ,   HeartFill ,  PersonLinesFill   ,  EyeFill,CashCoin } from 'react-bootstrap-icons';
 import { format, formatDistanceToNow } from 'date-fns';
 
 const ChefProfile = ({ addToCart }) => {
@@ -22,6 +22,7 @@ const ChefProfile = ({ addToCart }) => {
     notes: ''
   });
   const [requestStatus, setRequestStatus] = useState(null);
+    const [showBioModal, setShowBioModal] = useState(false); // New state for bio modal
 
   // Color scheme
   const colors = {
@@ -99,208 +100,229 @@ const ChefProfile = ({ addToCart }) => {
 
   return (
     <div style={{ backgroundColor: '#f8fafc', minHeight: '100vh' }}>
-  {/* Chef Header */}
-  <div style={{ 
-    background: `linear-gradient(135deg, ${colors.primary} 0%, ${colors.primaryDark} 100%)`,
-    padding: '2rem 0',
-    color: 'white',
-    boxShadow: '0 1px 6px rgba(0, 0, 0, 0.08)'
-  }}>
-    <div className="container">
-      <div className="d-flex flex-column flex-lg-row align-items-center gap-3">
-        {/* Profile Image */}
-        <div className="position-relative" style={{ lineHeight: 0 }}>
-          <img
-            src={'/images/chef.png'}
-            alt={chef.user?.Name}
-            style={{
-              width: '120px',
-              height: '120px',
-              borderRadius: '50%',
-              objectFit: 'cover',
-              border: '2px solid rgba(255,255,255,0.95)',
-              boxShadow: '0 3px 12px rgba(0,0,0,0.12)',
-            }}
-          />
+   {/* Chef Header */}
+{/* Chef Header - Compact & Modern */}
+<div style={{ 
+  backgroundColor: '#ffffff',
+  padding: '1.25rem 0',
+  boxShadow: '0 2px 10px rgba(0, 0, 0, 0.05)',
+  borderBottom: '1px solid #f0f0f0'
+}}>
+  <div className="container">
+    <div className="d-flex flex-column flex-md-row align-items-start justify-content-between gap-4">
+      {/* Left Section: Profile Image */}
+      <div className="d-flex align-items-start gap-3">
+        <div className="position-relative" style={{ flexShrink: 0 }}>
+          <div style={{
+            width: '90px',
+            height: '90px',
+            borderRadius: '50%',
+            overflow: 'hidden',
+            border: '2px solid #f8f9fa',
+            boxShadow: '0 3px 8px rgba(0,0,0,0.08)'
+          }}>
+            <img
+              src={'/images/chef.png'}
+              alt={chef.user?.Name}
+              style={{
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover',
+              }}
+            />
+          </div>
           <div style={{
             position: 'absolute',
-            bottom: '4px',
-            right: '4px',
-            backgroundColor: colors.danger,
+            bottom: '0',
+            right: '0',
+            backgroundColor: '#2ECC71',
             width: '24px',
             height: '24px',
             borderRadius: '50%',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            boxShadow: '0 1px 4px rgba(0,0,0,0.15)'
+            boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+            border: '2px solid #ffffff'
           }}>
-            <StarFill style={{ color: 'white', fontSize: '0.8rem' }} />
+            <StarFill style={{ color: 'white', fontSize: '0.7rem' }} />
           </div>
         </div>
 
-        {/* Chef Info */}
-        <div className="text-center text-lg-start" style={{ flex: 1 }}>
-          <div className="mb-2">
+        {/* Name & Location */}
+        <div>
+          <div style={{ marginBottom: '0.25rem' }}>
             <h1 style={{
               fontSize: '1.5rem',
-              fontWeight: 600,
-              marginBottom: '0.25rem',
-              letterSpacing: '-0.015em',
-              lineHeight: 1.3
+              fontWeight: 700,
+              marginBottom: '0.15rem',
+              color: '#333'
             }}>
               {chef.user?.Name}
             </h1>
+
+            
             <div style={{
               display: 'flex',
-              gap: '0.375rem',
-              justifyContent: 'center',
+              gap: '0.3rem',
               alignItems: 'center',
-              color: 'rgba(255,255,255,0.85)',
-              fontSize: '0.875rem'
+              color: '#666',
+              fontSize: '0.9rem'
             }}>
-              <PinMapFill style={{ fontSize: '0.9rem' }} />
-              <span>Location {chef?.location} • {chef.area}</span>
+              <PinMapFill style={{ fontSize: '0.9rem', color: '#FF4532' }} />
+              <span>{chef?.location} • {chef.area}</span>
             </div>
           </div>
 
-          {/* Stats Row */}
-          <div className="d-flex flex-wrap gap-1.5 justify-content-center">
+          {/* ProChef & Verified */}
+          <div className="d-flex gap-2 mt-2">
             <div style={{
-              backgroundColor: 'rgba(255,255,255,0.09)',
-              padding: '0.375rem 0.75rem',
-              borderRadius: '24px',
+              backgroundColor: '#f0f9ff',
+              color: '#0ea5e9',
+              padding: '0.25rem 0.75rem',
+              borderRadius: '16px',
+              fontSize: '0.8rem',
+              fontWeight: 600,
               display: 'flex',
               alignItems: 'center',
-              gap: '0.375rem',
-              backdropFilter: 'blur(2px)',
-              fontSize: '0.825rem'
+              gap: '0.3rem',
+              border: '1px solid #e0f2fe'
             }}>
-              <CashCoin style={{ fontSize: '0.95rem' }} />
-              <span>Ksh {100} bob / Jikoni Culture</span>
+              <StarFill style={{ fontSize: '0.7rem' }} />
+              <span>PRO CHEF</span>
             </div>
-
             <div style={{
-              background: `linear-gradient(45deg, ${colors.success}, ${colors.teal})`,
-              padding: '0.375rem 0.75rem',
-              borderRadius: '24px',
+              backgroundColor: '#f0fdf4',
+              color: '#16a34a',
+              padding: '0.25rem 0.75rem',
+              borderRadius: '16px',
+              fontSize: '0.8rem',
+              fontWeight: 600,
               display: 'flex',
               alignItems: 'center',
-              gap: '0.375rem',
-              fontSize: '0.825rem',
-              boxShadow: '0 1px 3px rgba(0,0,0,0.12)'
+              gap: '0.3rem',
+              border: '1px solid #dcfce7'
             }}>
-              <ClockHistory style={{ fontSize: '0.95rem' }} />
-              <span>{chef.experienceYears}y exp</span>
-            </div>
-
-            <div style={{
-              backgroundColor: 'rgba(255,255,255,0.09)',
-              padding: '0.375rem 0.75rem',
-              borderRadius: '24px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.375rem',
-              backdropFilter: 'blur(2px)',
-              fontSize: '0.825rem'
-            }}>
-              <AwardFill style={{ fontSize: '0.95rem' }} />
-              <span>{chef.speciality}</span>
+              <CheckCircleFill style={{ fontSize: '0.7rem' }} />
+              <span>VERIFIED</span>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Middle Section: Stats */}
+      <div className="d-flex flex-wrap align-items-center gap-4" style={{ minWidth: '280px' }}>
+        {/* Followers */}
+        <div className="text-center">
+          <div style={{
+            fontSize: '1.25rem',
+            fontWeight: 700,
+            color: '#FF4532',
+          }}>
+            {chef.followers || 0}
+          </div>
+          <div style={{
+            fontSize: '0.75rem',
+            fontWeight: 500,
+            color: '#777',
+            textTransform: 'uppercase'
+          }}>
+        Views
+          </div>
+        </div>
+        
+        {/* Likes */}
+        <div className="text-center">
+          <div style={{
+            fontSize: '1.25rem',
+            fontWeight: 700,
+            color: '#FF4532',
+          }}>
+            {chef.likes || 0}
+          </div>
+          <div style={{
+            fontSize: '0.75rem',
+            fontWeight: 500,
+            color: '#777',
+            textTransform: 'uppercase'
+          }}>
+            Likes
+          </div>
+        </div>
+        
+        {/* Experience */}
+        <div className="text-center">
+          <div style={{
+            fontSize: '1.25rem',
+            fontWeight: 700,
+            color: '#FF4532',
+          }}>
+            {chef.experienceYears}
+          </div>
+          <div style={{
+            fontSize: '0.75rem',
+            fontWeight: 500,
+            color: '#777',
+            textTransform: 'uppercase'
+          }}>
+            Years Exp
+          </div>
+        </div>
+        
+        {/* Cuisine Type */}
+        <div style={{
+          backgroundColor: '#f0fdf4',
+          color: '#16a34a',
+          padding: '0.35rem 1rem',
+          borderRadius: '20px',
+          fontSize: '0.85rem',
+          fontWeight: 500,
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.4rem'
+        }}>
+          <EggFried style={{ fontSize: '0.85rem' }} />
+          <span>{chef.cuisineType || 'Continental'}</span>
+        </div>
+      </div>
+
+      {/* Right Section: Buttons */}
+      <div className="d-flex flex-wrap align-items-center gap-2">
+<Button 
+  className="d-flex align-items-center px-5 py-2 custom-outline-green"
+  onClick={() => setShowBioModal(true)}
+  style={{
+    fontWeight: 500,
+    fontSize: '0.85rem'
+  }}
+>
+  <PersonLinesFill className="me-1" /> View Bio
+</Button>
+
+
+        <Button 
+          className=' px-5 py-2 d-flex align-items-center'
+          onClick={() => setShowHireModal(true)}
+          style={{
+            background: '#FF4532',
+            color: 'white',
+            border: 'none',
+            fontWeight: 600,
+            fontSize: '0.85rem'
+          }}
+        >
+          Hire Chef
+        </Button>
+      </div>
     </div>
   </div>
-
-
+</div>
 
       {/* Main Content */}
       <div className="container py-5">
         <Row className="g-4">
           {/* Chef Details Sidebar */}
-          <Col lg={4}>
-            <Card className="shadow-lg border-0">
-              <Card.Body>
-                <div className="mb-4">
-                  <h4 className="fw-bold mb-3" style={{ color: colors.primary }}>About</h4>
-                  <p className="text-muted lead">{chef.bio}</p>
-                  
-                  <div className="mt-4">
-                    <h5 className="fw-bold mb-3" style={{ color: colors.purple }}>
-                      <GeoAlt className="me-2" /> Location
-                    </h5>    
-                    <p className="mb-0"> <span className='red2'>{chef.location}</span>, {chef.city}</p>
-                  </div>
-                </div>
-
-                <div className="border-top pt-4">
-                  <h5 className="fw-bold mb-3" style={{ color: colors.primary }}>
-                    <Envelope className="me-2" /> Contact
-                  </h5>
-                  <Button 
-                   className='bgred border-0'
-                    style={{ 
-                      width: '100%',
-                      padding: '0.75rem',
-                      fontSize: '1.1rem'
-                    }}
-                    onClick={() => setShowHireModal(true)}
-                  >
-                    Hire Chef
-                  </Button>
-                  
-                  {chef.socialLinks && (
-                    <div className="mt-4">
-                      <h5 className="fw-bold mb-3" style={{ color: colors.primary }}>Social Links</h5>
-                      <div className="d-flex gap-2 flex-wrap">
-                        {Object.entries(chef.socialLinks).map(([platform, url]) => (
-                          <a
-                            key={platform}
-                            href={url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="btn btn-outline-primary rounded-pill"
-                            style={{ 
-                              borderColor: colors.primary,
-                              color: colors.primary
-                            }}
-                          >
-                            <i className={`bi bi-${platform.toLowerCase()} me-2`} />
-                            {platform}
-                          </a>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {chef.certifications?.length > 0 && (
-                  <div className="border-top pt-4 mt-4">
-                    <h5 className="fw-bold mb-3" style={{ color: colors.primary }}>Certifications</h5>
-                    <div className="d-flex flex-column gap-2">
-                      {chef.certifications.map((cert, i) => (
-                        <div key={i} className="d-flex align-items-center gap-2">
-                          <div style={{
-                            width: '30px',
-                            height: '30px',
-                            backgroundColor: colors.primary,
-                            borderRadius: '50%',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center'
-                          }}>
-                            <span className="text-white">✓</span>
-                          </div>
-                          <span className="text-muted">{cert}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </Card.Body>
-            </Card>
-          </Col>
+     
 
 {/* Auto-Scroll Foods Section */}
 <div className="py-4 border-bottom" style={{ backgroundColor: '#f8f9fa' }}>
