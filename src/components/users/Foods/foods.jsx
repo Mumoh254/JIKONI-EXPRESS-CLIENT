@@ -5,7 +5,7 @@ import {
 } from 'react-bootstrap';
 import {
   GeoAlt,  Star, StarHalf   ,Cart,  Scooter,
-  CheckCircle, EggFried, FilterLeft,    StarFill, CartPlus, Person, Clock,  Instagram, Facebook, Twitter , Plus,  Dash, Trash, Pencil, Bell
+  CheckCircle, EggFried, FilterLeft,  Calendar,   Clock as ClockIcon   ,  StarFill, CartPlus, Person, Clock,  Instagram, Facebook, Twitter , Plus,  Dash, Trash, Pencil, Bell
 } from 'react-bootstrap-icons';
 
 import { useNavigate } from 'react-router-dom'; 
@@ -109,6 +109,48 @@ import { jwtDecode } from "jwt-decode"; // ✅ fixed
 
 
 const FoodPlatform = (   food ) => {
+
+
+
+  const [showPreOrderModal, setShowPreOrderModal] = useState(false);
+  const [selectedFood, setSelectedFood] = useState(null);
+  const [likedFoods, setLikedFoods] = useState({});
+  
+
+  const formatDistanceToNow = (date) => {
+    // Simplified version - use date-fns in real implementation
+    const hoursAgo = Math.floor((new Date() - date) / (1000 * 60 * 60));
+    return `${hoursAgo} hour${hoursAgo !== 1 ? 's' : ''}`;
+  };
+
+  // Pre-order form state
+  const [preOrderForm, setPreOrderForm] = useState({
+    date: '',
+    time: '',
+    instructions: '',
+    servings: 1
+  });
+
+  const handlePreOrder = (food) => {
+    setSelectedFood(food);
+    setShowPreOrderModal(true);
+    // Reset form when opening modal
+    setPreOrderForm({
+      date: '',
+      time: '',
+      instructions: '',
+      servings: 1
+    });
+  };
+
+  const handleSubmitPreOrder = () => {
+    console.log("Pre-order submitted:", {
+      food: selectedFood,
+      ...preOrderForm
+    });
+    setShowPreOrderModal(false);
+  };
+
 
   
 
@@ -1301,231 +1343,431 @@ const RiderRegistrationModal = ({ show, onClose, onSubmit, userId }) => {
 </div>
 
 
-      {/* Food Grid */}
-{/* Food Grid */}
-<div className="food-platform" style={{ backgroundColor: colors.light }}>
-  <Row className="g-4 py-2">
-    {state.foods.map(food => (
-      <Col key={food.id} xs={12} md={6} lg={4} xl={4}> {/* Responsive columns */}
-        <Card className="h-100 shadow-lg border-0 overflow-hidden food-card">
-          {/* Image Section */}
-          <div className="position-relative">
-            <Carousel interval={null} indicators={food.photoUrls.length > 1}>
-              {food.photoUrls.map((img, i) => (
-                <Carousel.Item key={i}>
-                  <div className="ratio ratio-4x3">
-                    <img
-                      src={img}
-                      alt={`${food.title} - Photo ${i+1}`}
-                      className="card-img-top object-fit-cover"
-                      style={{ filter: 'brightness(0.96)' }}
-                    />
-                  </div>
-                </Carousel.Item>
-              ))}
-            </Carousel>
-            
-            {/* Floating Price Tag */}
-            <div className="position-absolute top-0 end-0 m-3">
-              <Badge  className="price-tag fw-bold">
-                KES {food.price}
-              </Badge>
+
+
+    <div className="food-platform" style={{ backgroundColor: colors.light }}>
+      {/* Pre-Order Modal */}
+   <Modal show={showPreOrderModal} onHide={() => setShowPreOrderModal(false)} centered>
+    <Modal.Header closeButton className="border-0 pb-0 bg-white">
+      <Modal.Title className="fw-bold text-dark">Pre-Order Your Meal</Modal.Title>
+    </Modal.Header>
+    
+    <Modal.Body className="bg-white">
+      {selectedFood && (
+        <div className="d-flex align-items-center mb-4">
+          <div className="me-3" style={{ 
+            width: '80px', 
+            height: '80px', 
+            overflow: 'hidden',
+            borderRadius: '12px' 
+          }}>
+            <img 
+              src={selectedFood.photoUrls[0]} 
+              alt={selectedFood.title}
+              className="w-100 h-100 object-fit-cover"
+            />
+          </div>
+          <div>
+            <h5 className="mb-1 fw-bold text-dark">{selectedFood.title}</h5>
+            <div className="d-flex align-items-center">
+              <span className="badge me-2" style={{
+                background: 'linear-gradient(45deg, #FF6B6B, #FF4532)',
+                color: '#fff',
+                border: 'none'
+              }}>
+                {selectedFood.mealType}
+              </span>
+              <span className="fw-bold text-danger">KES {selectedFood.price}</span>
             </div>
           </div>
+        </div>
+      )}
 
-          {/* Card Body */}
-          <Card.Body className="d-flex flex-column pt-3">
-            {/* Food Metadata */}
-            <div className="d-flex flex-wrap align-items-center gap-2 mb-3">
-              <Badge pill className="meal-type">
-                {food.mealType}
-              </Badge>
-              <small className="text-muted d-flex align-items-center">
-                <Clock className="me-1" size={14} />
-                {formatDistanceToNow(new Date(food.createdAt))} ago
-              </small>
-            </div>
+      <Form>
+        <Row className="g-3">
+          <Col md={6}>
+            <Form.Group controlId="preOrderDate">
+              <Form.Label className="fw-medium">Delivery Date</Form.Label>
+              <div className="input-group">
+                <span className="input-group-text bg-white">
+                  <Calendar size={18} className="text-muted" />
+                </span>
+                <Form.Control 
+                  type="date" 
+                  aria-label="Delivery Date"
+                  value={preOrderForm.date}
+                  onChange={(e) => setPreOrderForm({...preOrderForm, date: e.target.value})}
+                  min={new Date().toISOString().split('T')[0]}
+                />
+              </div>
+              <small className="text-muted">Select a date you want your meal delivered.</small>
+            </Form.Group>
+          </Col>
 
-            {/* Food Title */}
-            <h3 className="mb-2 fw-bold food-title fs-4">{food.title}</h3>
+          <Col md={6}>
+            <Form.Group controlId="preOrderTime">
+              <Form.Label className="fw-medium">Delivery Time</Form.Label>
+              <div className="input-group">
+                <span className="input-group-text bg-white">
+                  <Clock size={18} className="text-muted" />
+                </span>
+                <Form.Control 
+                  type="time" 
+                  aria-label="Delivery Time"
+                  value={preOrderForm.time}
+                  onChange={(e) => setPreOrderForm({...preOrderForm, time: e.target.value})}
+                />
+              </div>
+              <small className="text-muted">Choose a convenient time for delivery.</small>
+            </Form.Group>
+          </Col>
 
-            {/* Food Description */}
-            <p className="text-secondary mb-3 flex-grow-1">{food.description}</p>
+          <Col md={6}>
+            <Form.Group controlId="servings">
+              <Form.Label className="fw-medium">Number of Servings</Form.Label>
+              <Form.Select 
+                aria-label="Number of Servings"
+                value={preOrderForm.servings}
+                onChange={(e) => setPreOrderForm({...preOrderForm, servings: parseInt(e.target.value)})}
+              >
+                {[1,2,3,4,5,6,7,8].map(num => (
+                  <option key={num} value={num}>{num} serving{num > 1 ? 's' : ''}</option>
+                ))}
+              </Form.Select>
+            </Form.Group>
+          </Col>
 
-            {/* Dietary Tags */}
-            <div className="d-flex flex-wrap gap-2 mb-3">
-              <Badge pill className="dietary-tag speciality">
-                {food.speciality}
-              </Badge>
-              <Badge pill className="dietary-tag cuisine">
-                {food.cuisineType}
-              </Badge>
-              <Badge pill className="dietary-tag dietary">
-                {food.dietary}
-              </Badge>
-            </div>
+          <Col md={6}>
+            <Form.Group controlId="totalPrice">
+              <Form.Label className="fw-medium">Total Price</Form.Label>
+              <div className="d-flex align-items-center h-100">
+                <h4 className="mb-0 fw-bold text-danger">
+                  {selectedFood ? `KES ${(selectedFood.price * preOrderForm.servings).toFixed(2)}` : ''}
+                </h4>
+              </div>
+            </Form.Group>
+          </Col>
 
-            {/* Chef Profile */}
-            <div className="chef-profile bg-white p-3 rounded-3 mt-auto">
-              <div className="d-flex align-items-center gap-3">
-                <div 
-                  className="chef-avatar hover-scale"
-                  onClick={() => {
-    playSound();
-    navigate(`/chef/${food.chefId}`);
-  }}
-                  style={{
-                    width: '60px',
-                    height: '60px',
-                    minWidth: '60px',
-                    borderRadius: '50%',
-                    overflow: 'hidden',
-                    border: '2px solid #FF4532',
-                    cursor: 'pointer'
-                  }}
+          <Col xs={12}>
+            <Form.Group controlId="specialInstructions">
+              <Form.Label className="fw-medium">Special Instructions</Form.Label>
+              <Form.Control 
+                as="textarea" 
+                rows={3} 
+                placeholder="Any dietary restrictions or special requests..."
+                value={preOrderForm.instructions}
+                onChange={(e) => setPreOrderForm({...preOrderForm, instructions: e.target.value})}
+              />
+              <small className="text-muted">We’ll do our best to accommodate your request.</small>
+            </Form.Group>
+          </Col>
+        </Row>
+      </Form>
+    </Modal.Body>
+
+    <Modal.Footer className="bg-white border-0">
+      <Button 
+        variant="light" 
+        className="fw-medium"
+        onClick={() => setShowPreOrderModal(false)}
+      >
+        Cancel
+      </Button>
+      <Button 
+        className="px-4 fw-bold text-white"
+        style={{
+          background: 'linear-gradient(45deg, #FF6B6B, #FF4532)',
+          border: 'none'
+        }}
+        onClick={handleSubmitPreOrder}
+        disabled={!preOrderForm.date || !preOrderForm.time}
+      >
+        Confirm Pre-Order
+      </Button>
+    </Modal.Footer>
+  </Modal>
+
+
+      {/* Food Grid */}
+      <Row className="g-4 py-3">
+        {state.foods.map(food => (
+          <Col key={food.id} xs={12} md={6} lg={4} xl={4}>
+            <Card className="h-100 shadow-sm border-0 overflow-hidden food-card" style={{ 
+              borderRadius: '16px', 
+              transition: 'all 0.3s ease'
+            }}>
+              {/* Image Section */}
+              <div className="position-relative" style={{ overflow: 'hidden' }}>
+                <Carousel 
+                  interval={null} 
+                  indicators={food.photoUrls.length > 1}
+                  controls={false}
                 >
-                  <img
-                    src={food.chef.profilePicture || '/images/chef.png'}
-                    alt={food.chef.user.Name}
-                    className="w-100 h-100 object-fit-cover"
-                  />
-                </div>
-
-                <div className="flex-grow-1">
-                  <h6 className="mb-0 fw-bold text-truncate">{food.chef.user.Name}</h6>
-                  <div className="d-flex align-items-center gap-2 mt-1">
-                    <StarFill className="text-warning" size={14} />
-                    <small className="fw-medium">{food.chef.rating}</small>
-                    <span className="text-muted">•</span>
-                    <small className="fw-medium">{food.chef.experienceYears}yrs</small>
-                  </div>
-                </div>
-<div 
-  className="d-flex flex-column text-muted align-items-center gap-2 p-2" 
-  style={{
-   border: '0.5px solid rgba(51, 51, 51, 0.1)', // thinner + less intense
-    borderRadius: '6px', // optional for slight rounding
-    width: 'fit-content'
-  }}
->
-                  <Button 
-                    variant="link" 
-                    className="p-0 text-danger hover-scale"
-                    onClick={() => handleLike(food.id)}
-                  >
-                    {food.likes > 0 ? <HeartFill size={20} /> : <Heart size={24} />}
-                    <span className="d-block small fw-bold">{food.likes}</span>
-                  </Button>
-                  <div className="d-flex align-items-center gap-1 text-success">
-                    <FaEye size={20} />
-                    <span className="small fw-bold">{food.views}</span>
-                  </div>
+                  {food.photoUrls.map((img, i) => (
+                    <Carousel.Item key={i}>
+                      <div className="ratio ratio-4x3">
+                        <img
+                          src={img}
+                          alt={`${food.title} - Photo ${i+1}`}
+                          className="card-img-top object-fit-cover"
+                          style={{ 
+                            transition: 'transform 0.5s ease'
+                          }}
+                        />
+                      </div>
+                    </Carousel.Item>
+                  ))}
+                </Carousel>
+                
+                {/* Floating Price Tag */}
+                <div className="position-absolute top-0 end-0 m-3">
+                  <Badge className="price-tag fw-bold px-3 py-2">
+                    KES {food.price}
+                  </Badge>
                 </div>
               </div>
 
-              {/* Certifications */}
-              {food.chef.certifications.length > 0 && (
-                <div className="mt-3">
-                  <h6 className="text-uppercase small mb-2 fw-bold text-muted">Certifications</h6>
-                  <div className="d-flex flex-wrap gap-2">
-                    {food.chef.certifications.map((cert, i) => (
-                      <Badge
-                        key={i}
-               
-                        className="d-flex align-items-center py-2 px-3 hover-scale"
+              {/* Card Body */}
+              <Card.Body className="d-flex flex-column pt-3 pb-0">
+                {/* Food Metadata */}
+                <div className="d-flex justify-content-between align-items-center mb-2">
+                  <Badge pill style={{ 
+                    background: 'rgba(255, 107, 107, 0.15)', 
+                    color: '#FF6B6B',
+                    fontSize: '0.9rem'
+                  }}>
+                    {food.mealType}
+                  </Badge>
+             <small className="text-muted d-flex align-items-center" style={{ fontSize: '0.9rem' }}>
+  <Clock className="me-1 text-primary" size={16} />
+  {formatDistanceToNow(new Date(food.createdAt), { addSuffix: true })}
+</small>
+
+                </div>
+
+                {/* Food Title */}
+                <h5 className="mb-2 fw-bold food-title" style={{ fontSize: '1.3rem' }}>
+                  {food.title}
+                </h5>
+
+
+
+                {/* Chef Profile */}
+                <div className="chef-profile bg-white p-3 rounded-3 mt-auto" style={{ 
+                  border: '1px solid rgba(0,0,0,0.05)',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.03)'
+                }}>
+                  <div className="d-flex justify-content-between align-items-center mb-2">
+                    {/* Chef Info */}
+                    <div className="d-flex align-items-center gap-3">
+                      <div 
+                        className="chef-avatar"
+                        onClick={() => {
+                          playSound();
+                          navigate(`/chef/${food.chef.id}`);
+                        }}
                         style={{
-                          background: 'linear-gradient(45deg, #27ae60, #2ecc71)',
-                          color: 'white',
-                          fontSize: '0.85rem'
+                          width: '50px',
+                          height: '50px',
+                          borderRadius: '50%',
+                          overflow: 'hidden',
+                          border: '2px solid #FF6B6B',
+                          cursor: 'pointer',
+                          flexShrink: 0,
+                          transition: 'transform 0.3s ease'
                         }}
                       >
-                        {cert}
-                      </Badge>
-                    ))}
+                        <img
+                          src={food.chef.profilePicture || '/images/chef.png'}
+                          alt={food.chef.user.Name}
+                          className="w-100 h-100 object-fit-cover"
+                        />
+                      </div>
+
+                      <div className="chef-info">
+                        <h6 className="mb-0 fw-bold text-truncate" style={{ maxWidth: '130px' }}>
+                          {food.chef.user.Name}
+                        </h6>
+                        <div className="d-flex align-items-center gap-2 mt-1">
+                          <div className="d-flex align-items-center">
+                            <StarFill className="text-warning" size={14} />
+                            <small className="fw-medium ms-1">{food.chef.rating || 'New'}</small>
+                          </div>
+                          <span className="text-muted fs-xs">•</span>
+                       
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Engagement Metrics */}
+                    <div className="d-flex align-items-center gap-3">
+                      <div className="engagement-metric">
+                        <div className="d-flex align-items-center justify-content-center gap-1 text-danger">
+                          <Button 
+                            variant="link" 
+                            className="p-0"
+                            onClick={() => handleLike(food.id)}
+                          >
+                            {food.likes > 0 ? <HeartFill size={20} /> : <Heart size={20} />}
+                          </Button>
+                          <span className="small fw-bold">{food.likes || 0}</span>
+                        </div>
+                        <div className="text-center mt-1">
+                          <small className="text-muted fw-medium">Likes</small>
+                        </div>
+                      </div>
+                      
+                      <div className="engagement-metric">
+                        <div className="d-flex align-items-center justify-content-center gap-1 text-success">
+                          <FaEye size={20} />
+                          <span className="small fw-bold">{food.views || 0}</span>
+                        </div>
+                        <div className="text-center mt-1">
+                          <small className="text-muted fw-medium">Views</small>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Opening Hours */}
+                  <div className="d-flex justify-content-between align-items-center mt-3 pt-2 border-top">
+                    <div className="d-flex align-items-center gap-2">
+                      <Clock size={16} className="text-primary" />
+                      <small className="fw-medium">
+                        {food.chef.openingHours || '8am - 6pm'}
+                      </small>
+                    </div>
+                    <Badge bg="light" className="text-success p-2 fw-medium">
+                      Available
+                    </Badge>
                   </div>
                 </div>
-              )}
-            </div>
 
-            {/* Add to Cart Button */}
-            <Button 
-              variant="primary" 
-              className="add-to-cart-btn mt-3 w-100 py-2"
-              onClick={() => updateCart(food, 1)}
-            >
-              <CartPlus className="me-2" size={20} />
-              Add to Cart
-            </Button>
-          </Card.Body>
-        </Card>
-      </Col>
-    ))}
-  </Row>
+                {/* Action Buttons */}
+                <div className="d-flex gap-3 mt-4 mb-4">
+               <Button 
+  className="flex-grow-1 py-2 fw-bold"
+  style={{ 
+    borderRadius: '12px', 
+    border: '2px solid #2ECC71', 
+    color: '#2ECC71',
+    backgroundColor: 'transparent'
+  }}
+  onClick={() => handlePreOrder(food)}
+>
+  Pre-Order
+</Button>
 
-  {/* Responsive Styles */}
-  <style jsx global>{`
-    .price-tag {
-      background: linear-gradient(45deg,#2ecc71, #2ecc71) !important;
-      color: white !important;
-      font-size: 1.1rem;
-      padding: 0.5rem 1.25rem;
-      box-shadow: 0 4px 12px rgba(255,69,50,0.3);
-    }
+                  <Button 
+                    variant="primary" 
+                    className="flex-grow-1 py-2 fw-bold"
+                    style={{ 
+                      borderRadius: '12px',
+                      background:  ' #FF4532',
+                      border: 'none'
+                    }}
+                    onClick={() => updateCart(food, 1)}
+                  >
+                    <CartPlus className="me-2" size={20} />
+                    Add to Cart
+                  </Button>
+                </div>
+              </Card.Body>
+            </Card>
+          </Col>
+        ))}
+      </Row>
 
-    /* Small devices (1 column) */
-    @media (max-width: 767.98px) {
-      .food-card {
-        max-width: 100%;
-      }
-      .food-title {
-        font-size: 1.25rem;
-      }
-      .chef-profile {
-        padding: 1rem !important;
-      }
-    }
+      {/* Global Styles */}
+      <style jsx global>{`
+        .price-tag {
+          background: #FF4532 !important;
+          color: white !important;
+          font-size: 1.1rem;
+          box-shadow: 0 4px 12px rgba(255, 69, 50, 0.3);
+     
+        }
 
-    /* Medium devices (2 columns) */
-    @media (min-width: 768px) and (max-width: 1199.98px) {
-      .food-card {
-        max-width: 100%;
-      }
-      .food-title {
-        font-size: 1.3rem;
-      }
-      .chef-avatar {
-        width: 50px !important;
-        height: 50px !important;
-      }
-    }
+        .carousel-indicators {
+          position: absolute;
+          bottom: 15px;
+          left: 50%;
+          transform: translateX(-50%);
+          display: flex;
+          justify-content: center;
+          padding: 0;
+          margin: 0;
+          list-style: none;
+          z-index: 10;
+        }
+        
+        .carousel-indicators button {
+          width: 8px;
+          height: 8px;
+          border-radius: 50%;
+          background-color: rgba(255,255,255,0.5);
+          border: none;
+          margin: 0 5px;
+          padding: 0;
+          cursor: pointer;
+          transition: all 0.3s ease;
+        }
+        
+        .carousel-indicators .active {
+          background-color: white;
+          width: 25px;
+          border-radius: 5px;
+        }
 
-    /* Large devices (3 columns) */
-    @media (min-width: 1200px) {
-      .food-card {
-        max-width: 380px;
-        margin: 0 auto;
-      }
-      .food-title {
-        font-size: 1.4rem;
-      }
-      .chef-profile {
-        padding: 1.5rem !important;
-      }
-    }
+        .food-card:hover {
+          transform: translateY(-5px);
+          box-shadow: 0 15px 30px rgba(0,0,0,0.1) !important;
+        }
+        
+        .chef-avatar:hover {
+          transform: scale(1.05);
+        }
 
-    .add-to-cart-btn {
-      background: linear-gradient(45deg, #FF4532,#FF4532) !important;
-      border: none !important;
-      font-weight: 600;
-      transition: all 0.3s ease;
-      
-      &:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 5px 15px rgba(255,69,50,0.3);
-      }
-    }
-  `}</style>
-</div>
+        .engagement-metric {
+          min-width: 60px;
+          text-align: center;
+          background: rgba(0,0,0,0.02);
+          border-radius: 8px;
+          padding: 5px 8px;
+        }
+
+        @media (max-width: 767.98px) {
+          .food-title {
+            font-size: 1.25rem;
+          }
+          .chef-info {
+            max-width: 130px;
+          }
+          .engagement-metric {
+            min-width: 50px;
+            padding: 4px 6px;
+          }
+        }
+
+        @media (min-width: 768px) and (max-width: 1199.98px) {
+          .food-title {
+            font-size: 1.3rem;
+          }
+        }
+
+        @media (min-width: 1200px) {
+          .food-card {
+            max-width: 380px;
+            margin: 0 auto;
+          }
+          .food-title {
+            font-size: 1.4rem;
+          }
+        }
+      `}</style>
+    </div>
+
+
 </div>
 )}
 
