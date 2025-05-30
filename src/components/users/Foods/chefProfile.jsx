@@ -3,7 +3,8 @@ import { useParams } from 'react-router-dom';
 import { Row, Col, Card, Carousel, Badge,  Button, Spinner, Tabs, Tab, Modal, Form } from 'react-bootstrap';
 import { StarHalf, CartPlus, GeoAlt, Clock,  EggFried   , People, Envelope, PersonBadge  ,    CheckCircleFill  ,  StarFill , PinMapFill  ,   AwardFill , ClockHistory ,   HeartFill ,  PersonLinesFill   ,  EyeFill,CashCoin } from 'react-bootstrap-icons';
 import { format, formatDistanceToNow } from 'date-fns';
-
+import { GiKenya } from "react-icons/gi";
+import { BsCart } from 'react-icons/bs';
 const ChefProfile = ({ addToCart }) => {
 
   const  BASE_URL   =   "https://neuro-apps-api-express-js-production-redy.onrender.com/apiV1/smartcity-ke"
@@ -24,6 +25,33 @@ const ChefProfile = ({ addToCart }) => {
   const [requestStatus, setRequestStatus] = useState(null);
     const [showBioModal, setShowBioModal] = useState(false); // New state for bio modal
 
+
+
+    
+      const [state, setState] = useState({
+        foods: [],
+        orders: [],
+        riders: [],
+        cart: [],
+         showCart: false,
+        cart: [],  // 
+        
+        loadingOrders: true,
+        loading: true,
+        error: null,
+        showChefReg: false,
+        showRiderReg: false,
+        showCart: false,
+        showFoodPost: false,
+        showAnalytics: false,
+        showBikers: false,
+        showEditFood: null,
+        isChefMode: localStorage.getItem('isChef') === 'true',
+        isRiderMode: localStorage.getItem('isRider') === 'true',
+        filters: { area: 'all', specialty: 'all', mealType: 'all' }
+      });
+
+
   // Color scheme
   const colors = {
     primary: '#2ecc71',
@@ -33,6 +61,46 @@ const ChefProfile = ({ addToCart }) => {
     purple: '#2d3436',
     purpleDark: '#8b5cf6'
   };
+
+
+
+  
+
+  // Add this cart management logic
+const updateCart = (item, quantityChange) => {
+  playSound()
+  setState(prev => {
+    const existingItem = prev.cart.find(i => i.id === item.id);
+    let newCart = [...prev.cart];
+    
+    if (existingItem) {
+      // Update quantity
+      const newQuantity = existingItem.quantity + quantityChange;
+      if (newQuantity <= 0) {
+        // Remove item if quantity reaches 0
+        newCart = newCart.filter(i => i.id !== item.id);
+      } else {
+        // Update quantity
+        newCart = newCart.map(i => 
+          i.id === item.id ? { ...i, quantity: newQuantity } : i
+        );
+      }
+    } else if (quantityChange > 0) {
+      // Add new item to cart
+      newCart.push({ 
+        ...item,
+        quantity: 1,
+        price: Number(item.price)
+      });
+    }
+    
+    return { ...prev, cart: newCart };
+  });
+};
+
+// Add these calculation functions
+const calculateSubtotal = () => 
+  state.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
 
   useEffect(() => {
     const fetchChefData = async () => {
@@ -100,8 +168,158 @@ const ChefProfile = ({ addToCart }) => {
 
   return (
     <div style={{ backgroundColor: '#f8fafc', minHeight: '100vh' }}>
-   {/* Chef Header */}
+
+
+
+   <header className="header bg-white shadow-sm sticky-top">
+  <div className="container">
+    <div className="d-flex justify-content-between align-items-center py-2 py-md-2">
+      {/* Branding */}
+      <div className="d-flex align-items-center gap-2 gap-md-3">
+        <GiKenya className="text-primary header-icon" />
+        <h1 className="m-0 brand-title">
+          <span className="text-primary">Jikoni</span>
+          <span className="text-danger px-1">Express</span>
+        </h1>
+      </div>
+
+      {/* Actions */}
+      <div className="d-flex gap-2 gap-md-3 align-items-center">
+        {/* Role Buttons */}
+        {!state.isChefMode && !state.isRiderMode && (
+          <div className="d-flex gap-1 gap-md-2">
+            <Button 
+              variant="outline-primary"
+              className="rounded-pill px-3 px-md-4 py-1 d-flex align-items-center"
+              onClick={() => setState(s => ({ ...s, showChefReg: true }))}
+            >
+              <Person className="me-1 me-md-2" />
+              <span className="d-none d-md-inline">Chef</span>
+            </Button>
+            <Button 
+              variant="outline-success"
+              className="rounded-pill px-3 px-md-4 py-1 d-flex align-items-center"
+              onClick={() => setState(s => ({ ...s, showRiderReg: true }))}
+            >
+              <Scooter className="me-1 me-md-2" />
+              <span className="d-none d-md-inline">Rider</span>
+            </Button>
+          </div>
+        )}
+
+        {/* Exit Button */}
+        {state.isChefMode && (
+          <Button 
+            variant="danger"
+            className="rounded-pill px-3 px-md-4 py-1"
+            onClick={() => {
+              localStorage.removeItem('chefId');
+              setState(s => ({ ...s, isChefMode: false }));
+            }}
+          >
+            <span className="d-none d-md-inline">Exit Chef Mode</span>
+            <span className="d-md-none">Exit</span>
+          </Button>
+        )}
+
+        {/* Cart Button */}
+    <Button 
+  variant="warning"
+  className="rounded-pill px-2 px-md-2 py-1 position-relative"
+  onClick={() => {
+    updateCart(); // Call your function
+    setState(s => ({ ...s, showCart: true })); // Show the cart modal
+  }}
+  style={{ minWidth: 'auto' }}
+>
+  <BsCart className="me-1 me-md-2" />
+  <span className="d-none d-md-inline">Cart</span>
+  <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+    {state.cart.reduce((sum, i) => sum + i.quantity, 0)}
+    <span className="visually-hidden">items in cart</span>
+  </span>
+</Button>
+
+      </div>
+    </div>
+  </div>
+
+  <style jsx>{`
+    .header {
+      border-bottom: 2px solid rgba(0,0,0,0.1);
+      z-index: 1000;
+      transition: all 0.3s ease;
+    }
+    
+    .brand-title {
+      font-family: 'Pacifico', cursive;
+      font-size: 1.75rem;
+      letter-spacing: -1px;
+      transition: font-size 0.3s ease;
+    }
+    
+    .header-icon {
+      font-size: 2rem !important;
+      transition: font-size 0.3s ease;
+    }
+    
+    .btn-outline-primary:hover,
+    .btn-outline-success:hover {
+      transform: translateY(-1px);
+    }
+    
+    .btn-warning:hover {
+      transform: scale(1.05) translateY(-1px);
+    }
+    
+    .badge {
+      font-size: 0.65rem;
+      padding: 0.35em 0.6em;
+      transition: all 0.3s ease;
+    }
+    
+    @media (max-width: 768px) {
+      .brand-title {
+        font-size: 1.4rem;
+      }
+      
+      .header-icon {
+        font-size: 1.75rem !important;
+      }
+      
+      .btn {
+        font-size: 0.8rem;
+      }
+    }
+    
+    @media (max-width: 576px) {
+      .brand-title {
+        font-size: 1.25rem;
+      }
+      
+      .header-icon {
+        font-size: 1.5rem !important;
+      }
+      
+      .btn {
+        padding: 0.25rem 0.5rem;
+      }
+      
+      .badge {
+        font-size: 0.55rem;
+        padding: 0.25em 0.5em;
+      }
+    }
+  `}</style>
+</header>
+
+
+
+
 {/* Chef Header - Compact & Modern */}
+
+
+
 <div style={{ 
   backgroundColor: '#ffffff',
   padding: '1.25rem 0',
@@ -323,119 +541,145 @@ const ChefProfile = ({ addToCart }) => {
         <Row className="g-4">
           {/* Chef Details Sidebar */}
      
-
-{/* Auto-Scroll Foods Section */}
-<div className="py-4 border-bottom" style={{ backgroundColor: '#f8f9fa' }}>
+{/* Compact Auto-Scroll Foods Section */}
+<div className="py-3" style={{ backgroundColor: '#f8f9fa' }}>
   <div className="container">
-    <h5 className="mb-3 fw-bold" style={{ 
-      color: colors.primary,
-      fontSize: '1.25rem',
-      letterSpacing: '-0.015em'
-    }}>
-      <StarHalf className="me-2" style={{ width: '20px', height: '20px' }} /> 
-      Signature Creations
-    </h5>
+    <div className="d-flex justify-content-between align-items-center mb-3">
+      <h5 className="fw-bold mb-0" style={{ 
+        color: colors.primary,
+        fontSize: '1.1rem',
+        display: 'flex',
+        alignItems: 'center'
+      }}>
+        <StarHalf className="me-2" style={{ width: '18px', height: '18px' }} /> 
+        Signature Creations
+      </h5>
+      
+      <div className="d-flex gap-1">
+        <button className="btn btn-sm   px-3 py-1"  style={{  background:  '#FF4532'  ,  color:  '#fff'}} >
+          View All
+        </button>
+      </div>
+    </div>
     
-    <div className="foods-scroll-container">
-      <div className="foods-scroll">
+    <div className="foods-scroll-container position-relative">
+      <div className="foods-scroll d-flex pb-2">
         {foods.map(food => (
-          <div key={food.id} className="food-scroll-item">
-            <Card className="h-100 shadow-sm border-0 overflow-hidden" style={{
-              borderRadius: '12px',
-              transition: 'transform 0.2s cubic-bezier(0.4, 0, 0.2, 1)'
+          <div key={food.id} className="food-scroll-item" style={{ width: '200px' }}>
+            <Card className="h-100 shadow-sm border-0" style={{
+              borderRadius: '10px',
+              overflow: 'hidden',
+              transition: 'all 0.2s ease'
             }}>
+              {/* Food Image */}
               <div className="position-relative">
-                <Carousel interval={null} indicators={food.photoUrls?.length > 1}>
-                  {(food.photoUrls || []).map((img, i) => (
-                    <Carousel.Item key={i}>
-                      <div className="ratio ratio-1x1">
-                        <img
-                          src={img}
-                          alt={`${food.title} - Photo ${i + 1}`}
-                          className="card-img-top object-fit-cover"
-                          style={{ 
-                            filter: 'brightness(0.98)',
-                            borderTopLeftRadius: '12px',
-                            borderTopRightRadius: '12px'
-                          }}
-                          onError={(e) => (e.target.src = '/placeholder-food.jpg')}
-                        />
-                      </div>
-                    </Carousel.Item>
-                  ))}
-                </Carousel>
+                <div className="ratio ratio-1x1">
+                  <img
+                    src={food.photoUrls?.[0] || '/placeholder-food.jpg'}
+                    alt={food.title}
+                    className="card-img-top object-fit-cover"
+                    onError={(e) => (e.target.src = '/placeholder-food.jpg')}
+                  />
+                </div>
                 <div style={{
                   position: 'absolute',
-                  top: '12px',
-                  right: '12px',
-                  backdropFilter: 'blur(4px)',
-                  backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                  borderRadius: '20px',
-                  padding: '4px 12px',
-                  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)'
+                  top: '8px',
+                  right: '8px',
+                  backgroundColor: 'rgba(255,255,255,0.9)',
+               
+                  padding: '2px 10px',
+                  boxShadow: '0 1px 4px rgba(0,0,0,0.1)'
                 }}>
                   <span style={{
                     color: colors.primary,
                     fontWeight: 600,
-                    fontSize: '0.9rem'
+                    fontSize: '0.8rem'
                   }}>
                     KES {food.price}
                   </span>
                 </div>
               </div>
 
-              <Card.Body className="d-flex flex-column" style={{ padding: '1.25rem' }}>
-                <h6 className="fw-bold mb-2" style={{ 
-                  color: colors.primary,
-                  fontSize: '1rem',
-                  lineHeight: 1.3
+              <Card.Body className="d-flex flex-column p-2">
+                <h6 className="fw-bold mb-1 mt-1" style={{ 
+                  color: '#333',
+                  fontSize: '0.95rem',
+                  lineHeight: 1.3,
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis'
                 }}>
                   {food.title}
                 </h6>
 
-                <div className="d-flex gap-2 flex-wrap mb-3">
-                  <Badge pill className="small" style={{ 
-                    backgroundColor: `${colors.purple}15`,
+                <div className="d-flex gap-1 flex-wrap mb-2">
+                  <span className="badge rounded-pill" style={{ 
+                    backgroundColor: '#eef2ff',
                     color: colors.purple,
-                    padding: '0.35rem 0.7rem',
-                    fontSize: '0.8rem'
+                    padding: '0.25rem 0.6rem',
+                    fontSize: '0.75rem',
+                    fontWeight: 500
                   }}>
                     {food.cuisineType}
-                  </Badge>
-                  <Badge pill className="small" style={{ 
-                    backgroundColor: `${colors.danger}15`,
+                  </span>
+                  <span className="badge rounded-pill" style={{ 
+                    backgroundColor: '#fef2f2',
                     color: colors.danger,
-                    padding: '0.35rem 0.7rem',
-                    fontSize: '0.8rem'
+                    padding: '0.25rem 0.6rem',
+                    fontSize: '0.75rem',
+                    fontWeight: 500
                   }}>
                     {food.dietary}
-                  </Badge>
+                  </span>
                 </div>
 
-                <Button
-                  variant="primary"
-                  size="sm"
-                  className="w-100 d-flex align-items-center justify-content-center"
-                  style={{ 
-                    backgroundColor: colors.primary,
-                    borderColor: colors.primary,
-                    padding: '0.5rem',
-                    fontSize: '0.9rem',
-                    borderRadius: '8px',
-                    transition: 'all 0.2s ease'
-                  }}
-                  onClick={() => addToCart(food)}
-                >
-                  <CartPlus className="me-2" style={{ width: '16px', height: '16px' }} />
-                  Add to Cart
-                </Button>
+                <div className="d-flex gap-2 mt-auto">
+                  <Button
+                    variant="outline-primary"
+                    size="sm"
+                    className="flex-grow-1"
+                    style={{ 
+                      padding: '0.25rem',
+                      fontSize: '0.8rem',
+                      borderRadius: '6px',
+                      borderWidth: '1px',
+
+                
+
+    border: '2px solid #2ECC71', 
+    color: '#2ECC71',
+    backgroundColor: 'transparent'
+
+                    }}
+                    onClick={() => handlePreOrder(food)}
+                  >
+                    Pre-order
+                  </Button>
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    className="flex-grow-1 d-flex align-items-center justify-content-center"
+                    style={{ 
+                      backgroundColor: '#FF4532',
+                      borderColor: '#FF4532',
+                      padding: '0.25rem',
+                      fontSize: '0.8rem',
+                      borderRadius: '6px'
+                    }}
+                    onClick={() => addToCart(food)}
+                  >
+                    <CartPlus style={{ width: '14px', height: '14px', marginRight: '4px' }} />
+                    Add
+                  </Button>
+                </div>
               </Card.Body>
             </Card>
           </div>
         ))}
       </div>
     </div>
-  </div>
+ 
+</div>
 
   <style jsx>{`
     .foods-scroll-container {
@@ -547,7 +791,7 @@ const ChefProfile = ({ addToCart }) => {
                           }}
                         
                         >
-                          KES {food.price}
+                        <span>   KES {food.price} </span>
                         </Badge>
                       </div>
 
@@ -564,19 +808,35 @@ const ChefProfile = ({ addToCart }) => {
                           {food.dietary}
                         </Badge>
                       </div>
+      {/* Action Buttons */}
+                <div className="d-flex gap-3 mt-4 mb-4">
+               <Button 
+  className="flex-grow-1 py-2 fw-bold"
+  style={{ 
+    borderRadius: '12px', 
+    border: '2px solid #2ECC71', 
+    color: '#2ECC71',
+    backgroundColor: 'transparent'
+  }}
+  onClick={() => handlePreOrder(food)}
+>
+  Pre-Order
+</Button>
 
-                      <Button
-                      
-                        style={{
-                       
-                          padding: '0.75rem',
-                          fontSize: '1.1rem'
-                        }}
-                        className="w-100  bgred border-0"
-                        onClick={() => addToCart(food)}
-                      >
-                        <CartPlus className="me-2" /> Add to Cart
-                      </Button>
+                  <Button 
+                    variant="primary" 
+                    className="flex-grow-1 py-2 fw-bold"
+                    style={{ 
+                      borderRadius: '12px',
+                      background:  ' #FF4532',
+                      border: 'none'
+                    }}
+                    onClick={() => updateCart(food, 1)}
+                  >
+                    <CartPlus className="me-2" size={20} />
+                    Add to Cart
+                  </Button>
+                </div>
                     </Card.Body>
                   </Card>
                 </Col>
