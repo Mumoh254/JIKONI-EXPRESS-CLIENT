@@ -784,71 +784,86 @@ const RiderRegistrationModal = ({ show, onClose, onSubmit, userId }) => {
   </div>
 
   <style jsx>{`
-    .header {
-      border-bottom: 2px solid rgba(0,0,0,0.1);
-      z-index: 1000;
-      transition: all 0.3s ease;
-    }
-    
-    .brand-title {
-      font-family: 'Pacifico', cursive;
-      font-size: 1.75rem;
-      letter-spacing: -1px;
-      transition: font-size 0.3s ease;
-    }
-    
-    .header-icon {
-      font-size: 2rem !important;
-      transition: font-size 0.3s ease;
-    }
-    
-    .btn-outline-primary:hover,
-    .btn-outline-success:hover {
-      transform: translateY(-1px);
-    }
-    
-    .btn-warning:hover {
-      transform: scale(1.05) translateY(-1px);
-    }
-    
-    .badge {
-      font-size: 0.65rem;
-      padding: 0.35em 0.6em;
-      transition: all 0.3s ease;
-    }
-    
-    @media (max-width: 768px) {
-      .brand-title {
-        font-size: 1.4rem;
-      }
-      
-      .header-icon {
-        font-size: 1.75rem !important;
-      }
-      
-      .btn {
-        font-size: 0.8rem;
-      }
-    }
-    
-    @media (max-width: 576px) {
-      .brand-title {
-        font-size: 1.25rem;
-      }
-      
-      .header-icon {
-        font-size: 1.5rem !important;
-      }
-      
-      .btn {
-        padding: 0.25rem 0.5rem;
-      }
-      
-      .badge {
-        font-size: 0.55rem;
-        padding: 0.25em 0.5em;
-      }
-    }
+.header {
+  border-bottom: 2px solid rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  transition: all 0.3s ease;
+}
+
+/* Brand Title */
+.brand-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  transition: font-size 0.3s ease;
+}
+
+/* Header Icons */
+.header-icon {
+  font-size: 2rem !important;
+  transition: font-size 0.3s ease;
+}
+
+/* Button Hover Effects */
+.btn-outline-primary:hover,
+.btn-outline-success:hover {
+  transform: translateY(-1px);
+}
+
+.btn-warning:hover {
+  transform: scale(1.05) translateY(-1px);
+}
+
+/* Badge */
+.badge {
+  font-size: 0.7rem;
+  padding: 0.4em 0.65em;
+  border-radius: 0.65rem;
+  transition: all 0.3s ease;
+}
+
+/* Medium Screens */
+@media (max-width: 768px) {
+  .brand-title {
+    font-size: 1.6rem;
+  }
+
+  .header-icon {
+    font-size: 1.6rem !important;
+  }
+
+  .btn {
+    font-size: 0.9rem;
+    padding: 0.5rem 1rem;
+  }
+
+  .badge {
+    font-size: 0.6rem;
+    padding: 0.3em 0.55em;
+  }
+}
+
+/* Small Screens */
+@media (max-width: 576px) {
+  .brand-title {
+    font-size: 1.45rem;
+  }
+
+  .header-icon {
+    font-size: 1.5rem !important;
+  }
+
+  .btn {
+    font-size: 1rem;
+    padding: 0.5rem 1rem; /* Increased for better touch area */
+  }
+
+  .badge {
+    font-size: 1rem;
+    padding: 0.3em 0.55em;
+  }
+}
+
   `}</style>
 </header>
 
