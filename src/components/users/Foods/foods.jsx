@@ -506,7 +506,7 @@ const getTimeUntilClosing = (openingHours) => {
               {state.isChefMode && (
                 <Button 
                   variant="danger"
-                  className="rounded-pill px-3 px-md-4 py-1"
+                  className="rounded-pill px-3  px-md-4 py-1"
                   onClick={() => {
                     localStorage.removeItem('chefId');
                     setState(s => ({ ...s, isChefMode: false }));
@@ -518,11 +518,11 @@ const getTimeUntilClosing = (openingHours) => {
               )}
               <Button 
                 variant="warning"
-                className="rounded-pill px-2 px-md-2 py-1 position-relative"
+                className="rounded-pill px-3 me-2 mt-1  px-md-2 py-1 position-relative"
                 onClick={() => setState(s => ({ ...s, showCart: true }))} 
                 style={{ minWidth: 'auto' }}
               >
-                <Cart className="me-1 me-md-2" />
+                <Cart className="me-2  me-md-2" />
                 <span className="d-none d-md-inline">Cart</span>
                 <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
                   {state.cart.reduce((sum, i) => sum + i.quantity, 0)}
