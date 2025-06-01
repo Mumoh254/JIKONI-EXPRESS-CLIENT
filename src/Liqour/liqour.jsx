@@ -22,7 +22,7 @@ import { GiKenya } from "react-icons/gi";
 import DeliveryRegistration from '../Liqour/delivery';
 import popSound from '../handler/playSound';
 
-    
+    import  LiquorProductsGrid     from  '../Liqour/liqourProdutsGrid'
 import { jwtDecode } from "jwt-decode"; 
 import moment from 'moment-timezone';
 import CartSidebar from '../components/cartAndOrder/cart';
@@ -460,137 +460,118 @@ const Liqour = () => {
   return (
     <Container fluid className="px-0" style={{ backgroundColor: theme.light }}>
       {/* Header */}
-      <header className="header bg-white shadow-sm sticky-top">
-        <div className="container">
-          <div className="d-flex justify-content-between align-items-center py-2 py-md-2">
-            <div className="d-flex align-items-center gap-2 gap-md-3">
-              <GiKenya className="text-primary header-icon" />
-              <h1 className="m-0 brand-title">
-                <span className="text-primary">Spirits</span>
-                <span className="text-warning px-1">Hub</span>
-              </h1>
-            </div>
-            <div className="d-flex gap-2 gap-md-3 align-items-center">
-              {!state.isVendorMode && !state.isDeliveryMode && (
-                <div className="d-flex gap-1 gap-md-2">
-                  <Button 
-                    variant="outline-primary"
-                    className="rounded-pill px-3 px-md-4 py-1 d-flex align-items-center"
-                    onClick={() => setState(s => ({ ...s, showVendorReg: true }))}
-                  >
-                    <Person className="me-1 me-md-2" />
-                    <span className="d-none d-md-inline">Vendor</span>
-                  </Button>
-                  <Button 
-                    variant="outline-success"
-                    className="rounded-pill px-3 px-md-4 py-1 d-flex align-items-center"
-                    onClick={() => setState(s => ({ ...s, showDeliveryReg: true }))}
-                  >
-                    <Scooter className="me-1 me-md-2" />
-                    <span className="d-none d-md-inline">Delivery</span>
-                  </Button>
-                </div>
-              )}
-              {state.isVendorMode && (
-                <Button 
-                  variant="danger"
-                  className="rounded-pill px-3  px-md-4 py-1"
-                  onClick={() => {
-                    localStorage.removeItem('vendorId');
-                    setState(s => ({ ...s, isVendorMode: false }));
-                  }}
-                >
-                  <span className="d-none d-md-inline">Exit Vendor Mode</span>
-                  <span className="d-md-none">Exit</span>
-                </Button>
-              )}
-              <Button 
-                variant="warning"
-                className="rounded-pill px-3 me-2 mt-1  px-md-2 py-1 position-relative"
-                onClick={() => setState(s => ({ ...s, showCart: true }))} 
-                style={{ minWidth: 'auto' }}
-              >
-                <Cart className="me-2  me-md-2" />
-                <span className="d-none d-md-inline">Cart</span>
-                <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                  {state.cart.reduce((sum, i) => sum + i.quantity, 0)}
-                  <span className="visually-hidden">items in cart</span>
-                </span>
-              </Button>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      <div className="py-4 container-xl">
-        {/* Stories Section */}
-        <div className="stories-fixed-section bg-white shadow-sm">
-          <h4 className="mb-3 fw-bold mt-3" style={{ color: '#ff6f00' }}>🍹 Premium Spirits</h4>
-
-       <div className="liquor-stories-container">
-      <div className="stories-header">
-        <h2 className="section-title">Featured Liquor Brands</h2>
-        <p className="section-subtitle">Discover premium spirits from top distributors</p>
+    {/* Header */}
+<header className="header bg-white shadow-sm sticky-top">
+  <div className="container">
+    <div className="d-flex justify-content-between align-items-center py-2 py-md-2">
+      <div className="d-flex align-items-center gap-2 gap-md-3">
+        <GiKenya className="text-primary header-icon" />
+        <h1 className="m-0 brand-title">
+          <span className="text-primary">Jikoni</span>
+          <span className="text-danger px-1">Liqour & Shots</span>
+        </h1>
       </div>
+      <div className="d-flex gap-2 gap-md-3 align-items-center">
+        {!state.isVendorMode && !state.isDeliveryMode && (
+          <div className="d-flex gap-1 gap-md-2">
+            <Button 
+              variant="outline-primary"
+              className="rounded-pill px-3 px-md-4 py-1 d-flex align-items-center"
+              onClick={() => setState(s => ({ ...s, showVendorReg: true }))}
+            >
+              <Person className="me-1 me-md-2" />
+              <span className="d-none d-md-inline">Vendor</span>
+            </Button>
+            <Button 
+              variant="outline-success"
+              className="rounded-pill px-3 px-md-4 py-1 d-flex align-items-center"
+              onClick={() => setState(s => ({ ...s, showDeliveryReg: true }))}
+            >
+              <Scooter className="me-1 me-md-2" />
+              <span className="d-none d-md-inline">Delivery</span>
+            </Button>
+          </div>
+        )}
+        {state.isVendorMode && (
+          <Button 
+            variant="danger"
+            className="rounded-pill px-3  px-md-4 py-1"
+            onClick={() => {
+              localStorage.removeItem('vendorId');
+              setState(s => ({ ...s, isVendorMode: false }));
+            }}
+          >
+            <span className="d-none d-md-inline">Exit Vendor Mode</span>
+            <span className="d-md-none">Exit</span>
+          </Button>
+        )}
+        <Button 
+          variant="warning"
+          className="rounded-pill px-3 me-2 mt-1  px-md-2 py-1 position-relative"
+          onClick={() => setState(s => ({ ...s, showCart: true }))} 
+          style={{ minWidth: 'auto' }}
+        >
+          <Cart className="me-2  me-md-2" />
+          <span className="d-none d-md-inline">Cart</span>
+          <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+            {state.cart.reduce((sum, i) => sum + i.quantity, 0)}
+            <span className="visually-hidden">items in cart</span>
+          </span>
+        </Button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div className="py-4 container-xl">
+  {/* Stories Section */}
+  <div className="liquor-stories-container">
+    <div className="stories-header">
+      <h2 className="section-title">Premium Spirits Collection</h2>
+      <p className="section-subtitle">Discover exclusive liquors from top Kenyan distributors</p>
+    </div>
+    
+    <div className="stories-scroll-container">
+      <div className="stories-scroll">
+        {/* Add Story Button */}
       
-      <div className="stories-scroll-container">
-        <div className="stories-scroll">
-          {/* Add Story Button */}
+
+        {filteredProducts.map(product => (
           <div 
-            className="story-item add-story" 
-            onClick={() => setState(s => ({ ...s, showVendorReg: true }))}
+            key={product.id}
+            className="story-item"
+            onClick={() => navigate(`/vendor/${product.vendorId}`)}
           >
             <div className="story-image-wrapper">
               <div className="story-gradient-border">
-                <img
-                  src="/images/liquor-story.jpg"
-                  alt="Add Story"
-                  className="story-img"
-                />
-                <div className="add-story-overlay">
-                  <Plus size={28} className="add-icon" />
+                <div className="product-image-container">
+                  <img
+                    src={product.photoUrls?.[0] || '/placeholder-liquor.jpg'}
+                    alt={product.title}
+                    className="story-img"
+                  />
                 </div>
-              </div>
-              <div className="story-details">
-                <span className="vendor-name">Add Brand</span>
-              </div>
-            </div>
-          </div>
-
-          {filteredProducts.map(product => (
-            <div 
-              key={product.id}
-              className="story-item"
-              onClick={() => console.log(`Navigating to vendor/${product.vendorId}`)}
-            >
-              <div className="story-image-wrapper">
-                <div className="story-gradient-border">
-                  <div className="product-image-container">
-                    <img
-                      src={product.photoUrls[0] || '/placeholder-liquor.jpg'}
-                      alt={product.title}
-                      className="story-img"
-                    />
-                  </div>
+                {product.discount > 0 && (
                   <div className="discount-badge">
                     {product.discount}% OFF
                   </div>
-                </div>
-                <div className="story-details">
-                  <span className="vendor-name">{product.brand}</span>
-                  <div className="vendor-info">
-                    <span className="distributor-name">{product.vendor?.user?.Name || 'Distributor'}</span>
-                    <div className="location-info">
-                      <GeoAlt size={14} className="location-icon" />
-                      <span className="location-text">{product.area}</span>
-                    </div>
+                )}
+              </div>
+              <div className="story-details">
+                <span className="vendor-name">{product.brand || product.title}</span>
+                <div className="vendor-info">
+                  <span className="distributor-name">{product.vendor?.user?.Name || 'Premium Distributor'}</span>
+                  <div className="location-info">
+                    <GeoAlt size={14} className="location-icon" />
+                    <span className="location-text">{product.area || 'Nairobi'}</span>
                   </div>
                 </div>
               </div>
             </div>
-          ))}
-        </div>
+          </div>
+        ))}
       </div>
+
     
   
           </div>
@@ -752,184 +733,7 @@ const Liqour = () => {
 
           {/* Liquor Products Grid */}
           <Row className="g-4 py-3">
-            {state.products.map(product => (
-              <Col key={product.id} xs={12} md={6} lg={4} xl={4}>
-                <Card className="h-100 shadow-sm border-0 overflow-hidden liquor-card" style={{ 
-                  borderRadius: '16px', 
-                  transition: 'all 0.3s ease'
-                }}>
-                  <div className="position-relative" style={{ overflow: 'hidden' }}>
-                    <Carousel 
-                      interval={null} 
-                      indicators={product.photoUrls?.length > 1}
-                      controls={false}
-                    >
-                      {product.photoUrls?.map((img, i) => (
-                        <Carousel.Item key={i}>
-                          <div className="ratio ratio-4x3">
-                            <img
-                              src={img}
-                              alt={`${product.title} - Photo ${i+1}`}
-                              className="card-img-top object-fit-cover"
-                              style={{ transition: 'transform 0.5s ease' }}
-                            />
-                          </div>
-                        </Carousel.Item>
-                      ))}
-                    </Carousel>
-                    
-                    <div className="position-absolute top-0 end-0 m-3">
-                      <Badge className="price-tag fw-bold px-3 py-2" style={{ backgroundColor: theme.primary }}>
-                        KES {product.price}
-                      </Badge>
-                    </div>
-                  </div>
-
-                  <Card.Body className="d-flex flex-column pt-3 pb-0">
-                    <div className="d-flex justify-content-between align-items-center mb-2">
-                      <Badge pill style={{ 
-                        background: 'rgba(26, 35, 126, 0.15)', 
-                        color: theme.primary,
-                        fontSize: '0.9rem'
-                      }}>
-                        {product.category || 'Liquor'}
-                      </Badge>
-                      <small className="text-muted d-flex align-items-center" style={{ fontSize: '0.9rem' }}>
-                        <Clock className="me-1 text-primary" size={16} />
-                        {formatDistanceToNow(new Date(product.createdAt), { addSuffix: true })}
-                      </small>
-                    </div>
-
-                    <h5 className="mb-2 fw-bold product-title" style={{ fontSize: '1.3rem' }}>
-                      {product.title}
-                    </h5>
-
-                    <div className="vendor-profile bg-white p-3 rounded-3 mt-auto" style={{ 
-                      border: '1px solid rgba(0,0,0,0.05)',
-                      boxShadow: '0 4px 12px rgba(0,0,0,0.03)'
-                    }}>
-                      <div className="d-flex justify-content-between align-items-center mb-2">
-                        <div className="d-flex align-items-center gap-3">
-                          <div 
-                            className="vendor-avatar"
-                            onClick={() => {
-                              playSound();
-                              navigate(`/vendor/${product.vendor?.id}`);
-                            }}
-                            style={{
-                              width: '50px',
-                              height: '50px',
-                              borderRadius: '50%',
-                              overflow: 'hidden',
-                              border: '2px solid #1a237e',
-                              cursor: 'pointer',
-                              flexShrink: 0,
-                              transition: 'transform 0.3s ease'
-                            }}
-                          >
-                            <img
-                              src={product.vendor?.profilePicture || '/images/vendor.png'}
-                              alt={product.vendor?.user?.Name || 'Distributor'}
-                              className="w-100 h-100 object-fit-cover"
-                            />
-                          </div>
-
-                          <div className="vendor-info">
-                            <h6 className="mb-0 fw-bold text-truncate" style={{ maxWidth: '130px' }}>
-                              {product.vendor?.user?.Name || 'Distributor'}
-                            </h6>
-                            <div className="d-flex align-items-center gap-2 mt-1">
-                              <div className="d-flex align-items-center">
-                                <StarFill className="text-warning" size={14} />
-                                <small className="fw-medium ms-1">{product.vendor?.rating || 'New'}</small>
-                              </div>
-                              <span className="text-muted fs-xs">•</span>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="d-flex align-items-center gap-3">
-                          <div className="engagement-metric">
-                            <div className="d-flex align-items-center justify-content-center gap-1 text-danger">
-                              <Button 
-                                variant="link" 
-                                className="p-0"
-                                onClick={() => handleLike(product.id)}
-                              >
-                                {product.likes > 0 ? <HeartFill size={20} /> : <Heart size={20} />}
-                              </Button>
-                              <span className="small fw-bold">{product.likes || 0}</span>
-                            </div>
-                            <div className="text-center mt-1">
-                              <small className="text-muted fw-medium">Likes</small>
-                            </div>
-                          </div>
-                          
-                          <div className="engagement-metric">
-                            <div className="d-flex align-items-center justify-content-center gap-1 text-success">
-                              <FaEye size={20} />
-                              <span className="small fw-bold">{product.views || 0}</span>
-                            </div>
-                            <div className="text-center mt-1">
-                              <small className="text-muted fw-medium">Views</small>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="d-flex justify-content-between align-items-center mt-3 pt-2 border-top">
-                        <div className="d-flex align-items-center gap-2">
-                          <Clock size={18} className="text-primary" />
-                          <small className="fw-medium">
-                            {product.vendor?.openingHours || '5pm - 2am'}
-                            {isVendorOpen(product.vendor?.openingHours || '5pm - 2am') && (
-                              <span style={{ color: '#d32f2f' }}>
-                                {' '}• Closing in {getTimeUntilClosing(product.vendor?.openingHours || '5pm - 2am')}
-                              </span>
-                            )}
-                          </small>
-                        </div>
-                        <Badge
-                          bg={isVendorOpen(product.vendor?.openingHours || '5pm - 2am') ? 'success' : 'secondary'}
-                          className={`p-2 fw-medium text-${isVendorOpen(product.vendor?.openingHours || '5pm - 2am') ? 'light' : 'dark'}`}
-                        >
-                          {isVendorOpen(product.vendor?.openingHours || '5pm - 2am') ? 'Open' : 'Closed'}
-                        </Badge>
-                      </div>
-                    </div>
-
-                    <div className="d-flex gap-3 mt-4 mb-4">
-                      <Button 
-                        className="flex-grow-1 py-2 fw-bold"
-                        style={{ 
-                          borderRadius: '12px', 
-                          border: `2px solid ${theme.primary}`, 
-                          color: theme.primary,
-                          backgroundColor: 'transparent'
-                        }}
-                        onClick={() => handlePreOrder(product)}
-                      >
-                        Pre-Order
-                      </Button>
-
-                      <Button 
-                        variant="primary" 
-                        className="flex-grow-1 py-2 fw-bold"
-                        style={{ 
-                          borderRadius: '12px',
-                          background: theme.secondary,
-                          border: 'none'
-                        }}
-                        onClick={() => updateCart(product, 1)}
-                      >
-                        <CartPlus className="me-2" size={20} />
-                        Add to Cart
-                      </Button>
-                    </div>
-                  </Card.Body>
-                </Card>
-              </Col>
-            ))}
+      <LiquorProductsGrid  />
           </Row>
         </div>
       </div>
