@@ -1,18 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Row, Col, Card, Spinner, Carousel, Badge, Button, Dropdown } from 'react-bootstrap';
+import { Row, Col, Card, Spinner, Carousel, Badge, Button, Dropdown, Modal, Form } from 'react-bootstrap';
 import { 
   HeartFill, 
   GeoAlt, 
   StarFill, 
   ShareFill,
   Clock,
-  PersonCircle
+  PersonCircle,
+  Search,
+  Person,
+  Chat
 } from 'react-bootstrap-icons';
-
-
-import { getUserIdFromToken } from '../../handler/tokenDecorder';
-import { jwtDecode } from "jwt-decode"; // ✅ fixed
+import { FaWhatsapp, FaInstagram } from 'react-icons/fa';
+import   {jwtDecode}  from 'jwt-decode';
 
 const SavedFoods = ({ user }) => {
   const BASE_URL = "http://localhost:8000/apiV1/smartcity-ke";
@@ -21,6 +22,10 @@ const SavedFoods = ({ user }) => {
   const [error, setError] = useState(null);
   const [activeFilter, setActiveFilter] = useState('all');
   const [userId, setUserId] = useState(null);
+  const [showSuggestModal, setShowSuggestModal] = useState(false);
+  const [selectedFood, setSelectedFood] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
   
   // Get user ID from token
   useEffect(() => {
@@ -52,7 +57,7 @@ const SavedFoods = ({ user }) => {
         
         await new Promise(resolve => setTimeout(resolve, 1500));
         
-        const response = await fetch(`${BASE_URL}/user/smart_ke_WT_536237943/saved-foods`);
+        const response = await fetch(`${BASE_URL}/user/${userId}/saved-foods`);
         if (!response.ok) {
           throw new Error('Failed to fetch saved foods');
         }
@@ -100,7 +105,7 @@ const SavedFoods = ({ user }) => {
     return `${diffDays} days ago`;
   };
 
-  // Enhanced share functionality with dynamic messages
+  // Enhanced share functionality
   const shareFood = (platform, food) => {
     const dishTypes = {
       'ugali': 'delicious Ugali',
@@ -133,7 +138,6 @@ const SavedFoods = ({ user }) => {
         break;
       case 'instagram':
         alert(`Share this food to Instagram:\n${message}\n${url}`);
-        // In a real app, you would use the Instagram sharing API
         break;
       case 'copy':
         navigator.clipboard.writeText(`${message}\n\n${url}`);
@@ -153,6 +157,50 @@ const SavedFoods = ({ user }) => {
     }
   };
 
+  // Open suggest modal
+  const openSuggestModal = (food) => {
+    setSelectedFood(food);
+    setShowSuggestModal(true);
+  };
+
+  // Search users (mock implementation)
+  const searchUsers = (query) => {
+    if (!query.trim()) {
+      setSearchResults([]);
+      return;
+    }
+    
+    // Mock user data
+    const mockUsers = [
+      { id: 1, name: 'John Kamau', avatar: null },
+      { id: 2, name: 'Mary Wambui', avatar: null },
+      { id: 3, name: 'Peter Otieno', avatar: null },
+      { id: 4, name: 'Sarah Akinyi', avatar: null },
+      { id: 5, name: 'David Mwangi', avatar: null },
+    ];
+    
+    const results = mockUsers.filter(user => 
+      user.name.toLowerCase().includes(query.toLowerCase())
+    );
+    
+    setSearchResults(results);
+  };
+
+  // Handle search input change
+  const handleSearchChange = (e) => {
+    const query = e.target.value;
+    setSearchQuery(query);
+    searchUsers(query);
+  };
+
+  // Handle suggestion
+  const handleSuggest = (userId) => {
+    alert(`Suggested ${selectedFood.title} to user ${userId}!`);
+    setShowSuggestModal(false);
+    setSearchQuery('');
+    setSearchResults([]);
+  };
+
   if (error) {
     return (
       <div className="container py-5 text-center">
@@ -166,51 +214,31 @@ const SavedFoods = ({ user }) => {
   }
 
   return (
-    <div className="container py-5">
-      {/* Catchy Platform Advertisement */}
-      <div className="text-center mb-4 p-4 rounded" style={{ 
-        background: 'linear-gradient(135deg, #FF4532, #FF6B45)',
-        color: 'white',
-        boxShadow: '0 8px 24px rgba(255, 69, 50, 0.3)'
-      }}>
-        <h2 className="fw-bold display-5 mb-3">
-          <span style={{ textShadow: '0 2px 4px rgba(0,0,0,0.2)' }}>Discover Kenya's Hidden Culinary Gems!</span>
-        </h2>
-        <p className="lead mb-0" style={{ maxWidth: '700px', margin: '0 auto' }}>
-          Jikoni Express connects you with authentic Kenyan chefs creating mouthwatering dishes in your neighborhood. 
-          Save your favorites, share with friends, and taste the real Kenya!
-        </p>
-      </div>
-
-      <div className="text-center mb-5">
-        <h1 className="fw-bold mb-3" style={{ 
+    <div className="container py-4">
+      {/* Platform Header */}
+      <div className="text-center mb-4">
+        <h1 className="fw-bold mb-1" style={{ 
           color: '#FF4532',
-          position: 'relative',
-          display: 'inline-block'
+          fontSize: '2.2rem'
         }}>
           <HeartFill className="me-2" style={{ 
-            color: '#FF4532', 
-            filter: 'drop-shadow(1px 1px 1px rgba(0,0,0,0.2))' 
+            color: '#FF4532',
+            fontSize: '1.8rem'
           }} />
-          Your Favorites - Share with Friends!
-          <div className="position-absolute bottom-0 start-50 translate-middle-x" 
-            style={{
-              width: '80px',
-              height: '4px',
-              background: '#2ECC71',
-              borderRadius: '2px'
-            }}
-          ></div>
+          Your Food Favorites
         </h1>
-        <p className="text-muted">Your personal collection of delicious Kenyan favorites</p>
+        <p className="mb-0" style={{ fontSize: '1.1rem' }}>
+          Discover, save, and share Kenya's best homemade meals
+        </p>
       </div>
       
+      {/* Filter Buttons */}
       {savedFoods.length > 0 && (
         <div className="mb-4 d-flex flex-wrap justify-content-center gap-2">
           <Button 
-            variant={activeFilter === 'all' ? 'primary' : 'outline-primary'} 
+            variant={activeFilter === 'all' ? 'primary' : 'outline-secondary'} 
             onClick={() => setActiveFilter('all')}
-            className="rounded-pill px-3"
+            className="px-3"
             style={{ 
               backgroundColor: activeFilter === 'all' ? '#FF4532' : 'transparent',
               borderColor: '#FF4532',
@@ -222,9 +250,9 @@ const SavedFoods = ({ user }) => {
           {cuisineTypes.map(type => (
             <Button 
               key={type}
-              variant={activeFilter === type ? 'primary' : 'outline-primary'} 
+              variant={activeFilter === type ? 'primary' : 'outline-secondary'} 
               onClick={() => setActiveFilter(type)}
-              className="rounded-pill px-3"
+              className="px-3"
               style={{ 
                 backgroundColor: activeFilter === type ? '#2ECC71' : 'transparent',
                 borderColor: '#2ECC71',
@@ -240,40 +268,32 @@ const SavedFoods = ({ user }) => {
       {loading ? (
         <div className="d-flex justify-content-center py-5">
           <div className="text-center">
-            <div className="spinner-grow" role="status" style={{ 
-              width: '3rem', 
-              height: '3rem',
-              color: '#FF4532'
-            }}>
-              <span className="visually-hidden">Loading...</span>
-            </div>
-            <p className="mt-3 fw-medium" style={{ color: '#6c757d' }}>Loading your delicious favorites...</p>
+            <Spinner animation="border" variant="primary" style={{ width: '3rem', height: '3rem' }} />
+            <p className="mt-3 fw-medium">Loading your delicious favorites...</p>
           </div>
         </div>
       ) : savedFoods.length === 0 ? (
         <div className="text-center py-5" style={{ maxWidth: '600px', margin: '0 auto' }}>
-          <div className="position-relative mb-4">
-            <div className="d-flex justify-content-center">
-              <div style={{
-                width: '120px',
-                height: '120px',
-                borderRadius: '50%',
-                background: 'linear-gradient(135deg, #FFD3D3, #FF4532)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                boxShadow: '0 8px 16px rgba(255, 69, 50, 0.3)'
-              }}>
-                <HeartFill style={{ fontSize: '3rem', color: 'white' }} />
-              </div>
+          <div className="mb-4">
+            <div style={{
+              width: '100px',
+              height: '100px',
+              borderRadius: '50%',
+              backgroundColor: '#FF4532',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              margin: '0 auto'
+            }}>
+              <HeartFill style={{ fontSize: '2.5rem', color: 'white' }} />
             </div>
           </div>
-          <h4 className="mb-3" style={{ color: '#495057' }}>Your food collection is empty</h4>
-          <p className="text-muted mb-4">Start exploring delicious Kenyan foods and save your favorites here!</p>
-          <Link to="/food" className="btn btn-primary px-4 py-2 rounded-pill d-inline-flex align-items-center"
-            style={{ backgroundColor: '#FF4532', border: 'none' }}>
+          <h4 className="mb-3">Your food collection is empty</h4>
+          <p className="mb-4">Start exploring delicious Kenyan foods and save your favorites!</p>
+          <Link to="/food" className="btn px-4 py-2 d-inline-flex align-items-center"
+            style={{ backgroundColor: '#FF4532', color: 'white' }}>
             <StarFill className="me-2" />
-            Discover Kenyan Foods
+            Discover Foods
           </Link>
         </div>
       ) : (
@@ -281,94 +301,77 @@ const SavedFoods = ({ user }) => {
           <Row xs={1} md={2} lg={3} className="g-4">
             {filteredFoods.map(food => (
               <Col key={food.id}>
-                <Card className="h-100 shadow-sm border-0 overflow-hidden position-relative"
-                  style={{
-                    borderRadius: '16px',
-                    transition: 'transform 0.3s ease, box-shadow 0.3s ease',
-                    transformOrigin: 'center',
-                    border: '1px solid rgba(0,0,0,0.05)'
-                  }}
-                  onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-8px)'}
-                  onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}
-                >
-                  {/* Trending Badges - Always visible */}
+                <Card className="h-100 shadow-sm border-0 overflow-hidden"
+                  style={{ borderRadius: '12px', border: '1px solid #eee' }}>
+                  
+                  {/* Trending Badges */}
                   <div className="position-absolute top-3 start-3 z-2">
                     {food.isHot && (
-                      <Badge pill style={{ 
+                      <Badge pill className="me-1" style={{ 
                         backgroundColor: '#FF4532', 
                         color: 'white',
-                        fontWeight: 500
+                        fontWeight: 500,
+                        fontSize: '0.85rem'
                       }}>
                         🔥 Hot This Week
                       </Badge>
                     )}
                     {food.isMostLiked && (
-                      <Badge pill style={{ 
+                      <Badge pill className="me-1" style={{ 
                         backgroundColor: '#FFD166', 
                         color: '#495057',
-                        fontWeight: 500
+                        fontWeight: 500,
+                        fontSize: '0.85rem'
                       }}>
                         👑 Most Liked
                       </Badge>
                     )}
                   </div>
                   
-                  {/* Action Buttons - Always visible */}
+                  {/* Action Buttons */}
                   <div className="position-absolute top-3 end-3 z-2 d-flex gap-2">
                     <Button 
                       variant="danger" 
-                      size="sm" 
-                      className="rounded-circle p-1 d-flex align-items-center justify-content-center"
+                      className="d-flex align-items-center justify-content-center p-2"
                       style={{ 
-                        width: '32px', 
-                        height: '32px', 
-                        boxShadow: '0 2px 6px rgba(0,0,0,0.2)',
                         backgroundColor: '#FF4532',
                         border: 'none'
                       }}
                       onClick={() => handleRemoveSaved(food.id)}
                     >
-                      <HeartFill size={14} />
+                      <HeartFill size={18} />
                     </Button>
                     
                     <Dropdown>
                       <Dropdown.Toggle 
                         variant="success" 
-                        size="sm"
-                        className="rounded-circle p-1 d-flex align-items-center justify-content-center"
+                        className="d-flex align-items-center justify-content-center p-2"
                         style={{ 
-                          width: '32px', 
-                          height: '32px', 
-                          boxShadow: '0 2px 6px rgba(0,0,0,0.2)',
                           backgroundColor: '#2ECC71',
                           border: 'none'
                         }}
                       >
-                        <ShareFill size={14} />
+                        <ShareFill size={18} />
                       </Dropdown.Toggle>
 
                       <Dropdown.Menu>
                         <Dropdown.Item onClick={() => shareFood('whatsapp', food)}>
-                          <i className="bi bi-whatsapp me-2" style={{ color: '#25D366' }}></i>
+                          <FaWhatsapp className="me-2" style={{ color: '#25D366', fontSize: '1.2rem' }} />
                           WhatsApp
                         </Dropdown.Item>
                         <Dropdown.Item onClick={() => shareFood('instagram', food)}>
-                          <i className="bi bi-instagram me-2" style={{ color: '#E1306C' }}></i>
+                          <FaInstagram className="me-2" style={{ color: '#E1306C', fontSize: '1.2rem' }} />
                           Instagram
                         </Dropdown.Item>
                         <Dropdown.Item onClick={() => shareFood('copy', food)}>
                           <i className="bi bi-link-45deg me-2"></i>
                           Copy Link
                         </Dropdown.Item>
-                        <Dropdown.Divider />
-                        <Dropdown.Item onClick={() => shareFood('share', food)}>
-                          <i className="bi bi-share me-2"></i>
-                          Other Platforms
-                        </Dropdown.Item>
                       </Dropdown.Menu>
                     </Dropdown>
                   </div>
                   
+                  {/* Food Images */}
                   <Carousel interval={null} indicators={food.photoUrls?.length > 1}>
                     {(food.photoUrls || []).map((img, i) => (
                       <Carousel.Item key={i}>
@@ -378,9 +381,8 @@ const SavedFoods = ({ user }) => {
                             alt={`${food.title} - Photo ${i + 1}`}
                             className="card-img-top object-fit-cover"
                             style={{ 
-                              filter: 'brightness(0.95)',
-                              borderTopLeftRadius: '16px',
-                              borderTopRightRadius: '16px'
+                              borderTopLeftRadius: '12px',
+                              borderTopRightRadius: '12px'
                             }}
                             onError={(e) => {
                               e.target.src = '/placeholder-food.jpg';
@@ -391,21 +393,21 @@ const SavedFoods = ({ user }) => {
                     ))}
                   </Carousel>
 
-                  <Card.Body className="d-flex flex-column pb-4">
+                  <Card.Body className="d-flex flex-column">
                     <div className="d-flex justify-content-between align-items-start mb-2">
-                      <h5 className="fw-bold mb-0" style={{ color: '#2d3436' }}>
+                      <h5 className="fw-bold mb-0">
                         {food.title}
                       </h5>
                       <Badge className="fs-6 fw-normal" style={{ 
                         backgroundColor: '#FF4532',
-                        boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                        padding: '0.4em 0.7em'
                       }}>
                         KES {food.price}
                       </Badge>
                     </div>
 
-                    {/* Chef Info with Navigation - Fixed visibility */}
-                    <div className="d-flex align-items-center mb-1">
+                    {/* Chef Info */}
+                    <div className="d-flex align-items-center mb-2">
                       <PersonCircle className="me-2" style={{ color: '#6c757d' }} />
                       <Link 
                         to={`/chef/${food.chefId}`} 
@@ -417,14 +419,14 @@ const SavedFoods = ({ user }) => {
                     </div>
 
                     {/* Location and Time */}
-                    <div className="d-flex justify-content-between mb-2">
+                    <div className="d-flex justify-content-between mb-2 text-muted">
                       <div className="d-flex align-items-center">
-                        <GeoAlt className="me-2" style={{ color: '#6c757d' }} />
-                        <small className="text-muted">{food.location}</small>
+                        <GeoAlt className="me-1" />
+                        <small>{food.location}</small>
                       </div>
                       <div className="d-flex align-items-center">
-                        <Clock className="me-2" style={{ color: '#6c757d' }} />
-                        <small className="text-muted">{getDaysAgo(food.postedDate)}</small>
+                        <Clock className="me-1" />
+                        <small>{getDaysAgo(food.postedDate)}</small>
                       </div>
                     </div>
 
@@ -434,13 +436,13 @@ const SavedFoods = ({ user }) => {
                       <div className="d-flex align-items-center">
                         <HeartFill className="me-1" style={{ color: '#FF4532' }} />
                         <small className="fw-medium">
-                          {food.likes} {food.likes > 1 ? 'likes' : 'like'}
+                          {food.likes} likes
                         </small>
                       </div>
                       <div className="d-flex align-items-center">
                         <ShareFill className="me-1" style={{ color: '#2ECC71' }} />
                         <small className="fw-medium">
-                          {food.shares} {food.shares > 1 ? 'shares' : 'share'}
+                          {food.shares} shares
                         </small>
                       </div>
                     </div>
@@ -449,48 +451,54 @@ const SavedFoods = ({ user }) => {
                     <div className="d-flex gap-2 flex-wrap mb-3">
                       <Badge pill className="fw-normal" style={{ 
                         backgroundColor: '#FF4532',
-                        color: 'white'
+                        color: 'white',
+                        padding: '0.5em 0.8em'
                       }}>
                         {food.cuisineType}
                       </Badge>
                       <Badge pill className="fw-normal" style={{ 
                         backgroundColor: '#2ECC71',
-                        color: 'white'
+                        color: 'white',
+                        padding: '0.5em 0.8em'
                       }}>
                         {food.dietary}
                       </Badge>
-                      {food.isVegetarian && (
-                        <Badge pill className="fw-normal" style={{ 
-                          backgroundColor: '#06D6A0',
-                          color: 'white'
-                        }}>
-                          Vegetarian
-                        </Badge>
-                      )}
                     </div>
 
-                    <div className="mt-auto">
-                      <div className="d-flex gap-2">
-                        <Link 
-                          to={`/chef/${food.chefId}`}
-                          className="btn btn-primary flex-grow-1 d-flex align-items-center justify-content-center py-2 rounded-pill"
-                          style={{
-                            background: 'linear-gradient(90deg, #FF4532, #FF6B45)',
-                            border: 'none',
-                            boxShadow: '0 4px 8px rgba(0,0,0,0.1)'
-                          }}
-                        >
-                          <StarFill className="me-2" />
-                          View Chef Profile
-                        </Link>
-                        <Button variant="outline-primary" className="rounded-pill px-3 py-2"
-                          style={{ 
-                            color: '#2ECC71',
-                            borderColor: '#2ECC71'
-                          }}>
-                          Order
-                        </Button>
-                      </div>
+                    {/* Action Buttons */}
+                    <div className="mt-auto d-flex gap-2">
+                      <Link 
+                        to={`/chef/${food.chefId}`}
+                        className="btn d-flex align-items-center justify-content-center py-2 flex-grow-1"
+                        style={{
+                          backgroundColor: '#FF4532',
+                          color: 'white',
+                          border: 'none'
+                        }}
+                      >
+                        <Person className="me-2" />
+                        View Chef
+                      </Link>
+                      <Button className="py-2" 
+                        style={{ 
+                          backgroundColor: '#2ECC71',
+                          color: 'white',
+                          border: 'none'
+                        }}>
+                        Order
+                      </Button>
+                      <Button 
+                        className="py-2"
+                        style={{ 
+                          backgroundColor: '#3498db',
+                          color: 'white',
+                          border: 'none'
+                        }}
+                        onClick={() => openSuggestModal(food)}
+                      >
+                        <Chat className="me-1" />
+                        Suggest
+                      </Button>
                     </div>
                   </Card.Body>
                 </Card>
@@ -498,105 +506,148 @@ const SavedFoods = ({ user }) => {
             ))}
           </Row>
           
-          <div className="text-center mt-5">
-            <Button variant="outline-primary" className="rounded-pill px-4 py-2"
-              style={{ 
-                color: '#FF4532',
-                borderColor: '#FF4532'
-              }}>
+          <div className="text-center mt-4">
+            <Button variant="outline-secondary" className="px-4 py-2">
               Load More
             </Button>
           </div>
         </>
       )}
       
-      {/* Platform Promotion Footer */}
-      <div className="text-center mt-5 pt-4 border-top">
-        <h3 className="mb-3" style={{ color: '#FF4532' }}>Why Save with Jikoni Express?</h3>
+      {/* Suggest Modal */}
+      <Modal show={showSuggestModal} onHide={() => setShowSuggestModal(false)} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>Suggest Food to a Friend</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {selectedFood && (
+            <div className="mb-3">
+              <p className="mb-1">Suggesting: <strong>{selectedFood.title}</strong></p>
+              <p className="mb-2 text-muted">by {selectedFood.chefName}</p>
+              <img 
+                src={selectedFood.photoUrls?.[0] || '/placeholder-food.jpg'} 
+                alt={selectedFood.title} 
+                className="img-fluid rounded"
+                style={{ maxHeight: '150px' }}
+              />
+            </div>
+          )}
+          
+          <Form.Group className="mb-3">
+            <Form.Label>Search users</Form.Label>
+            <div className="input-group">
+              <span className="input-group-text">
+                <Search />
+              </span>
+              <Form.Control
+                type="text"
+                placeholder="Search by name"
+                value={searchQuery}
+                onChange={handleSearchChange}
+              />
+            </div>
+          </Form.Group>
+          
+          <div className="mt-3">
+            <h6 className="mb-2">Search Results</h6>
+            {searchResults.length > 0 ? (
+              <div className="list-group">
+                {searchResults.map(user => (
+                  <div 
+                    key={user.id} 
+                    className="list-group-item list-group-item-action d-flex justify-content-between align-items-center"
+                  >
+                    <div>
+                      <Person className="me-2" />
+                      {user.name}
+                    </div>
+                    <Button 
+                      size="sm"
+                      style={{ backgroundColor: '#FF4532', border: 'none' }}
+                      onClick={() => handleSuggest(user.id)}
+                    >
+                      Suggest
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-muted text-center py-3">
+                {searchQuery ? 'No users found' : 'Start typing to search users'}
+              </p>
+            )}
+          </div>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowSuggestModal(false)}>
+            Close
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+      {/* Platform Promotion */}
+      <div className="text-center mt-5 pt-4">
+        <h3 className="mb-4" style={{ color: '#FF4532' }}>Why Use Jikoni Express?</h3>
         <Row className="g-4">
           <Col md={4}>
-            <div className="p-3 bg-light rounded">
+            <div className="p-3 border rounded h-100">
               <div className="mb-3">
-                <div style={{
+                <div className="mx-auto" style={{
                   width: '60px',
                   height: '60px',
                   borderRadius: '50%',
-                  background: '#FF4532',
+                  backgroundColor: '#FF4532',
                   display: 'flex',
                   alignItems: 'center',
-                  justifyContent: 'center',
-                  margin: '0 auto'
+                  justifyContent: 'center'
                 }}>
-                  <i className="bi bi-share" style={{ fontSize: '1.5rem', color: 'white' }}></i>
+                  <ShareFill style={{ fontSize: '1.5rem', color: 'white' }} />
                 </div>
               </div>
               <h5 className="mb-2">Share Kenyan Flavors</h5>
-              <p className="mb-0">Spread the love for authentic Kenyan cuisine with friends and family</p>
+              <p className="mb-0">Spread the love for authentic Kenyan cuisine with friends</p>
             </div>
           </Col>
           <Col md={4}>
-            <div className="p-3 bg-light rounded">
+            <div className="p-3 border rounded h-100">
               <div className="mb-3">
-                <div style={{
+                <div className="mx-auto" style={{
                   width: '60px',
                   height: '60px',
                   borderRadius: '50%',
-                  background: '#2ECC71',
+                  backgroundColor: '#2ECC71',
                   display: 'flex',
                   alignItems: 'center',
-                  justifyContent: 'center',
-                  margin: '0 auto'
+                  justifyContent: 'center'
                 }}>
-                  <i className="bi bi-heart" style={{ fontSize: '1.5rem', color: 'white' }}></i>
+                  <Person style={{ fontSize: '1.5rem', color: 'white' }} />
                 </div>
               </div>
               <h5 className="mb-2">Support Local Chefs</h5>
-              <p className="mb-0">Your favorites help Kenyan chefs grow their culinary businesses</p>
+              <p className="mb-0">Help Kenyan chefs grow their culinary businesses</p>
             </div>
           </Col>
           <Col md={4}>
-            <div className="p-3 bg-light rounded">
+            <div className="p-3 border rounded h-100">
               <div className="mb-3">
-                <div style={{
+                <div className="mx-auto" style={{
                   width: '60px',
                   height: '60px',
                   borderRadius: '50%',
-                  background: '#FFD166',
+                  backgroundColor: '#3498db',
                   display: 'flex',
                   alignItems: 'center',
-                  justifyContent: 'center',
-                  margin: '0 auto'
+                  justifyContent: 'center'
                 }}>
-                  <i className="bi bi-lightning" style={{ fontSize: '1.5rem', color: 'white' }}></i>
+                  <Chat style={{ fontSize: '1.5rem', color: 'white' }} />
                 </div>
               </div>
-              <h5 className="mb-2">Quick Reordering</h5>
-              <p className="mb-0">One-tap ordering for your favorite Kenyan dishes</p>
+              <h5 className="mb-2">Suggest to Friends</h5>
+              <p className="mb-0">Share your favorite meals with friends and family</p>
             </div>
           </Col>
         </Row>
       </div>
-
-      <style jsx>{`
-        .card:hover {
-          box-shadow: 0 12px 20px rgba(0,0,0,0.15) !important;
-        }
-        .card-img-top {
-          transition: transform 0.5s ease;
-        }
-        .card:hover .card-img-top {
-          transform: scale(1.05);
-        }
-        .carousel-control-prev, .carousel-control-next {
-          background: rgba(0,0,0,0.2);
-          width: 40px;
-          height: 40px;
-          border-radius: '50%';
-          top: 50%;
-          transform: translateY(-50%);
-          margin: 0 10px;
-        }
-      `}</style>
     </div>
   );
 };
