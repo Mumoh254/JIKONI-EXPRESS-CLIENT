@@ -527,69 +527,72 @@ const Liqour = () => {
         <div className="stories-fixed-section bg-white shadow-sm">
           <h4 className="mb-3 fw-bold mt-3" style={{ color: '#ff6f00' }}>🍹 Premium Spirits</h4>
 
-          <div className="stories-container">
-            <div className="stories-scroll">
-              {/* Add Story Button */}
-              <div 
-                className="story-item" 
-                onClick={() => setState(s => ({ ...s, showVendorReg: true }))}
-                style={{ marginRight: '1.5rem' }}
-              >
-                <div className="story-image-wrapper position-relative">
-                  <div className="story-gradient-border add-story-border">
+       <div className="liquor-stories-container">
+      <div className="stories-header">
+        <h2 className="section-title">Featured Liquor Brands</h2>
+        <p className="section-subtitle">Discover premium spirits from top distributors</p>
+      </div>
+      
+      <div className="stories-scroll-container">
+        <div className="stories-scroll">
+          {/* Add Story Button */}
+          <div 
+            className="story-item add-story" 
+            onClick={() => setState(s => ({ ...s, showVendorReg: true }))}
+          >
+            <div className="story-image-wrapper">
+              <div className="story-gradient-border">
+                <img
+                  src="/images/liquor-story.jpg"
+                  alt="Add Story"
+                  className="story-img"
+                />
+                <div className="add-story-overlay">
+                  <Plus size={28} className="add-icon" />
+                </div>
+              </div>
+              <div className="story-details">
+                <span className="vendor-name">Add Brand</span>
+              </div>
+            </div>
+          </div>
+
+          {filteredProducts.map(product => (
+            <div 
+              key={product.id}
+              className="story-item"
+              onClick={() => console.log(`Navigating to vendor/${product.vendorId}`)}
+            >
+              <div className="story-image-wrapper">
+                <div className="story-gradient-border">
+                  <div className="product-image-container">
                     <img
-                      src="/images/liquor-story.jpg"
-                      alt="Add Story"
+                      src={product.photoUrls[0] || '/placeholder-liquor.jpg'}
+                      alt={product.title}
                       className="story-img"
                     />
-                    <div className="add-story-plus">
-                      <Plus size={28} className="text-white" />
-                    </div>
                   </div>
-                  <div className="story-details">
-                    <span className="vendor-name">Add Brand</span>
+                  <div className="discount-badge">
+                    {product.discount}% OFF
+                  </div>
+                </div>
+                <div className="story-details">
+                  <span className="vendor-name">{product.brand}</span>
+                  <div className="vendor-info">
+                    <span className="distributor-name">{product.vendor?.user?.Name || 'Distributor'}</span>
+                    <div className="location-info">
+                      <GeoAlt size={14} className="location-icon" />
+                      <span className="location-text">{product.area}</span>
+                    </div>
                   </div>
                 </div>
               </div>
-
-              {filteredProducts.map(product => (
-                <div 
-                  key={product.id}
-                  className="story-item"
-                  onClick={() => navigate(`/vendor/${product.vendorId}`)}
-                  style={{ marginRight: '0.4rem' }}
-                >
-                  <div className="story-image-wrapper position-relative">
-                    <div className="story-gradient-border">
-                      <img
-                        src={product.photoUrls?.[0] || '/placeholder-liquor.jpg'}
-                        alt={product.title}
-                        className="story-img"
-                      />
-                    </div>
-                    <div className="story-details">
-                      <span className="vendor-name">{product.vendor?.user?.Name || 'Distributor'}</span>
-                      <Badge pill className="location-badge overflow-hidden p-0">
-                        <GeoAlt size={14} className="me-1 ms-1 text-white" />
-                        <marquee
-                          behavior="scroll"
-                          direction="left"
-                          scrollAmount="1.3"
-                          className="marquee-badge w-100"
-                        >
-                          <span className="area-text text-white fw-bold me-2">
-                            {product.area}
-                          </span>
-                          <span className="discount-text fw-bold">
-                            | {product.discount ? `${product.discount}% OFF` : '0% OFF'}
-                          </span>
-                        </marquee>
-                      </Badge>
-                    </div>
-                  </div>
-                </div>
-              ))}
             </div>
+          ))}
+        </div>
+      </div>
+    
+  
           </div>
         </div>
 
