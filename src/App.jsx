@@ -18,6 +18,7 @@ import ChefDashboard from './components/chefs/chefsdashboard';
 import { FaWineBottle } from "react-icons/fa";
 import { IoIosPersonAdd } from "react-icons/io";
 import { GiHotMeal } from "react-icons/gi";
+import  Liqour   from './Liqour/liqour'
 
 const AppContainer = styled.div`
   min-height: 100vh;
@@ -152,6 +153,8 @@ function App() {
           <Route path="/register" element={<Register />} />
           <Route path="/verify-otp" element={<VerifyOtp />} />
           <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+             <Route path="/jikoni-express/liqour-shots" element={<Liqour />} />
           <Route path="/culture/foods" element={<FoodPlatform />} />
           <Route path="/chef/:id" element={<ChefProfile />} />
           <Route path="/jikoni/express/download" element={<Download />} />
@@ -180,7 +183,7 @@ function App() {
           
 
             
-               <NavLink to="/jikoni/express/download">
+               <NavLink to="/register">
               <IoIosPersonAdd />Register
             </NavLink>
 
@@ -195,7 +198,7 @@ function App() {
 
 
             
-               <NavLink to="/jikoni/express/download">
+               <NavLink to="/jikoni-express/liqour-shots">
               <FaWineBottle /> Liqour
             </NavLink>
 
