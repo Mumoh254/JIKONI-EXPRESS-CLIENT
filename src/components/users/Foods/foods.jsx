@@ -139,14 +139,71 @@ const FoodPlatform = () => {
   });
   const [orderHistory, setOrderHistory] = useState([]);
 
-  const isChefOpen = (openingHours) => {
-    if (!openingHours) return false;
-    const [start, end] = openingHours.split(' - ');
-    const now = moment.tz('Africa/Nairobi');
-    const startTime = moment.tz(start, ['hA', 'ha', 'H:mm'], 'Africa/Nairobi');
-    const endTime = moment.tz(end, ['hA', 'ha', 'H:mm'], 'Africa/Nairobi');
-    return now.isBetween(startTime, endTime);
+const parseTime = (timeStr, today) => {
+  // Try 24-hr format first
+  let time = moment.tz(`${today} ${timeStr}`, 'YYYY-MM-DD HH:mm', 'Africa/Nairobi');
+  if (!time.isValid()) {
+    // Try 12-hr format with am/pm
+    time = moment.tz(`${today} ${timeStr}`, 'YYYY-MM-DD h:mma', 'Africa/Nairobi');
+  }
+  return time;
+}
+
+const isChefOpen = (openingHours) => {
+  if (!openingHours) return false;
+
+  const [start, end] = openingHours.split(' - ');
+  const now = moment.tz('Africa/Nairobi');
+  const today = now.format('YYYY-MM-DD');
+
+  const startTime = parseTime(start.trim().toLowerCase(), today);
+  let endTime = parseTime(end.trim().toLowerCase(), today);
+
+  if (endTime.isBefore(startTime)) {
+    endTime = endTime.add(1, 'day');
+  }
+
+  console.log('now:', now.format());
+  console.log('startTime:', startTime.format());
+  console.log('endTime:', endTime.format());
+
+  return now.isSameOrAfter(startTime) && now.isBefore(endTime);
+};
+
+const getTimeUntilClosing = (openingHours) => {
+  if (!openingHours) return null;
+
+  const [start, end] = openingHours.split(' - ');
+  const now = moment.tz('Africa/Nairobi');
+  const today = now.format('YYYY-MM-DD');
+
+  const parseTime = (timeStr, day) => {
+    let time = moment.tz(`${day} ${timeStr}`, 'YYYY-MM-DD HH:mm', 'Africa/Nairobi');
+    if (!time.isValid()) {
+      time = moment.tz(`${day} ${timeStr}`, 'YYYY-MM-DD h:mma', 'Africa/Nairobi');
+    }
+    return time;
   };
+
+  const startTime = parseTime(start.trim().toLowerCase(), today);
+  let endTime = parseTime(end.trim().toLowerCase(), today);
+
+  if (endTime.isBefore(startTime)) {
+    endTime = endTime.add(1, 'day');
+  }
+
+  const duration = moment.duration(endTime.diff(now));
+
+  if (duration.asMilliseconds() <= 0) {
+    // Already closed or closing time passed
+    return null;
+  }
+
+  const hours = Math.floor(duration.asHours());
+  const minutes = duration.minutes();
+
+  return `${hours > 0 ? `${hours}h ` : ''}${minutes}m`;
+};
 
   const playSound = () => {
     new Audio(popSound).play();
@@ -1057,17 +1114,23 @@ const FoodPlatform = () => {
 
                       <div className="d-flex justify-content-between align-items-center mt-3 pt-2 border-top">
                         <div className="d-flex align-items-center gap-2">
-                          <Clock size={16} className="text-primary" />
-                          <small className="fw-medium">
-                            {food.chef?.openingHours || '8am - 6pm'}
-                          </small>
-                        </div>
-                        <Badge
-                          bg={isChefOpen(food.chef?.openingHours || '8am - 2pm') ? 'success' : 'secondary'}
-                          className={`p-2 fw-medium text-${isChefOpen(food.chef?.openingHours || '8am - 2pm') ? 'light' : 'dark'}`}
-                        >
-                          {isChefOpen(food.chef?.openingHours || '8am - 2pm') ? 'Available' : 'Closed'}
-                        </Badge>
+                 <Clock size={18} className="text-primary" />
+<small className="fw-medium">
+  {food.chef?.openingHours || '5am - 6pm'}
+  {isChefOpen(food.chef?.openingHours || '5am - 2pm') && (
+    <span style={{ color: '#ff4d4d' }}>
+      {' '}• Closing in {getTimeUntilClosing(food.chef?.openingHours || '8am - 2pm')}
+    </span>
+  )}
+</small>
+</div>
+<Badge
+  bg={isChefOpen(food.chef?.openingHours || '5am - 2pm') ? 'success' : 'secondary'}
+  className={`p-2 fw-medium text-${isChefOpen(food.chef?.openingHours || '8am - 2pm') ? 'light' : 'dark'}`}
+>
+  {isChefOpen(food.chef?.openingHours || '5am - 2pm') ? 'Available' : 'Closed'}
+</Badge>
+
                       </div>
                     </div>
 

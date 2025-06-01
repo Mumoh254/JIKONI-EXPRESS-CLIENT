@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Button, Modal, Form, Card, Row, Col } from 'react-bootstrap';
+import { Button, Modal, Form, Col, Row, Table, Badge, Spinner } from 'react-bootstrap';
 import axios from 'axios';
 import { formatDistanceToNow } from 'date-fns';
 import Swal from 'sweetalert2';
@@ -31,6 +31,16 @@ export default function FoodItemsTable() {
   const [showEditFood, setShowEditFood] = useState(null);
   const [showAddFood, setShowAddFood] = useState(false);
   const [error, setError] = useState(null);
+  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setWindowWidth(window.innerWidth);
+    };
+    
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const fetchFoods = async () => {
     setLoading(true);
@@ -50,21 +60,40 @@ export default function FoodItemsTable() {
     }
   };
 
-  const deleteFood = async (id) => {
+  const confirmDelete = async (id, title) => {
     playSound();
-    try {
-      await axios.delete(`${BASE_URL}/food/${id}`);
-      setFoods(prev => prev.filter(food => food.id !== id));
-      Toast.fire({
-        icon: 'success',
-        title: 'Food item deleted successfully!',
-      });
-    } catch (err) {
-      console.error('Error deleting food:', err.message);
-      Toast.fire({
-        icon: 'error',
-        title: 'Failed to delete food item.',
-      });
+    const result = await MySwal.fire({
+      title: 'Are you sure?',
+      text: `Delete "${title}" permanently?`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Yes, delete it!',
+      cancelButtonText: 'Cancel',
+      customClass: {
+        container: windowWidth < 576 ? 'swal-mobile' : '',
+        popup: windowWidth < 576 ? 'swal-popup-mobile' : '',
+        title: windowWidth < 576 ? 'swal-title-mobile' : '',
+        actions: windowWidth < 576 ? 'swal-actions-mobile' : ''
+      }
+    });
+
+    if (result.isConfirmed) {
+      try {
+        await axios.delete(`${BASE_URL}/food/${id}`);
+        setFoods(prev => prev.filter(food => food.id !== id));
+        Toast.fire({
+          icon: 'success',
+          title: 'Food item deleted successfully!',
+        });
+      } catch (err) {
+        console.error('Error deleting food:', err.message);
+        Toast.fire({
+          icon: 'error',
+          title: 'Failed to delete food item.',
+        });
+      }
     }
   };
 
@@ -129,12 +158,12 @@ export default function FoodItemsTable() {
     fetchFoods();
   }, []);
 
+  const isMobile = windowWidth < 768;
+
   if (loading) {
     return (
       <div className="text-center py-5">
-        <div className="spinner-border text-primary" role="status">
-          <span className="visually-hidden">Loading...</span>
-        </div>
+        <Spinner animation="border" variant="primary" />
         <p className="mt-3">Fetching food items...</p>
       </div>
     );
@@ -142,13 +171,16 @@ export default function FoodItemsTable() {
 
   return (
     <div className="container py-4">
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <h3 className="mb-0">Food Items</h3>
+      <div className="d-flex flex-column flex-md-row justify-content-between align-items-center mb-4">
+        <h3 className="mb-3 mb-md-0">Food Items Management</h3>
         <Button 
           variant="primary"
           onClick={() => setShowAddFood(true)}
+          className="d-flex align-items-center"
+          size={isMobile ? "sm" : undefined}
         >
-          <i className="bi bi-plus-lg me-2"></i> Post Food
+          <i className="bi bi-plus-lg me-2"></i> 
+          {isMobile ? "New Food" : "Post New Food"}
         </Button>
       </div>
 
@@ -163,77 +195,114 @@ export default function FoodItemsTable() {
           <p className="text-muted">Start by posting your first food item</p>
         </div>
       ) : (
-        <Row className="g-4">
-          {foods.map(food => (
-            <Col key={food.id} md={6} lg={4}>
-              <Card className="h-100 shadow-sm">
-                <div style={{
-                  height: '200px',
-                  overflow: 'hidden',
-                  position: 'relative'
-                }}>
-                  <img
-                    src={food.photoUrls[0]}
-                    alt={food.title}
-                    className="w-100 h-100 object-fit-cover"
-                  />
-                  {food.photoUrls.length > 1 && (
-                    <span className="badge bg-dark position-absolute top-0 end-0 m-2">
-                      +{food.photoUrls.length - 1}
-                    </span>
-                  )}
-                  <div className="position-absolute bottom-0 start-0 m-2">
-                    <Badge bg="primary">KES {food.price}</Badge>
-                  </div>
-                  {food.discount > 0 && (
-                    <div className="position-absolute top-0 start-0 m-2">
-                      <Badge bg="danger">{food.discount}% OFF</Badge>
+        <div className="table-responsive">
+          <Table striped bordered hover className="align-middle">
+            <thead className="table-dark">
+              <tr>
+                <th style={{ width: '100px' }}>Image</th>
+                <th>Title</th>
+                {!isMobile && <th>Description</th>}
+                <th>Price</th>
+                {!isMobile && <th>Discount</th>}
+                {!isMobile && <th>Type</th>}
+                {!isMobile && <th>Created</th>}
+                <th style={{ width: isMobile ? '80px' : '120px' }}>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {foods.map(food => (
+                <tr key={food.id}>
+                  <td className="p-1">
+                    <div className="position-relative" style={{ height: '60px', width: '60px' }}>
+                      <img
+                        src={food.photoUrls[0]}
+                        alt={food.title}
+                        className="w-100 h-100 object-fit-cover rounded"
+                        style={{ border: '1px solid #dee2e6' }}
+                      />
+                      {food.photoUrls.length > 1 && !isMobile && (
+                        <span className="position-absolute top-0 end-0 translate-middle badge bg-dark rounded-pill">
+                          +{food.photoUrls.length - 1}
+                        </span>
+                      )}
                     </div>
+                  </td>
+                  <td className="fw-semibold">
+                    {isMobile ? (
+                      <div className="d-flex flex-column">
+                        <span>{food.title}</span>
+                        <small className="text-muted mt-1">
+                          {formatDistanceToNow(new Date(food.createdAt), { addSuffix: true })}
+                        </small>
+                      </div>
+                    ) : (
+                      food.title
+                    )}
+                  </td>
+                  {!isMobile && (
+                    <td>
+                      <div className="text-truncate" style={{ maxWidth: '200px' }}>
+                        {food.description}
+                      </div>
+                    </td>
                   )}
-                </div>
-                
-                <Card.Body>
-                  <Card.Title className="d-flex justify-content-between">
-                    <span>{food.title}</span>
-                    <Badge bg="info">{food.mealType}</Badge>
-                  </Card.Title>
-                  <Card.Text className="text-muted small mb-3">
-                    {food.description}
-                  </Card.Text>
-                  
-                  <div className="d-flex justify-content-between align-items-center">
-                    <small className="text-muted">
+                  <td className="fw-bold text-primary">KES {food.price}</td>
+                  {!isMobile && (
+                    <td>
+                      {food.discount > 0 ? (
+                        <Badge bg="danger" className="px-2 py-1">
+                          {food.discount}% OFF
+                        </Badge>
+                      ) : (
+                        <span className="text-muted">None</span>
+                      )}
+                    </td>
+                  )}
+                  {!isMobile && (
+                    <td>
+                      <Badge bg="info" className="text-capitalize">
+                        {food.mealType}
+                      </Badge>
+                    </td>
+                  )}
+                  {!isMobile && (
+                    <td className="text-muted small">
                       {formatDistanceToNow(new Date(food.createdAt), { addSuffix: true })}
-                    </small>
+                    </td>
+                  )}
+                  <td className="d-flex gap-2 justify-content-center">
+                    <Button
+                      variant="outline-primary"
+                      size="sm"
+                      onClick={() => setShowEditFood(food)}
+                      className="d-flex align-items-center justify-content-center"
+                      style={{ width: '36px', height: '36px' }}
+                      title="Edit"
+                    >
+                      <i className="bi bi-pencil"></i>
+                    </Button>
                     
-                    <div className="d-flex gap-2">
-                      <Button
-                        variant="outline-primary"
-                        size="sm"
-                        onClick={() => setShowEditFood(food)}
-                      >
-                        <i className="bi bi-pencil"></i>
-                      </Button>
-                      
-                      <Button
-                        variant="outline-danger"
-                        size="sm"
-                        onClick={() => deleteFood(food.id)}
-                      >
-                        <i className="bi bi-trash"></i>
-                      </Button>
-                    </div>
-                  </div>
-                </Card.Body>
-              </Card>
-            </Col>
-          ))}
-        </Row>
+                    <Button
+                      variant="outline-danger"
+                      size="sm"
+                      onClick={() => confirmDelete(food.id, food.title)}
+                      className="d-flex align-items-center justify-content-center"
+                      style={{ width: '36px', height: '36px' }}
+                      title="Delete"
+                    >
+                      <i className="bi bi-trash"></i>
+                    </Button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </Table>
+        </div>
       )}
 
       {/* Add Food Modal */}
       <Modal show={showAddFood} onHide={() => setShowAddFood(false)} size="lg">
-        <Modal.Header closeButton>
+        <Modal.Header closeButton className="bg-dark text-white">
           <Modal.Title>Post New Food Item</Modal.Title>
         </Modal.Header>
         <Modal.Body>
@@ -278,11 +347,11 @@ export default function FoodItemsTable() {
             <Form.Group className="mb-3">
               <Form.Label>Images</Form.Label>
               <Form.Control name="images" type="file" multiple required />
-              <Form.Text>Select up to 5 images of your food</Form.Text>
+              <Form.Text className="text-muted">Select up to 5 images of your food</Form.Text>
             </Form.Group>
 
-            <div className="d-flex justify-content-end mt-4">
-              <Button variant="secondary" onClick={() => setShowAddFood(false)} className="me-2">
+            <div className="d-flex justify-content-end mt-4 gap-2">
+              <Button variant="secondary" onClick={() => setShowAddFood(false)}>
                 Cancel
               </Button>
               <Button variant="primary" type="submit">
@@ -295,7 +364,7 @@ export default function FoodItemsTable() {
 
       {/* Edit Food Modal */}
       <Modal show={!!showEditFood} onHide={() => setShowEditFood(null)} size="lg">
-        <Modal.Header closeButton>
+        <Modal.Header closeButton className="bg-dark text-white">
           <Modal.Title>Edit {showEditFood?.title}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
@@ -362,11 +431,22 @@ export default function FoodItemsTable() {
               <Form.Group className="mb-3">
                 <Form.Label>Update Images</Form.Label>
                 <Form.Control name="images" type="file" multiple />
-                <Form.Text>Current images will be replaced</Form.Text>
+                <div className="d-flex gap-2 mt-2 flex-wrap">
+                  {showEditFood.photoUrls.map((url, index) => (
+                    <img 
+                      key={index} 
+                      src={url} 
+                      alt={`Preview ${index + 1}`} 
+                      className="img-thumbnail" 
+                      style={{ width: '60px', height: '60px', objectFit: 'cover' }} 
+                    />
+                  ))}
+                </div>
+                <Form.Text className="text-muted">Current images will be replaced</Form.Text>
               </Form.Group>
 
-              <div className="d-flex justify-content-end mt-4">
-                <Button variant="secondary" onClick={() => setShowEditFood(null)} className="me-2">
+              <div className="d-flex justify-content-end mt-4 gap-2">
+                <Button variant="secondary" onClick={() => setShowEditFood(null)}>
                   Cancel
                 </Button>
                 <Button variant="primary" type="submit">

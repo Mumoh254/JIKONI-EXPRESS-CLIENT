@@ -46,3 +46,8 @@ svg {
     transform: translateX(-100%);
   }
 }
+
+
+.closing-text {
+  color: #ff4d4d;
+}
