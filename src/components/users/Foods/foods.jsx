@@ -1,29 +1,26 @@
 import React, { useState, useEffect } from 'react';
 import {
   Container, Row, Col, Card, Button, Spinner, Alert, Badge,
-  Modal, Form, Offcanvas,  Stack  , ListGroup, Tabs, Tab , ButtonGroup, Carousel, ProgressBar
+  Modal, Form, Offcanvas, Stack, ListGroup, Tabs, Tab, ButtonGroup, Carousel, ProgressBar
 } from 'react-bootstrap';
 import {
-  GeoAlt,  Star, StarHalf   ,Cart,  Scooter,
-  CheckCircle, EggFried, FilterLeft,  Calendar,   Clock as ClockIcon   ,  StarFill, CartPlus, Person, Clock,  Instagram, Facebook, Twitter , Plus,  Dash, Trash, Pencil, Bell
+  GeoAlt, Star, StarHalf, Cart, Scooter,
+  CheckCircle, EggFried, FilterLeft, Calendar, Clock as ClockIcon, StarFill, CartPlus, Person, Clock, Instagram, Facebook, Twitter, Plus, Dash, Trash, Pencil, Bell
 } from 'react-bootstrap-icons';
-
-import { useNavigate } from 'react-router-dom'; 
-  import Swal from 'sweetalert2';
+import { IoBarChartSharp } from "react-icons/io5";
+import { useNavigate } from 'react-router-dom';
+import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
-import  ChefRegistrationModal   from  '../../modals/chefRegistration'
-
+import ChefRegistrationModal from '../../modals/chefRegistration';
 import { Heart, HeartFill } from 'react-bootstrap-icons';
 import { FaEye } from "react-icons/fa";
-
 import styled from 'styled-components';
 import { formatDistanceToNow } from 'date-fns';
 import { GiKenya } from "react-icons/gi";
-
-import   RiderRegistration    from   '../../modals/riderRegistration'
-
+import RiderRegistration from '../../modals/riderRegistration';
 import popSound from '../../../../public/audio/cliks.mp3';
-
+import { jwtDecode } from "jwt-decode";
+import moment from 'moment-timezone';
 
 const theme = {
   primary: '#2563eb',
@@ -45,15 +42,11 @@ const StyledCard = styled(Card)`
   }
 `;
 
-
-
-
 const FilterButton = styled(Button)`
   border-radius: 20px;
   padding: 0.5rem 1.2rem;
   margin: 0 0.3rem;
 `;
-
 
 const StoriesContainer = styled.div`
   padding: 1rem 0;
@@ -105,141 +98,448 @@ const StoryItem = styled.div`
   }
 `;
 
-import { jwtDecode } from "jwt-decode"; // ✅ fixed
+const DELIVERY_FEE = 100;
 
-import moment from 'moment-timezone';
-const FoodPlatform = (   food ) => {
+const CartContainer = styled(Offcanvas)`
+  width: 380px !important;
+  box-shadow: -4px 0 20px rgba(0,0,0,0.05);
+  background: #f8f9fa;
+`;
 
-const isChefOpen = (openingHours) => {
-  if (!openingHours) return false;
+const CartItem = styled(ListGroup.Item)`
+  transition: all 0.2s ease;
+  background: transparent !important;
+  border-bottom: 1px solid #eee !important;
+  
+  &:hover {
+    transform: translateX(4px);
+    background: white !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  }
+`;
 
-  const [start, end] = openingHours.split(' - ');
+const FoodImage = styled.img`
+  width: 50px;
+  height: 50px;
+  border-radius: 8px;
+  object-fit: cover;
+  border: 2px solid #fff;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+`;
 
-  // Get current time in Kenyan timezone
-  const now = moment.tz('Africa/Nairobi');
+const FixedFooter = styled.div`
+  position: sticky;
+  bottom: 0;
+  background: white;
+  padding: 1.5rem;
+  box-shadow: 0 -4px 20px rgba(0,0,0,0.05);
+  border-radius: 12px 12px 0 0;
+`;
 
-  // Parse the start and end times also in Kenyan timezone
-  const startTime = moment.tz(start, ['hA', 'ha', 'H:mm'], 'Africa/Nairobi');
-  const endTime = moment.tz(end, ['hA', 'ha', 'H:mm'], 'Africa/Nairobi');
+const RemoveButton = styled(Button)`
+  opacity: 0.7;
+  transition: all 0.2s ease;
+  
+  &:hover {
+    opacity: 1;
+    transform: scale(1.1);
+    color: #dc3545 !important;
+  }
+`;
 
-  return now.isBetween(startTime, endTime);
+const CartSidebar = ({ show, onClose, cart, updateCart, onCheckout, orderHistory }) => {
+  const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  const total = subtotal + DELIVERY_FEE;
+  const [activeTab, setActiveTab] = useState('cart');
+
+  return (
+    <CartContainer show={show} onHide={onClose} placement="end">
+      <Offcanvas.Header closeButton className="border-bottom bg-white">
+        <Offcanvas.Title className="d-flex align-items-center gap-2">
+          <CartPlus fontSize={24} className="text-primary" />
+          <span className="fw-bold">Your Food Cart</span>
+          <Badge bg="secondary" pill>{cart.length}</Badge>
+        </Offcanvas.Title>
+      </Offcanvas.Header>
+
+      <Offcanvas.Body className="d-flex flex-column p-0">
+        <Tabs
+          activeKey={activeTab}
+          onSelect={setActiveTab}
+          id="cart-tabs"
+          className="mb-3 px-3"
+          variant="pills"
+        >
+          <Tab eventKey="cart" title="Current Order">
+            <div className="flex-grow-1 overflow-auto p-3">
+              {cart.length === 0 ? (
+                <div className="text-center text-muted py-4">
+                  Your cart is empty. Start adding delicious items!
+                </div>
+              ) : (
+                <ListGroup variant="flush">
+                  {cart.map(item => (
+                    <CartItem key={item.id} className="py-3 px-4">
+                      <Stack direction="horizontal" gap={3} className="align-items-start">
+                        <FoodImage 
+                          src={item.photoUrls?.[0] || '/placeholder-food.jpg'}
+                          alt={item.title}
+                          className="mt-1"
+                        />
+                        
+                        <Stack className="flex-grow-1">
+                          <h6 className="mb-1 fw-semibold mb-2 ms-3">{item.title}</h6>
+                          
+                          {item.isPreOrder && (
+                            <div className="ms-3 mb-2">
+                              <Badge bg="info" className="me-2">
+                                Pre-Order
+                              </Badge>
+                              <small className="text-muted">
+                                {item.preOrderDate} at {item.preOrderTime}
+                              </small>
+                            </div>
+                          )}
+                          
+                          <Stack direction="horizontal" gap={2} className="align-items-center ms-3">
+                            <Button 
+                              variant="outline-secondary" 
+                              size="sm"
+                              className="d-flex align-items-center justify-content-center p-1"
+                              style={{ width: '32px' }}
+                              onClick={() => updateCart(item, -1)}
+                              disabled={item.quantity === 1}
+                            >
+                              <Dash />
+                            </Button>
+                            
+                            <span className="text-primary fw-bold">{item.quantity}</span>
+                            
+                            <Button 
+                              variant="outline-primary" 
+                              size="sm"
+                              className="d-flex align-items-center justify-content-center p-1"
+                              style={{ width: '32px' }}
+                              onClick={() => updateCart(item, 1)}
+                            >
+                              <Plus />
+                            </Button>
+                          </Stack>
+                        </Stack>
+
+                        <Stack className="align-items-end">
+                          <div className="text-end mb-2">
+                            <span className="fw-semibold text-dark">KSh {(item.price * item.quantity).toFixed(2)}</span>
+                          </div>
+                          
+                          <Button 
+                            size="sm"
+                            className="d-flex align-items-center border-0 bgred gap-1"
+                            onClick={() => updateCart(item, -item.quantity)}
+                          >
+                            <Trash size={14} />
+                            <span>Remove</span>
+                          </Button>
+                        </Stack>
+                      </Stack>
+                    </CartItem>
+                  ))}
+                </ListGroup>
+              )}
+            </div>
+
+            <FixedFooter>
+              <div className="mb-3">
+                <div className="d-flex justify-content-between mb-2">
+                  <span className="text-muted">Subtotal:</span>
+                  <span className="fw-semibold">KSh {subtotal.toFixed(2)}</span>
+                </div>
+                <div className="d-flex justify-content-between mb-3">
+                  <span className="text-muted">Delivery Fee:</span>
+                  <span className="fw-semibold">KSh {DELIVERY_FEE.toFixed(2)}</span>
+                </div>
+                <div className="d-flex justify-content-between pt-2 border-top">
+                  <span className="fw-bold">Total:</span>
+                  <span className="fw-bold text-primary">KSh {total.toFixed(2)}</span>
+                </div>
+              </div>
+              <Button 
+                size="lg" 
+                className="w-100 fw-bold py-3 bgred border-0"
+                onClick={onCheckout}
+                disabled={cart.length === 0}
+              >
+                Proceed to Checkout →
+              </Button>
+            </FixedFooter>
+          </Tab>
+          
+          <Tab eventKey="history" title="Order History">
+            <div className="p-3">
+              {orderHistory.length === 0 ? (
+                <div className="text-center text-muted py-4">
+                  You haven't placed any orders yet
+                </div>
+              ) : (
+                <ListGroup variant="flush">
+                  {orderHistory.map(order => (
+                    <ListGroup.Item key={order.id} className="py-3 border-bottom">
+                      <div className="d-flex justify-content-between align-items-center mb-2">
+                        <div>
+                          <h6 className="mb-0 fw-bold">Order #{order.id.slice(0, 8)}</h6>
+                          <small className="text-muted">
+                            {new Date(order.date).toLocaleString()}
+                          </small>
+                        </div>
+                        <Badge bg={order.status === 'delivered' ? 'success' : 'warning'}>
+                          {order.status}
+                        </Badge>
+                      </div>
+                      
+                      <div className="mb-2">
+                        <strong>Items:</strong> 
+                        <span className="ms-2">
+                          {order.items.map(i => i.title).join(', ')}
+                        </span>
+                      </div>
+                      
+                      <div className="d-flex justify-content-between align-items-center">
+                        <div>
+                          <strong>Total:</strong> KSh {order.total.toFixed(2)}
+                        </div>
+                        
+                        <div className="d-flex gap-2">
+                          <Button 
+                            variant="outline-primary"
+                            size="sm"
+                            onClick={() => console.log('Call Chef')}
+                          >
+                            <Person className="me-1" /> Chef
+                          </Button>
+                          {order.rider && (
+                            <Button 
+                              variant="outline-success"
+                              size="sm"
+                              onClick={() => console.log('Call Rider')}
+                            >
+                              <Scooter className="me-1" /> Rider
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    </ListGroup.Item>
+                  ))}
+                </ListGroup>
+              )}
+            </div>
+          </Tab>
+        </Tabs>
+      </Offcanvas.Body>
+    </CartContainer>
+  );
 };
 
-  const [showPreOrderModal, setShowPreOrderModal] = useState(false);
-  const [selectedFood, setSelectedFood] = useState(null);
-  const [likedFoods, setLikedFoods] = useState({});
+const OrderConfirmation = ({ cart, location, onConfirm, onBack }) => {
+  const [locationError, setLocationError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState('mpesa');
+  const [phoneNumber, setPhoneNumber] = useState('');
   
+  const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  const total = subtotal + DELIVERY_FEE;
 
-  const formatDistanceToNow = (date) => {
-    // Simplified version - use date-fns in real implementation
-    const hoursAgo = Math.floor((new Date() - date) / (1000 * 60 * 60));
-    return `${hoursAgo} hour${hoursAgo !== 1 ? 's' : ''}`;
+  const handleConfirmOrder = () => {
+    setIsLoading(true);
+    
+    // Simulate API call
+    setTimeout(() => {
+      setIsLoading(false);
+      onConfirm();
+    }, 1500);
   };
 
-  // Pre-order form state
-  const [preOrderForm, setPreOrderForm] = useState({
-    date: '',
-    time: '',
-    instructions: '',
-    servings: 1
-  });
+  return (
+    <Container className="py-5">
+      <Row className="justify-content-center">
+        <Col md={8} lg={6}>
+          <Card className="shadow-sm">
+            <Card.Header className="bg-white border-0 py-4">
+              <h2 className="text-center mb-0">Confirm Your Order</h2>
+            </Card.Header>
+            
+            <Card.Body>
+              <div className="mb-4">
+                <h5 className="mb-3">Delivery Location</h5>
+                {location ? (
+                  <div className="d-flex align-items-center bg-light p-3 rounded">
+                    <GeoAlt size={24} className="text-primary me-3" />
+                    <div>
+                      <p className="mb-0 fw-bold">{location.address}</p>
+                      <small className="text-muted">
+                        Lat: {location.lat.toFixed(6)}, Lng: {location.lng.toFixed(6)}
+                      </small>
+                    </div>
+                  </div>
+                ) : (
+                  <Alert variant="warning" className="d-flex align-items-center">
+                    <ClockIcon size={20} className="me-2" />
+                    <span>Fetching your location...</span>
+                  </Alert>
+                )}
+                {locationError && (
+                  <Alert variant="danger" className="mt-2">
+                    {locationError}
+                  </Alert>
+                )}
+              </div>
+              
+              <div className="mb-4">
+                <h5 className="mb-3">Order Summary</h5>
+                <ListGroup variant="flush">
+                  {cart.map(item => (
+                    <ListGroup.Item key={item.id} className="d-flex justify-content-between">
+                      <div>
+                        {item.title} 
+                        {item.isPreOrder && (
+                          <Badge bg="info" className="ms-2">
+                            Pre-Order
+                          </Badge>
+                        )}
+                        <span className="text-muted d-block">x {item.quantity}</span>
+                      </div>
+                      <div>
+                        KSh {(item.price * item.quantity).toFixed(2)}
+                      </div>
+                    </ListGroup.Item>
+                  ))}
+                  
+                  <ListGroup.Item className="d-flex justify-content-between">
+                    <span>Subtotal</span>
+                    <span>KSh {subtotal.toFixed(2)}</span>
+                  </ListGroup.Item>
+                  
+                  <ListGroup.Item className="d-flex justify-content-between">
+                    <span>Delivery Fee</span>
+                    <span>KSh {DELIVERY_FEE.toFixed(2)}</span>
+                  </ListGroup.Item>
+                  
+                  <ListGroup.Item className="d-flex justify-content-between fw-bold fs-5">
+                    <span>Total</span>
+                    <span className="text-primary">KSh {total.toFixed(2)}</span>
+                  </ListGroup.Item>
+                </ListGroup>
+              </div>
+              
+              <div className="mb-4">
+                <h5 className="mb-3">Payment Method</h5>
+                <Form.Select 
+                  value={paymentMethod}
+                  onChange={(e) => setPaymentMethod(e.target.value)}
+                  className="mb-3"
+                >
+                  <option value="mpesa">M-Pesa</option>
+                  <option value="card">Credit/Debit Card</option>
+                  <option value="cash">Cash on Delivery</option>
+                </Form.Select>
+                
+                {paymentMethod === 'mpesa' && (
+                  <Form.Group className="mb-3">
+                    <Form.Label>M-Pesa Phone Number</Form.Label>
+                    <Form.Control 
+                      type="tel"
+                      placeholder="07XX XXX XXX"
+                      value={phoneNumber}
+                      onChange={(e) => setPhoneNumber(e.target.value)}
+                    />
+                  </Form.Group>
+                )}
+              </div>
+            </Card.Body>
+            
+            <Card.Footer className="bg-white border-0 py-3">
+              <div className="d-grid gap-3">
+                <Button 
+                  variant="primary"
+                  size="lg"
+                  onClick={handleConfirmOrder}
+                  disabled={isLoading || !location}
+                >
+                  {isLoading ? (
+                    <>
+                      <Spinner animation="border" size="sm" className="me-2" />
+                      Processing Order...
+                    </>
+                  ) : 'Confirm Order'}
+                </Button>
+                
+                <Button 
+                  variant="outline-secondary"
+                  size="lg"
+                  onClick={onBack}
+                >
+                  Back to Cart
+                </Button>
+              </div>
+            </Card.Footer>
+          </Card>
+        </Col>
+      </Row>
+    </Container>
+  );
+};
 
-  const handlePreOrder = (food) => {
-    setSelectedFood(food);
-    setShowPreOrderModal(true);
-    // Reset form when opening modal
-    setPreOrderForm({
-      date: '',
-      time: '',
-      instructions: '',
-      servings: 1
-    });
-  };
-
-  const handleSubmitPreOrder = () => {
-    console.log("Pre-order submitted:", {
-      food: selectedFood,
-      ...preOrderForm
-    });
-    setShowPreOrderModal(false);
-  };
-
-
-  
-
-
-
-
-  // View increment effect
-  useEffect(() => {
-    const incrementViews = async () => {
-      try {
-        await fetch(`${BASE_URL}/food/${food.id}/view`, { method: 'PUT' });
-      } catch (error) {
-        console.error('Error incrementing views:', error);
-      }
-    };
-    incrementViews();
-  }, [food.id]);
-
-
-
-  
-
-  const playSound = () => {
-    new Audio(popSound).play();
-  };
-  
-
-
-  
-  const colors = {
-    primary: '#c3e703', // Vibrant lime green
-    secondary: '#96d1c7', // Soft teal
-    accent: '#ff6b6b',   // Coral pink
-    dark: '#2d3436',     // Charcoal
-    light: '#f5f6fa'     // Off-white
-  };
-
-
-  const navigate = useNavigate(); // Hook for navigation
-
-
-  
+const FoodPlatform = () => {
   const [state, setState] = useState({
     foods: [],
     orders: [],
-    riders: [],
     cart: [],
-     showCart: false,
-    cart: [],  // 
-    
-    loadingOrders: true,
+    showCart: false,
     loading: true,
     error: null,
     showChefReg: false,
     showRiderReg: false,
-    showCart: false,
     showFoodPost: false,
     showAnalytics: false,
     showBikers: false,
     showEditFood: null,
     isChefMode: localStorage.getItem('isChef') === 'true',
     isRiderMode: localStorage.getItem('isRider') === 'true',
-    filters: { area: 'all', specialty: 'all', mealType: 'all' }
+    filters: { area: 'all', specialty: 'all', mealType: 'all' },
+    showOrderConfirmation: false,
+    userLocation: null,
+    locationError: null
   });
-
- const  BASE_URL   =   "https://neuro-apps-api-express-js-production-redy.onrender.com/apiV1/smartcity-ke"
-// 
-  const [showRiderReg, setShowRiderReg] = useState(false);
+  
+  const navigate = useNavigate();
+  const BASE_URL = "https://neuro-apps-api-express-js-production-redy.onrender.com/apiV1/smartcity-ke";
   const [userId, setUserId] = useState(null);
-  const [notifications, setNotifications] = useState([]);
+  const [showPreOrderModal, setShowPreOrderModal] = useState(false);
+  const [selectedFood, setSelectedFood] = useState(null);
+  const [preOrderForm, setPreOrderForm] = useState({
+    date: '',
+    time: '',
+    instructions: '',
+    servings: 1
+  });
+  const [orderHistory, setOrderHistory] = useState([]);
+
+  const isChefOpen = (openingHours) => {
+    if (!openingHours) return false;
+    const [start, end] = openingHours.split(' - ');
+    const now = moment.tz('Africa/Nairobi');
+    const startTime = moment.tz(start, ['hA', 'ha', 'H:mm'], 'Africa/Nairobi');
+    const endTime = moment.tz(end, ['hA', 'ha', 'H:mm'], 'Africa/Nairobi');
+    return now.isBetween(startTime, endTime);
+  };
+
+  const playSound = () => {
+    new Audio(popSound).play();
+  };
 
   useEffect(() => {
     const getUserIdFromToken = () => {
       const token = localStorage.getItem("token");
       if (!token) return null;
-
       try {
         const decoded = jwtDecode(token);
         return decoded?.id || decoded?.userId || decoded?._id || null;
@@ -251,7 +551,6 @@ const isChefOpen = (openingHours) => {
 
     const id = getUserIdFromToken();
     setUserId(id);
-    console.log("User ID:", id);
 
     // Request Notification Permission
     Notification.requestPermission().then((perm) => {
@@ -259,53 +558,8 @@ const isChefOpen = (openingHours) => {
         new Notification("Notifications Enabled");
       }
     });
-  }, []);
-
-  const showNotification = (title, body) => {
-
-    if (Notification.permission === "granted") {
-      new Notification(title, { body });
-    }
-
-  };
-  
-  const loadData = async () => {
-    try {
-      const [foodsRes, ordersRes, ridersRes] = await Promise.all([
-        fetch('${BASE_URL}/get/foods'),
-        fetch('/api/orders'),
-        fetch(`${BASE_URL}/riders`)
-      ]);
-
-   
-      const foods = await foodsRes.json();
-      const orders = await ordersRes.json();
-      const riders = await ridersRes.json();
-
-      const chefId = localStorage.getItem('chefId');
-      const riderId = localStorage.getItem('riderId');
-
-      setState(s => ({
-        ...s,
-        foods: chefId ? foods.filter(f => f.chef?.id === chefId) : foods,
-        orders: orders.filter(o => {
-          if(chefId) return o.chefId === chefId;
-          if(riderId) return o.riderId === riderId;
-          return o.userId === userId;
-        }),
-        riders,
-        loading: false
-      }));
-    } catch (err) {
-      setState(s => ({ ...s, error: err.message, loading: false }));
-    }
-  };
-
-  useEffect(() => { loadData(); }, []);
-
-
-  useEffect(() => {
     
+    // Fetch foods
     const fetchData = async () => {
       try {
         const response = await fetch(`${BASE_URL}/get/foods`);
@@ -326,37 +580,33 @@ const isChefOpen = (openingHours) => {
       }
     };
     fetchData();
-  }, []);
-
-
-  const handleLike = async (foodId) => {
-  if (!userId) {
-    console.warn("User ID is not available.");
-    return;
-  }
-
-  try {
-    const response = await fetch(`${BASE_URL}/food/${foodId}/like`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
+    
+    // Fetch order history (mock data)
+    const mockOrderHistory = [
+      {
+        id: 'order-12345',
+        date: Date.now() - 2 * 24 * 60 * 60 * 1000,
+        items: [
+          { id: 'food1', title: 'Chicken Biryani', price: 450, quantity: 1 },
+          { id: 'food2', title: 'Naan Bread', price: 80, quantity: 2 }
+        ],
+        total: 610,
+        status: 'delivered',
+        rider: { name: 'John Rider' }
       },
-      body: JSON.stringify({ userId }),  
-    });
-
-    const data = await response.json();
-    console.log(data);
-
-    if (response.ok) {
-      // Update your UI here
-    } else {
-      console.error("Failed to like food");
-    }
-  } catch (error) {
-    console.error("Error liking food:", error);
-  }
-};
-
+      {
+        id: 'order-67890',
+        date: Date.now() - 5 * 24 * 60 * 60 * 1000,
+        items: [
+          { id: 'food3', title: 'Vegetable Curry', price: 350, quantity: 1 }
+        ],
+        total: 350,
+        status: 'delivered',
+        rider: { name: 'Sarah Rider' }
+      }
+    ];
+    setOrderHistory(mockOrderHistory);
+  }, []);
 
   const filteredFoods = state.foods.filter(food => {
     const matchesArea = state.filters.area === 'all' || food.area === state.filters.area;
@@ -365,812 +615,256 @@ const isChefOpen = (openingHours) => {
     return matchesArea && matchesSpecialty && matchesMealType;
   });
 
-
-  // Chef Food Management
-  const createFood = async (foodData) => {
+  const handleLike = async (foodId) => {
+    if (!userId) return;
     try {
-      playSound()
-      const res = await fetch(`${BASE_URL}/food`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...foodData,
-          chefId: localStorage.getItem('chefId')
-        })
-      });
-      
-      if(res.ok) {
-        loadData();
-        showNotification('New Food Added', `${foodData.title} now available!`);
-      }
-    } catch(err) {
-      console.error('Create error:', err);
-    }
-  };
-
-
-  const FilterSection = () => (
-    <div className="mb-4 p-3 bg-white rounded shadow-sm">
-      <Row className="g-3">
-        <Col md={3}>
-          <Form.Control
-            placeholder="🔍 Search dishes..."
-            value={state.filters.searchQuery}
-            onChange={(e) => setState(s => ({ 
-              ...s, 
-              filters: { ...s.filters, searchQuery: e.target.value } 
-            }))}
-          />
-        </Col>
-        <Col md={3}>
-          <Form.Select 
-            value={state.filters.area}
-            onChange={(e) => setState(s => ({ 
-              ...s, 
-              filters: { ...s.filters, area: e.target.value } 
-            }))}
-          >
-            {state.areas?.map(area => (
-              <option key={area} value={area}>{area}</option>
-            ))}
-          </Form.Select>
-        </Col>
-        <Col md={3}>
-          <Form.Select 
-            value={state.filters.specialty}
-            onChange={(e) => setState(s => ({ 
-              ...s, 
-              filters: { ...s.filters, specialty: e.target.value } 
-            }))}
-          >
-            {state.specialties?.map(spec => (
-              <option key={spec} value={spec}>{spec}</option>
-            ))}
-          </Form.Select>
-        </Col>
-        <Col md={3}>
-          <Form.Select 
-            value={state.filters.mealType}
-            onChange={(e) => setState(s => ({ 
-              ...s, 
-              filters: { ...s.filters, mealType: e.target.value } 
-            }))}
-          >
-            <option value="all">All Meals</option>
-            <option value="breakfast">Breakfast</option>
-            <option value="lunch">Lunch</option>
-            <option value="dinner">Dinner</option>
-          </Form.Select>
-        </Col>
-      </Row>
-    </div>
-  );
-
-  const updateFood = async (foodData) => {
-    try {
-      playSound()
-      const res = await fetch(`${BASE_URL}/food/${foodData.id}`, {
+      const response = await fetch(`${BASE_URL}/food/${foodId}/like`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(foodData)
+        body: JSON.stringify({ userId })
       });
+      const data = await response.json();
+      if (response.ok) {
+        // Update UI
+      }
+    } catch (error) {
+      console.error("Error liking food:", error);
+    }
+  };
+
+  const updateCart = (item, quantityChange) => {
+    playSound();
+    setState(prev => {
+      const existingItem = prev.cart.find(i => i.id === item.id);
+      let newCart = [...prev.cart];
       
-      if(res.ok) {
-        loadData();
-        showNotification('Food Updated', `${foodData.title} updated successfully`);
+      if (existingItem) {
+        const newQuantity = existingItem.quantity + quantityChange;
+        if (newQuantity <= 0) {
+          newCart = newCart.filter(i => i.id !== item.id);
+        } else {
+          newCart = newCart.map(i => 
+            i.id === item.id ? { ...i, quantity: newQuantity } : i
+          );
+        }
+      } else if (quantityChange > 0) {
+        newCart.push({ 
+          ...item,
+          quantity: 1,
+          price: Number(item.price)
+        });
       }
-    } catch(err) {
-      console.error('Update error:', err);
-    }
+      
+      return { ...prev, cart: newCart };
+    });
   };
 
-  const deleteFood = async (foodId) => {
-    try {
-      playSound()
-      await fetch(`${BASE_URL}/food/${foodId}`, {
-        method: 'DELETE'
-      });
-      loadData();
-      showNotification('Food Removed', 'Item removed from your listings');
-    } catch(err) {
-      console.error('Delete error:', err);
-    }
+  const handlePreOrder = (food) => {
+    setSelectedFood(food);
+    setShowPreOrderModal(true);
+    setPreOrderForm({
+      date: '',
+      time: '',
+      instructions: '',
+      servings: 1
+    });
   };
 
-  // Orders Management
-  const updateOrderStatus = async (orderId, status) => {
-    try {
-      playSound()
-      await fetch(`/api/orders/${orderId}`, {
-        method: 'PATCH',
-        body: JSON.stringify({ status })
-      });
-      loadData();
-      showNotification('Order Updated', `Status changed to ${status}`);
-    } catch(err) {
-      console.error('Order update error:', err);
-    }
-  };
-
-
-
-  // Add this cart management logic
-const updateCart = (item, quantityChange) => {
-  playSound()
-  setState(prev => {
-    const existingItem = prev.cart.find(i => i.id === item.id);
-    let newCart = [...prev.cart];
+  const handleSubmitPreOrder = () => {
+    const preOrderItem = {
+      ...selectedFood,
+      isPreOrder: true,
+      preOrderDate: preOrderForm.date,
+      preOrderTime: preOrderForm.time,
+      instructions: preOrderForm.instructions,
+      quantity: preOrderForm.servings
+    };
     
-    if (existingItem) {
-      // Update quantity
-      const newQuantity = existingItem.quantity + quantityChange;
-      if (newQuantity <= 0) {
-        // Remove item if quantity reaches 0
-        newCart = newCart.filter(i => i.id !== item.id);
-      } else {
-        // Update quantity
-        newCart = newCart.map(i => 
-          i.id === item.id ? { ...i, quantity: newQuantity } : i
-        );
-      }
-    } else if (quantityChange > 0) {
-      // Add new item to cart
-      newCart.push({ 
-        ...item,
-        quantity: 1,
-        price: Number(item.price)
-      });
+    updateCart(preOrderItem, preOrderForm.servings);
+    setShowPreOrderModal(false);
+  };
+
+  const handleCheckout = () => {
+    // Get user's current location
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          // Reverse geocode to get address (mock)
+          const mockAddress = "123 Main St, Nairobi, Kenya";
+          setState(prev => ({
+            ...prev,
+            showCart: false,
+            showOrderConfirmation: true,
+            userLocation: {
+              lat: latitude,
+              lng: longitude,
+              address: mockAddress
+            }
+          }));
+        },
+        (error) => {
+          setState(prev => ({
+            ...prev,
+            showOrderConfirmation: true,
+            locationError: "Failed to get your location: " + error.message
+          }));
+        }
+      );
+    } else {
+      setState(prev => ({
+        ...prev,
+        showOrderConfirmation: true,
+        locationError: "Geolocation is not supported by your browser"
+      }));
     }
-    
-    return { ...prev, cart: newCart };
-  });
-};
+  };
 
-// Add these calculation functions
-const calculateSubtotal = () => 
-  state.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  const handleConfirmOrder = () => {
+    Swal.fire({
+      title: 'Order Confirmed!',
+      text: 'Your order has been placed successfully',
+      icon: 'success',
+      confirmButtonText: 'Continue Shopping'
+    }).then(() => {
+      // Clear cart and go back to food platform
+      setState(prev => ({
+        ...prev,
+        cart: [],
+        showOrderConfirmation: false
+      }));
+    });
+  };
 
-const calculateTotal = () => 
-  calculateSubtotal() + DELIVERY_FEE;
-
-  // Registration Handlers
   const registerChef = async (formData) => {
     try {
-      playSound()
+      playSound();
       const res = await fetch(`${BASE_URL}/chef`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...formData, userId })
       });
-
       const data = await res.json();
-      if(res.ok) {
+      if (res.ok) {
         localStorage.setItem('chefId', data.chef.id);
         localStorage.setItem('isChef', 'true');
         setState(s => ({ ...s, isChefMode: true, showChefReg: false }));
-        showNotification('Chef Mode Activated', 'Welcome to your chef dashboard!');
       }
-    } catch(err) {
+    } catch (err) {
       console.error('Chef registration error:', err);
     }
   };
 
-
-
-
-const MySwal = withReactContent(Swal);
-
-const Toast = Swal.mixin({
-  toast: true,
-  position: 'top-end', // top-right corner
-  showConfirmButton: false,
-  timer: 3000,
-  timerProgressBar: true,
-  didOpen: (toast) => {
-    toast.addEventListener('mouseenter', Swal.stopTimer);
-    toast.addEventListener('mouseleave', Swal.resumeTimer);
-  }
-});
-const handleRiderRegistration = async (formData) => {
-  try {
-    playSound()
-    const res = await fetch(`${BASE_URL}/rider`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        userId: userId,
-        nationalId: formData.nationalId,
-        city: formData.city,
-        area: formData.area,
-        neighborhood: formData.neighborhood,
-        vehicleType: formData.vehicleType,
-        registrationPlate: formData.registrationPlate,
-        workHours: formData.workHours,
-        serviceArea: formData.serviceArea,
-        agreedToTerms: formData.agreedToTerms,
-      })
-    });
-
-    const data = await res.json();
-
-    if (res.ok) {
-      localStorage.setItem('riderId', data.rider.id);
-      localStorage.setItem('isRider', 'true');
-      setShowRiderReg(false);
-
-      Toast.fire({
-        icon: 'success',
-        title: 'Rider Registered Successfully'
-      });
-    } else {
-      Toast.fire({
-        icon: 'error',
-        title: data.message || 'Registration failed'
-      });
-    }
-
-  } catch (err) {
-    console.error('Registration error:', err);
-    Toast.fire({
-      icon: 'error',
-      title: 'Something went wrong. Try again!'
-    });
-  }
-};
-
-
-  
-
-
-const RiderRegistrationModal = ({ show, onClose, onSubmit, userId }) => {
-  return (
-    <Modal show={show} onHide={onClose} centered>
-      <Modal.Header closeButton>
-        <Modal.Title>Rider Registration</Modal.Title>
-      </Modal.Header>
-      <Modal.Body>
-        <Form
-          onSubmit={(e) => {
-            e.preventDefault();
-            const formData = new FormData(e.target);
-            onSubmit({
-              nationalId: formData.get('nationalId'),
-              city: formData.get('city'),
-              area: formData.get('area'),
-              neighborhood: formData.get('neighborhood'),
-              vehicleType: formData.get('vehicle'),
-              registrationPlate: formData.get('registrationPlate'),
-              workHours: formData.get('workHours'),
-              serviceArea: formData.get('serviceArea'),
-              agreedToTerms: formData.get('agreedToTerms') === 'on',
-              userId: userId // Pass the userId from props
-            });
-          }}
-        >
-          {/* Form fields remain the same */}
-          <Form.Group className="mb-3">
-            <Form.Label>National ID</Form.Label>
-            <Form.Control name="nationalId" required />
-          </Form.Group>
-
-          <Form.Group className="mb-3">
-            <Form.Label>City</Form.Label>
-            <Form.Control name="city" required />
-          </Form.Group>
-
-          <Form.Group className="mb-3">
-            <Form.Label>Area</Form.Label>
-            <Form.Control name="area" required />
-          </Form.Group>
-
-          <Form.Group className="mb-3">
-            <Form.Label>Neighborhood</Form.Label>
-            <Form.Control name="neighborhood" required />
-          </Form.Group>
-
-          <Form.Group className="mb-3">
-            <Form.Label>Vehicle Type</Form.Label>
-            <Form.Select name="vehicle" required>
-              <option value="Bicycle">Bicycle</option>
-              <option value="Motorcycle">Motorcycle</option>
-              <option value="Car">Car</option>
-            </Form.Select>
-          </Form.Group>
-
-          <Form.Group className="mb-3">
-            <Form.Label>License Plate</Form.Label>
-            <Form.Control name="registrationPlate" required />
-          </Form.Group>
-
-          <Form.Group className="mb-3">
-            <Form.Label>Work Hours</Form.Label>
-            <Form.Control name="workHours" placeholder="9am - 5pm" required />
-          </Form.Group>
-
-          <Form.Group className="mb-3">
-            <Form.Label>Service Area</Form.Label>
-            <Form.Control name="serviceArea" required />
-          </Form.Group>
-
-          <Form.Group className="mb-3">
-            <Form.Check
-              type="checkbox"
-              label="I agree to the terms and conditions"
-              name="agreedToTerms"
-              required
-            />
-          </Form.Group>
-
-          <Button type="submit" variant="primary" className="w-100">
-            Register as Rider
-          </Button>
-        </Form>
-      </Modal.Body>
-    </Modal>
-  );
-};
-
-
-  return (
-    <Container fluid className=" px-0" style={{ backgroundColor: theme.light }}>
-      {/* Header */}
-     <header className="header bg-white shadow-sm sticky-top">
-  <div className="container">
-    <div className="d-flex justify-content-between align-items-center py-2 py-md-2">
-      {/* Branding */}
-      <div className="d-flex align-items-center gap-2 gap-md-3">
-        <GiKenya className="text-primary header-icon" />
-        <h1 className="m-0 brand-title">
-          <span className="text-primary">Jikoni</span>
-          <span className="text-danger px-1">Express</span>
-        </h1>
-      </div>
-
-      {/* Actions */}
-      <div className="d-flex gap-2 gap-md-3 align-items-center">
-        {/* Role Buttons */}
-        {!state.isChefMode && !state.isRiderMode && (
-          <div className="d-flex gap-1 gap-md-2">
-            <Button 
-              variant="outline-primary"
-              className="rounded-pill px-3 px-md-4 py-1 d-flex align-items-center"
-              onClick={() => setState(s => ({ ...s, showChefReg: true }))}
-            >
-              <Person className="me-1 me-md-2" />
-              <span className="d-none d-md-inline">Chef</span>
-            </Button>
-            <Button 
-              variant="outline-success"
-              className="rounded-pill px-3 px-md-4 py-1 d-flex align-items-center"
-              onClick={() => setState(s => ({ ...s, showRiderReg: true }))}
-            >
-              <Scooter className="me-1 me-md-2" />
-              <span className="d-none d-md-inline">Rider</span>
-            </Button>
-          </div>
-        )}
-
-        {/* Exit Button */}
-        {state.isChefMode && (
-          <Button 
-            variant="danger"
-            className="rounded-pill px-3 px-md-4 py-1"
-            onClick={() => {
-              localStorage.removeItem('chefId');
-              setState(s => ({ ...s, isChefMode: false }));
-            }}
-          >
-            <span className="d-none d-md-inline">Exit Chef Mode</span>
-            <span className="d-md-none">Exit</span>
-          </Button>
-        )}
-
-        {/* Cart Button */}
-        <Button 
-          variant="warning"
-          className="rounded-pill px-2 px-md-2 py-1 position-relative"
-          onClick={() => setState(s => ({ ...s, showCart: true }))} 
-          style={{ minWidth: 'auto' }}
-        >
-          <Cart className="me-1 me-md-2" />
-          <span className="d-none d-md-inline">Cart</span>
-          <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-            {state.cart.reduce((sum, i) => sum + i.quantity, 0)}
-            <span className="visually-hidden">items in cart</span>
-          </span>
-        </Button>
-      </div>
-    </div>
-  </div>
-
-  <style jsx>{`
-.header {
-  border-bottom: 2px solid rgba(0, 0, 0, 0.1);
-  z-index: 1000;
-  transition: all 0.3s ease;
-}
-
-/* Brand Title */
-.brand-title {
-  font-size: 1.75rem;
-  font-weight: 700;
-  letter-spacing: -0.5px;
-  transition: font-size 0.3s ease;
-}
-
-/* Header Icons */
-.header-icon {
-  font-size: 2rem !important;
-  transition: font-size 0.3s ease;
-}
-
-/* Button Hover Effects */
-.btn-outline-primary:hover,
-.btn-outline-success:hover {
-  transform: translateY(-1px);
-}
-
-.btn-warning:hover {
-  transform: scale(1.05) translateY(-1px);
-}
-
-/* Badge */
-.badge {
-  font-size: 0.7rem;
-  padding: 0.4em 0.65em;
-  border-radius: 0.65rem;
-  transition: all 0.3s ease;
-}
-
-/* Medium Screens */
-@media (max-width: 768px) {
-  .brand-title {
-    font-size: 1.6rem;
-  }
-
-  .header-icon {
-    font-size: 1.6rem !important;
-  }
-
-  .btn {
-    font-size: 0.9rem;
-    padding: 0.5rem 1rem;
-  }
-
-  .badge {
-    font-size: 0.6rem;
-    padding: 0.3em 0.55em;
-  }
-}
-
-/* Small Screens */
-@media (max-width: 576px) {
-  .brand-title {
-    font-size: 1.45rem;
-  }
-
-  .header-icon {
-    font-size: 1.5rem !important;
-  }
-
-  .btn {
-    font-size: 1rem;
-    padding: 0.5rem 1rem; /* Increased for better touch area */
-  }
-
-  .badge {
-    font-size: 1rem;
-    padding: 0.3em 0.55em;
-  }
-}
-
-  `}</style>
-</header>
-
-      {/* Main Content */}
-      {state.isChefMode ? (
-        <div className="py-2">
-          <div className="d-flex justify-content-between align-items-center mb-4">
-            <h2>Chef Dashboard</h2>
-            <div className="d-flex gap-2">
-              <Button variant="success" onClick={() => setState(s => ({ ...s, showFoodPost: true }))}>
-                + Post New Food
-              </Button>
-              <Button variant="info" onClick={() => setState(s => ({ ...s, showAnalytics: true }))}>
-                Analytics
-              </Button>
-              <Button variant="warning" onClick={() => setState(s => ({ ...s, showBikers: true }))}>
-                Available Riders
-              </Button>
-            </div>
-          </div>
-
-          <div className="table-responsive">
-  <table className="table table-hover align-middle">
-    <thead className="table-light">
-      <tr>
-        <th style={{ width: '100px' }}>Item</th>
-        <th>Details</th>
-        <th className="d-none d-md-table-cell">Description</th>
-        <th>Price</th>
-        <th className="d-none d-sm-table-cell">Type</th>
-        <th className="d-none d-lg-table-cell">Posted</th>
-        <th>Actions</th>
-      </tr>
-    </thead>
-    <tbody>
-      {state.foods.map(food => (
-        <tr key={food.id}>
-          {/* Image Gallery */}
-          <td>
-            <div style={{
-              width: '100px',
-              height: '100px',
-              borderRadius: '8px',
-              overflow: 'hidden',
-              position: 'relative'
-            }}>
-              <img 
-                src={food.photoUrls[0]} 
-                alt={food.title}
-                className="img-fluid"
-                style={{
-                  position: 'absolute',
-                  width: '100%',
-                  height: '100%',
-                  objectFit: 'cover',
-                  backgroundColor: '#f8f9fa'
-                }}
-              />
-              {food.photoUrls.length > 1 && (
-                <span className="badge bg-dark position-absolute bottom-0 end-0 m-1">
-                  +{food.photoUrls.length -1}
-                </span>
-              )}
-            </div>
-          </td>
-
-          {/* Title and Mobile Details */}
-          <td>
-            <div className="d-flex flex-column">
-              <strong className="mb-1">{food.title}</strong>
-              <div className="d-flex d-md-none gap-1 flex-wrap">
-                <span className="badge bg-primary">KES {food.price}</span>
-                <span className="badge bg-info">{food.mealType}</span>
-                <small className="text-muted">
-                  {formatDistanceToNow(new Date(food.createdAt), { addSuffix: true })}
-                </small>
-              </div>
-            </div>
-          </td>
-
-          {/* Description (Hidden on mobile) */}
-          <td className="d-none d-md-table-cell">
-            <p className="text-muted small mb-0 line-clamp-2">
-              {food.description}
-            </p>
-          </td>
-
-          {/* Price (Hidden on mobile - shown in title column) */}
-          <td className="d-none d-md-table-cell">
-            <span className="badge bg-primary">KES {food.price}</span>
-          </td>
-
-          {/* Meal Type (Hidden on mobile - shown in title column) */}
-          <td className="d-none d-sm-table-cell">
-            <span className="badge bg-info">{food.mealType}</span>
-          </td>
-
-          {/* Posted Date (Hidden on mobile) */}
-          <td className="d-none d-lg-table-cell">
-            <small className="text-muted">
-              {formatDistanceToNow(new Date(food.createdAt), { addSuffix: true })}
-            </small>
-          </td>
-
-          {/* Actions */}
-          <td>
-          <div className="d-flex gap-2 align-items-center">
-  {/* Edit Button */}
-  <button
-    type="button"
-    className="btn blue btn-sm hover-effect"
-    onClick={() => setState(prev => ({ ...prev, showEditFood: food }))}
-  >
-    <i className="bi bi-pencil me-1"></i> Edit
-  </button>
-
-  {/* Delete Button */}
-  <button
-    type="button"
-    className="btn red btn-sm hover-effect text-white"
-    onClick={() => deleteFood(food.id)}
-  >
-    <i className="bi bi-trash me-1  "></i> Delete
-  </button>
-</div>
-
-          </td>
-        </tr>
-      ))}
-    </tbody>
-  </table>
-</div>
-
-
-    <Form
-  onSubmit={async (e) => {
-    e.preventDefault();
-
-    const formData = new FormData(e.target);
-
-    // Show loading toast
-    Toast.fire({
-      icon: 'info',
-      title: 'Submitting...',
-      timer: 5000,
-      didOpen: () => {
-        Swal.showLoading();
-      }
-    });
-
+  const handleRiderRegistration = async (formData) => {
     try {
-      const response = await fetch("http://localhost:8000/apiV1/smartcity-ke/create/food", {
-        method: "POST",
-        body: formData
+      playSound();
+      const res = await fetch(`${BASE_URL}/rider`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: userId,
+          nationalId: formData.nationalId,
+          city: formData.city,
+          area: formData.area,
+          neighborhood: formData.neighborhood,
+          vehicleType: formData.vehicleType,
+          registrationPlate: formData.registrationPlate,
+          workHours: formData.workHours,
+          serviceArea: formData.serviceArea,
+          agreedToTerms: formData.agreedToTerms,
+        })
       });
-
-      const data = await response.json();
-      console.log(data);
-
-      if (response.ok) {
-        Toast.fire({
-          icon: 'success',
-          title: 'Food successfully created'
-        });
-        // Optionally, reset the form
-        e.target.reset();
-      } else {
-        Toast.fire({
-          icon: 'error',
-          title: data.message || 'Something went wrong'
-        });
+      const data = await res.json();
+      if (res.ok) {
+        localStorage.setItem('riderId', data.rider.id);
+        localStorage.setItem('isRider', 'true');
+        setState(s => ({ ...s, showRiderReg: false, isRiderMode: true }));
       }
-
-    } catch (error) {
-      console.error(error);
-      Toast.fire({
-        icon: 'error',
-        title: 'Network error. Please try again'
-      });
+    } catch (err) {
+      console.error('Registration error:', err);
     }
-  }}
-  encType="multipart/form-data"
->
+  };
 
-  <Form.Group>
-    <Form.Label>Title</Form.Label>
-    <Form.Control name="title" required />
-  </Form.Group>
+  if (state.showOrderConfirmation) {
+    return (
+      <OrderConfirmation
+        cart={state.cart}
+        location={state.userLocation}
+        onConfirm={handleConfirmOrder}
+        onBack={() => setState(prev => ({ ...prev, showOrderConfirmation: false, showCart: true }))}
+      />
+    );
+  }
 
-
-  <Form.Group>
-    <Form.Label>Description</Form.Label>
-    <Form.Control name="description" as="textarea" required />
-  </Form.Group>
-
-
-  <Form.Group>
-    <Form.Label>Price</Form.Label>
-    <Form.Control name="price" type="number" required />
-  </Form.Group>
-
-  <Form.Group>
-    <Form.Label>Meal Type</Form.Label>
-    <Form.Control name="mealType" required />
-  </Form.Group>
-<Form.Group>
-  <Form.Label>Upload Food Images</Form.Label>
-<Form.Control name="images" type="file" multiple required />
-
-</Form.Group>
-
-
-  <Form.Group>
-    <Form.Label>Area</Form.Label>
-    <Form.Control name="area" required />
-  </Form.Group>
-
-  <Form.Group>
-    <Form.Label>Chef ID</Form.Label>
-    <Form.Control name="chefId" required />
-  </Form.Group>
-
-  <Button type="submit">Create</Button>
-</Form>
-
-
-
-          {/* Edit Food Modal */}
-          <Modal show={!!state.showEditFood} onHide={() => setState(s => ({ ...s, showEditFood: null }))}>
-            <Modal.Header closeButton>
-              <Modal.Title>Edit {state.showEditFood?.title}</Modal.Title>
-            </Modal.Header>
-            <Modal.Body>
-              <Form onSubmit={(e) => {
-                e.preventDefault();
-                const formData = new FormData(e.target);
-                updateFood({
-                  id: state.showEditFood.id,
-                  ...Object.fromEntries(formData.entries())
-                });
-              }}>
-                {/* Form fields */}
-              </Form>
-            </Modal.Body>
-          </Modal>
-
-
-
-          {/* Analytics Sidebar */}
-          <Offcanvas show={state.showAnalytics} onHide={() => setState(s => ({ ...s, showAnalytics: false }))} placement="end">
-      <Offcanvas.Header closeButton>
-        <Offcanvas.Title>Chef Analytics</Offcanvas.Title>
-      </Offcanvas.Header>
-      <Offcanvas.Body>
-        <div className="mb-4">
-          <h5>Total Earnings</h5>
-          <h2 className="text-success">KES {state.orders.reduce((sum, o) => sum + o.total, 0)}</h2>
-        </div>
-        <div className="mb-4">
-          <h5>Completed Orders</h5>
-          <h3>{state.orders.filter(o => o.status === 'delivered').length}</h3>
-        </div>
-        <div>
-          <h5>Order Status Distribution</h5>
-          <ProgressBar className="mb-2">
-            <ProgressBar variant="success" now={
-              (state.orders.filter(o => o.status === 'delivered').length / state.orders.length) * 100
-            } />
-            <ProgressBar variant="warning" now={
-              (state.orders.filter(o => o.status === 'preparing').length / state.orders.length) * 100
-            } />
-          </ProgressBar>
-        </div>
-      </Offcanvas.Body>
-    </Offcanvas>
-
-
-          {/* Riders Sidebar */}
-
-      <Offcanvas show={state.showBikers} onHide={() => setState(s => ({ ...s, showBikers: false }))} placement="end">
-      <Offcanvas.Header closeButton>
-        <Offcanvas.Title>Available Riders</Offcanvas.Title>
-      </Offcanvas.Header>
-      <Offcanvas.Body>
-        <ListGroup>
-          {state.riders.map(rider => (
-            <ListGroup.Item key={rider.id}>
-              <div className="d-flex justify-content-between">
-                <div>
-                  <h6>{rider.name}</h6>
-                  <small>{rider.vehicle} ({rider.plate})</small>
+  return (
+    <Container fluid className="px-0" style={{ backgroundColor: theme.light }}>
+      {/* Header */}
+      <header className="header bg-white shadow-sm sticky-top">
+        <div className="container">
+          <div className="d-flex justify-content-between align-items-center py-2 py-md-2">
+            <div className="d-flex align-items-center gap-2 gap-md-3">
+              <GiKenya className="text-primary header-icon" />
+              <h1 className="m-0 brand-title">
+                <span className="text-primary">Jikoni</span>
+                <span className="text-danger px-1">Express</span>
+              </h1>
+            </div>
+            <div className="d-flex gap-2 gap-md-3 align-items-center">
+              {!state.isChefMode && !state.isRiderMode && (
+                <div className="d-flex gap-1 gap-md-2">
+                  <Button 
+                    variant="outline-primary"
+                    className="rounded-pill px-3 px-md-4 py-1 d-flex align-items-center"
+                    onClick={() => setState(s => ({ ...s, showChefReg: true }))}
+                  >
+                    <Person className="me-1 me-md-2" />
+                    <span className="d-none d-md-inline">Chef</span>
+                  </Button>
+                  <Button 
+                    variant="outline-success"
+                    className="rounded-pill px-3 px-md-4 py-1 d-flex align-items-center"
+                    onClick={() => setState(s => ({ ...s, showRiderReg: true }))}
+                  >
+                    <Scooter className="me-1 me-md-2" />
+                    <span className="d-none d-md-inline">Rider</span>
+                  </Button>
                 </div>
-                <Button size="sm" variant="outline-primary">
-                  Assign Order
+              )}
+              {state.isChefMode && (
+                <Button 
+                  variant="danger"
+                  className="rounded-pill px-3 px-md-4 py-1"
+                  onClick={() => {
+                    localStorage.removeItem('chefId');
+                    setState(s => ({ ...s, isChefMode: false }));
+                  }}
+                >
+                  <span className="d-none d-md-inline">Exit Chef Mode</span>
+                  <span className="d-md-none">Exit</span>
                 </Button>
-              </div>
-            </ListGroup.Item>
-          ))}
-        </ListGroup>
-      </Offcanvas.Body>
-    </Offcanvas>
-  </div>
-) : (
-         // User Marketplace
-       <div className="py-4 container-xl">
-  {/* Stories Section */}
-<div className="stories-fixed-section bg-white shadow-sm">
+              )}
+              <Button 
+                variant="warning"
+                className="rounded-pill px-2 px-md-2 py-1 position-relative"
+                onClick={() => setState(s => ({ ...s, showCart: true }))} 
+                style={{ minWidth: 'auto' }}
+              >
+                <Cart className="me-1 me-md-2" />
+                <span className="d-none d-md-inline">Cart</span>
+                <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                  {state.cart.reduce((sum, i) => sum + i.quantity, 0)}
+                  <span className="visually-hidden">items in cart</span>
+                </span>
+              </Button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <div className="py-4 container-xl">
+        {/* Stories Section */}
+        <div className="stories-fixed-section bg-white shadow-sm">
+       <div className="stories-fixed-section bg-white shadow-sm">
 
   
   <h4 className="mb-3 fw-bold mt-3" style={{ color: '#FF4532' }}>🍴 Jikoni Express Stories</h4>
@@ -1462,451 +1156,340 @@ const RiderRegistrationModal = ({ show, onClose, onSubmit, userId }) => {
   `}</style>
 </div>
 
+        </div>
 
-
-    <div className="food-platform" style={{ backgroundColor: colors.light }}>
-      <Modal show={showPreOrderModal} onHide={() => setShowPreOrderModal(false)} centered>
-        <Modal.Header closeButton className="border-0 pb-0 bg-white">
-          <Modal.Title className="fw-bold text-dark">Pre-Order Your Meal</Modal.Title>
-        </Modal.Header>
-        
-        <Modal.Body className="bg-white py-4">
-          {selectedFood && (
-            <div className="d-flex align-items-center mb-4">
-              <div className="me-3" style={{ 
-                width: '80px', 
-                height: '80px', 
-                overflow: 'hidden',
-                borderRadius: '12px' 
-              }}>
-                <img 
-                  src={selectedFood.photoUrls[0]} 
-                  alt={selectedFood.title}
-                  className="w-100 h-100 object-fit-cover"
-                />
-              </div>
-              <div>
-                <h5 className="mb-1 fw-bold text-dark">{selectedFood.title}</h5>
-                <div className="d-flex align-items-center">
-                  <span className="badge me-2" style={{
-                    background: 'linear-gradient(45deg, #FF6B6B, #FF4532)',
-                    color: '#fff',
-                    border: 'none',
-                    padding: '0.4em 0.8em'
+        <div className="food-platform">
+          {/* Pre-Order Modal */}
+          <Modal show={showPreOrderModal} onHide={() => setShowPreOrderModal(false)} centered>
+            <Modal.Header closeButton className="border-0 pb-0 bg-white">
+              <Modal.Title className="fw-bold text-dark">Pre-Order Your Meal</Modal.Title>
+            </Modal.Header>
+            
+            <Modal.Body className="bg-white py-4">
+              {selectedFood && (
+                <div className="d-flex align-items-center mb-4">
+                  <div className="me-3" style={{ 
+                    width: '80px', 
+                    height: '80px', 
+                    overflow: 'hidden',
+                    borderRadius: '12px' 
                   }}>
-                    {selectedFood.mealType}
-                  </span>
-                  <span className="fw-bold text-danger">KES {selectedFood.price}</span>
+                    <img 
+                      src={selectedFood.photoUrls[0]} 
+                      alt={selectedFood.title}
+                      className="w-100 h-100 object-fit-cover"
+                    />
+                  </div>
+                  <div>
+                    <h5 className="mb-1 fw-bold text-dark">{selectedFood.title}</h5>
+                    <div className="d-flex align-items-center">
+                      <Badge pill style={{
+                        background: 'linear-gradient(45deg, #FF6B6B, #FF4532)',
+                        color: '#fff',
+                        border: 'none',
+                        padding: '0.4em 0.8em'
+                      }}>
+                        {selectedFood.mealType}
+                      </Badge>
+                      <span className="fw-bold text-danger ms-2">KES {selectedFood.price}</span>
+                    </div>
+                  </div>
                 </div>
+              )}
 
-
-                
-              </div>
-            </div>
-          )}
-
-          <Form>
-            <Row className="g-3">
-              <Col md={6}>
-                <Form.Group controlId="preOrderDate">
-                  <Form.Label className="fw-medium mb-2">Delivery Date</Form.Label>
-                  <div className="input-group border rounded-3 overflow-hidden">
-                    <span className="input-group-text bg-white border-0">
-                      <Calendar size={18} className="text-muted" />
-                    </span>
-                    <Form.Control 
-                      type="date" 
-                      aria-label="Delivery Date"
-                      value={preOrderForm.date}
-                      onChange={(e) => setPreOrderForm({...preOrderForm, date: e.target.value})}
-                      min={new Date().toISOString().split('T')[0]}
-                      className="border-0 py-2 px-3"
-                      style={{ outline: 'none', boxShadow: 'none' }}
-                    />
-                  </div>
-                  <small className="text-muted mt-1 d-block">Select delivery date</small>
-                </Form.Group>
-              </Col>
-
-              <Col md={6}>
-                <Form.Group controlId="preOrderTime">
-                  <Form.Label className="fw-medium mb-2">Delivery Time</Form.Label>
-                  <div className="input-group border rounded-3 overflow-hidden">
-                    <span className="input-group-text bg-white border-0">
-                      <Clock size={18} className="text-muted" />
-                    </span>
-                    <Form.Control 
-                      type="time" 
-                      aria-label="Delivery Time"
-                      value={preOrderForm.time}
-                      onChange={(e) => setPreOrderForm({...preOrderForm, time: e.target.value})}
-                      className="border-0 py-2 px-3"
-                      style={{ outline: 'none', boxShadow: 'none' }}
-                    />
-                  </div>
-                  <small className="text-muted mt-1 d-block">Choose convenient time</small>
-                </Form.Group>
-              </Col>
-
-              <Col md={6}>
-                <Form.Group controlId="servings">
-                  <Form.Label className="fw-medium mb-2">Number of Servings</Form.Label>
-                  <Form.Select 
-                    aria-label="Number of Servings"
-                    value={preOrderForm.servings}
-                    onChange={(e) => setPreOrderForm({...preOrderForm, servings: parseInt(e.target.value)})}
-                    className="py-2 px-3 border rounded-3"
-                    style={{ 
-                      height: 'calc(2.5rem + 10px)',
-                      boxShadow: 'none'
-                    }}
-                  >
-                    {[1,2,3,4,5,6,7,8].map(num => (
-                      <option key={num} value={num}>{num} serving{num > 1 ? 's' : ''}</option>
-                    ))}
-                  </Form.Select>
-                </Form.Group>
-              </Col>
-
-              <Col md={6}>
-                <Form.Group controlId="totalPrice">
-                  <Form.Label className="fw-medium mb-2">Total Price</Form.Label>
-                  <div className="d-flex align-items-center justify-content-center h-100 bg-light rounded-3 py-2">
-                    <h4 className="mb-0 fw-bold text-danger">
-                      {selectedFood ? `KES ${(selectedFood.price * preOrderForm.servings).toFixed(2)}` : ''}
-                    </h4>
-                  </div>
-                </Form.Group>
-              </Col>
-
-              <Col xs={12}>
-                <Form.Group controlId="specialInstructions">
-                  <Form.Label className="fw-medium mb-2">Special Instructions</Form.Label>
-                  <Form.Control 
-                    as="textarea" 
-                    rows={3} 
-                    placeholder="Any dietary restrictions or special requests..."
-                    value={preOrderForm.instructions}
-                    onChange={(e) => setPreOrderForm({...preOrderForm, instructions: e.target.value})}
-                    className="border rounded-3 p-3"
-                    style={{ boxShadow: 'none' }}
-                  />
-                  <small className="text-muted mt-1 d-block">We'll accommodate your requests</small>
-                </Form.Group>
-              </Col>
-            </Row>
-          </Form>
-        </Modal.Body>
-
-        <Modal.Footer className="bg-white border-0 pt-0">
-          <Button 
-            variant="outline-secondary" 
-            className="fw-medium px-4 py-2 "
-            onClick={() => setShowPreOrderModal(false)}
-          >
-            Cancel
-          </Button>
-          <Button 
-            className="px-4 py-2 fw-bold text-white "
-            style={{
-              background: '#FF4532',
-              border: 'none'
-            }}
-            onClick={handleSubmitPreOrder}
-            disabled={!preOrderForm.date || !preOrderForm.time}
-          >
-            Confirm Pre-Order
-          </Button>
-        </Modal.Footer>
-      </Modal>
-
-
-      {/* Food Grid */}
-      <Row className="g-4 py-3">
-        {state.foods.map(food => (
-          <Col key={food.id} xs={12} md={6} lg={4} xl={4}>
-            <Card className="h-100 shadow-sm border-0 overflow-hidden food-card" style={{ 
-              borderRadius: '16px', 
-              transition: 'all 0.3s ease'
-            }}>
-              {/* Image Section */}
-              <div className="position-relative" style={{ overflow: 'hidden' }}>
-                <Carousel 
-                  interval={null} 
-                  indicators={food.photoUrls.length > 1}
-                  controls={false}
-                >
-                  {food.photoUrls.map((img, i) => (
-                    <Carousel.Item key={i}>
-                      <div className="ratio ratio-4x3">
-                        <img
-                          src={img}
-                          alt={`${food.title} - Photo ${i+1}`}
-                          className="card-img-top object-fit-cover"
-                          style={{ 
-                            transition: 'transform 0.5s ease'
-                          }}
+              <Form>
+                <Row className="g-3">
+                  <Col md={6}>
+                    <Form.Group controlId="preOrderDate">
+                      <Form.Label className="fw-medium mb-2">Delivery Date</Form.Label>
+                      <div className="input-group border rounded-3 overflow-hidden">
+                        <span className="input-group-text bg-white border-0">
+                          <Calendar size={18} className="text-muted" />
+                        </span>
+                        <Form.Control 
+                          type="date" 
+                          aria-label="Delivery Date"
+                          value={preOrderForm.date}
+                          onChange={(e) => setPreOrderForm({...preOrderForm, date: e.target.value})}
+                          min={new Date().toISOString().split('T')[0]}
+                          className="border-0 py-2 px-3"
+                          style={{ outline: 'none', boxShadow: 'none' }}
                         />
                       </div>
-                    </Carousel.Item>
-                  ))}
-                </Carousel>
-                
-                {/* Floating Price Tag */}
-                <div className="position-absolute top-0 end-0 m-3">
-                  <Badge className="price-tag fw-bold px-3 py-2">
-                    KES {food.price}
-                  </Badge>
-                </div>
-              </div>
+                      <small className="text-muted mt-1 d-block">Select delivery date</small>
+                    </Form.Group>
+                  </Col>
 
-              {/* Card Body */}
-              <Card.Body className="d-flex flex-column pt-3 pb-0">
-                {/* Food Metadata */}
-                <div className="d-flex justify-content-between align-items-center mb-2">
-                  <Badge pill style={{ 
-                    background: 'rgba(255, 107, 107, 0.15)', 
-                    color: '#FF6B6B',
-                    fontSize: '0.9rem'
-                  }}>
-                    {food.mealType}
-                  </Badge>
-             <small className="text-muted d-flex align-items-center" style={{ fontSize: '0.9rem' }}>
-  <Clock className="me-1 text-primary" size={16} />
-  {formatDistanceToNow(new Date(food.createdAt), { addSuffix: true })}
-</small>
+                  <Col md={6}>
+                    <Form.Group controlId="preOrderTime">
+                      <Form.Label className="fw-medium mb-2">Delivery Time</Form.Label>
+                      <div className="input-group border rounded-3 overflow-hidden">
+                        <span className="input-group-text bg-white border-0">
+                          <Clock size={18} className="text-muted" />
+                        </span>
+                        <Form.Control 
+                          type="time" 
+                          aria-label="Delivery Time"
+                          value={preOrderForm.time}
+                          onChange={(e) => setPreOrderForm({...preOrderForm, time: e.target.value})}
+                          className="border-0 py-2 px-3"
+                          style={{ outline: 'none', boxShadow: 'none' }}
+                        />
+                      </div>
+                      <small className="text-muted mt-1 d-block">Choose convenient time</small>
+                    </Form.Group>
+                  </Col>
 
-                </div>
-
-                {/* Food Title */}
-                <h5 className="mb-2 fw-bold food-title" style={{ fontSize: '1.3rem' }}>
-                  {food.title}
-                </h5>
-
-
-
-                {/* Chef Profile */}
-                <div className="chef-profile bg-white p-3 rounded-3 mt-auto" style={{ 
-                  border: '1px solid rgba(0,0,0,0.05)',
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.03)'
-                }}>
-                  <div className="d-flex justify-content-between align-items-center mb-2">
-                    {/* Chef Info */}
-                    <div className="d-flex align-items-center gap-3">
-                      <div 
-                        className="chef-avatar"
-                        onClick={() => {
-                          playSound();
-                          navigate(`/chef/${food.chef.id}`);
-                        }}
-                        style={{
-                          width: '50px',
-                          height: '50px',
-                          borderRadius: '50%',
-                          overflow: 'hidden',
-                          border: '2px solid #FF6B6B',
-                          cursor: 'pointer',
-                          flexShrink: 0,
-                          transition: 'transform 0.3s ease'
+                  <Col md={6}>
+                    <Form.Group controlId="servings">
+                      <Form.Label className="fw-medium mb-2">Number of Servings</Form.Label>
+                      <Form.Select 
+                        aria-label="Number of Servings"
+                        value={preOrderForm.servings}
+                        onChange={(e) => setPreOrderForm({...preOrderForm, servings: parseInt(e.target.value)})}
+                        className="py-2 px-3 border rounded-3"
+                        style={{ 
+                          height: 'calc(2.5rem + 10px)',
+                          boxShadow: 'none'
                         }}
                       >
-                        <img
-                          src={food.chef.profilePicture || '/images/chef.png'}
-                          alt={food.chef.user.Name}
-                          className="w-100 h-100 object-fit-cover"
-                        />
-                      </div>
+                        {[1,2,3,4,5,6,7,8].map(num => (
+                          <option key={num} value={num}>{num} serving{num > 1 ? 's' : ''}</option>
+                        ))}
+                      </Form.Select>
+                    </Form.Group>
+                  </Col>
 
-                      <div className="chef-info">
-                        <h6 className="mb-0 fw-bold text-truncate" style={{ maxWidth: '130px' }}>
-                          {food.chef.user.Name}
-                        </h6>
-                        <div className="d-flex align-items-center gap-2 mt-1">
-                          <div className="d-flex align-items-center">
-                            <StarFill className="text-warning" size={14} />
-                            <small className="fw-medium ms-1">{food.chef.rating || 'New'}</small>
+                  <Col md={6}>
+                    <Form.Group controlId="totalPrice">
+                      <Form.Label className="fw-medium mb-2">Total Price</Form.Label>
+                      <div className="d-flex align-items-center justify-content-center h-100 bg-light rounded-3 py-2">
+                        <h4 className="mb-0 fw-bold text-danger">
+                          {selectedFood ? `KES ${(selectedFood.price * preOrderForm.servings).toFixed(2)}` : ''}
+                        </h4>
+                      </div>
+                    </Form.Group>
+                  </Col>
+
+                  <Col xs={12}>
+                    <Form.Group controlId="specialInstructions">
+                      <Form.Label className="fw-medium mb-2">Special Instructions</Form.Label>
+                      <Form.Control 
+                        as="textarea" 
+                        rows={3} 
+                        placeholder="Any dietary restrictions or special requests..."
+                        value={preOrderForm.instructions}
+                        onChange={(e) => setPreOrderForm({...preOrderForm, instructions: e.target.value})}
+                        className="border rounded-3 p-3"
+                        style={{ boxShadow: 'none' }}
+                      />
+                      <small className="text-muted mt-1 d-block">We'll accommodate your requests</small>
+                    </Form.Group>
+                  </Col>
+                </Row>
+              </Form>
+            </Modal.Body>
+
+            <Modal.Footer className="bg-white border-0 pt-0">
+              <Button 
+                variant="outline-secondary" 
+                className="fw-medium px-4 py-2"
+                onClick={() => setShowPreOrderModal(false)}
+              >
+                Cancel
+              </Button>
+              <Button 
+                className="px-4 py-2 fw-bold text-white"
+                style={{
+                  background: '#FF4532',
+                  border: 'none'
+                }}
+                onClick={handleSubmitPreOrder}
+                disabled={!preOrderForm.date || !preOrderForm.time}
+              >
+                Confirm Pre-Order
+              </Button>
+            </Modal.Footer>
+          </Modal>
+
+          {/* Food Grid */}
+          <Row className="g-4 py-3">
+            {state.foods.map(food => (
+              <Col key={food.id} xs={12} md={6} lg={4} xl={4}>
+                <Card className="h-100 shadow-sm border-0 overflow-hidden food-card" style={{ 
+                  borderRadius: '16px', 
+                  transition: 'all 0.3s ease'
+                }}>
+                  <div className="position-relative" style={{ overflow: 'hidden' }}>
+                    <Carousel 
+                      interval={null} 
+                      indicators={food.photoUrls?.length > 1}
+                      controls={false}
+                    >
+                      {food.photoUrls?.map((img, i) => (
+                        <Carousel.Item key={i}>
+                          <div className="ratio ratio-4x3">
+                            <img
+                              src={img}
+                              alt={`${food.title} - Photo ${i+1}`}
+                              className="card-img-top object-fit-cover"
+                              style={{ transition: 'transform 0.5s ease' }}
+                            />
                           </div>
-                          <span className="text-muted fs-xs">•</span>
-                       
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Engagement Metrics */}
-                    <div className="d-flex align-items-center gap-3">
-                      <div className="engagement-metric">
-                        <div className="d-flex align-items-center justify-content-center gap-1 text-danger">
-                          <Button 
-                            variant="link" 
-                            className="p-0"
-                            onClick={() => handleLike(food.id)}
-                          >
-                            {food.likes > 0 ? <HeartFill size={20} /> : <Heart size={20} />}
-                          </Button>
-                          <span className="small fw-bold">{food.likes || 0}</span>
-                        </div>
-                        <div className="text-center mt-1">
-                          <small className="text-muted fw-medium">Likes</small>
-                        </div>
-                      </div>
-                      
-                      <div className="engagement-metric">
-                        <div className="d-flex align-items-center justify-content-center gap-1 text-success">
-                          <FaEye size={20} />
-                          <span className="small fw-bold">{food.views || 0}</span>
-                        </div>
-                        <div className="text-center mt-1">
-                          <small className="text-muted fw-medium">Views</small>
-                        </div>
-                      </div>
+                        </Carousel.Item>
+                      ))}
+                    </Carousel>
+                    
+                    <div className="position-absolute top-0 end-0 m-3">
+                      <Badge className="price-tag fw-bold px-3 py-2">
+                        KES {food.price}
+                      </Badge>
                     </div>
                   </div>
 
-                  {/* Opening Hours */}
-                 <div className="d-flex justify-content-between align-items-center mt-3 pt-2 border-top">
-  <div className="d-flex align-items-center gap-2">
-    <Clock size={16} className="text-primary" />
-    <small className="fw-medium">
-      {food.chef.openingHours || '8am - 6pm'}
-    </small>
-  </div>
-  <Badge
-    bg={isChefOpen(food.chef.openingHours || '8am - 2pm') ? 'success' : 'secondary'}
-    className={`p-2 fw-medium text-${isChefOpen(food.chef.openingHours || '8am - 2pm') ? 'light' : 'dark'}`}
-  >
-    {isChefOpen(food.chef.openingHours || '8am - 2pm') ? 'Available' : 'Closed'}
-  </Badge>
-</div>
-</div>
-                {/* Action Buttons */}
-                <div className="d-flex gap-3 mt-4 mb-4">
-               <Button 
-  className="flex-grow-1 py-2 fw-bold"
-  style={{ 
-    borderRadius: '12px', 
-    border: '2px solid #2ECC71', 
-    color: '#2ECC71',
-    backgroundColor: 'transparent'
-  }}
-  onClick={() => handlePreOrder(food)}
->
-  Pre-Order
-</Button>
+                  <Card.Body className="d-flex flex-column pt-3 pb-0">
+                    <div className="d-flex justify-content-between align-items-center mb-2">
+                      <Badge pill style={{ 
+                        background: 'rgba(255, 107, 107, 0.15)', 
+                        color: '#FF6B6B',
+                        fontSize: '0.9rem'
+                      }}>
+                        {food.mealType}
+                      </Badge>
+                      <small className="text-muted d-flex align-items-center" style={{ fontSize: '0.9rem' }}>
+                        <Clock className="me-1 text-primary" size={16} />
+                        {formatDistanceToNow(new Date(food.createdAt), { addSuffix: true })}
+                      </small>
+                    </div>
 
-                  <Button 
-                    variant="primary" 
-                    className="flex-grow-1 py-2 fw-bold"
-                    style={{ 
-                      borderRadius: '12px',
-                      background:  ' #FF4532',
-                      border: 'none'
-                    }}
-                    onClick={() => updateCart(food, 1)}
-                  >
-                    <CartPlus className="me-2" size={20} />
-                    Add to Cart
-                  </Button>
-                </div>
-              </Card.Body>
-              
-            </Card>
-          </Col>
-        ))}
-      </Row>
+                    <h5 className="mb-2 fw-bold food-title" style={{ fontSize: '1.3rem' }}>
+                      {food.title}
+                    </h5>
 
-      {/* Global Styles */}
-      <style jsx global>{`
-        .price-tag {
-          background: #FF4532 !important;
-          color: white !important;
-          font-size: 1.1rem;
-          box-shadow: 0 4px 12px rgba(255, 69, 50, 0.3);
-     
-        }
+                    <div className="chef-profile bg-white p-3 rounded-3 mt-auto" style={{ 
+                      border: '1px solid rgba(0,0,0,0.05)',
+                      boxShadow: '0 4px 12px rgba(0,0,0,0.03)'
+                    }}>
+                      <div className="d-flex justify-content-between align-items-center mb-2">
+                        <div className="d-flex align-items-center gap-3">
+                          <div 
+                            className="chef-avatar"
+                            onClick={() => {
+                              playSound();
+                              navigate(`/chef/${food.chef?.id}`);
+                            }}
+                            style={{
+                              width: '50px',
+                              height: '50px',
+                              borderRadius: '50%',
+                              overflow: 'hidden',
+                              border: '2px solid #FF6B6B',
+                              cursor: 'pointer',
+                              flexShrink: 0,
+                              transition: 'transform 0.3s ease'
+                            }}
+                          >
+                            <img
+                              src={food.chef?.profilePicture || '/images/chef.png'}
+                              alt={food.chef?.user?.Name}
+                              className="w-100 h-100 object-fit-cover"
+                            />
+                          </div>
 
-        .carousel-indicators {
-          position: absolute;
-          bottom: 15px;
-          left: 50%;
-          transform: translateX(-50%);
-          display: flex;
-          justify-content: center;
-          padding: 0;
-          margin: 0;
-          list-style: none;
-          z-index: 10;
-        }
-        
-        .carousel-indicators button {
-          width: 8px;
-          height: 8px;
-          border-radius: 50%;
-          background-color: rgba(255,255,255,0.5);
-          border: none;
-          margin: 0 5px;
-          padding: 0;
-          cursor: pointer;
-          transition: all 0.3s ease;
-        }
-        
-        .carousel-indicators .active {
-          background-color: white;
-          width: 25px;
-          border-radius: 5px;
-        }
+                          <div className="chef-info">
+                            <h6 className="mb-0 fw-bold text-truncate" style={{ maxWidth: '130px' }}>
+                              {food.chef?.user?.Name}
+                            </h6>
+                            <div className="d-flex align-items-center gap-2 mt-1">
+                              <div className="d-flex align-items-center">
+                                <StarFill className="text-warning" size={14} />
+                                <small className="fw-medium ms-1">{food.chef?.rating || 'New'}</small>
+                              </div>
+                              <span className="text-muted fs-xs">•</span>
+                            </div>
+                          </div>
+                        </div>
 
-        .food-card:hover {
-          transform: translateY(-5px);
-          box-shadow: 0 15px 30px rgba(0,0,0,0.1) !important;
-        }
-        
-        .chef-avatar:hover {
-          transform: scale(1.05);
-        }
+                        <div className="d-flex align-items-center gap-3">
+                          <div className="engagement-metric">
+                            <div className="d-flex align-items-center justify-content-center gap-1 text-danger">
+                              <Button 
+                                variant="link" 
+                                className="p-0"
+                                onClick={() => handleLike(food.id)}
+                              >
+                                {food.likes > 0 ? <HeartFill size={20} /> : <Heart size={20} />}
+                              </Button>
+                              <span className="small fw-bold">{food.likes || 0}</span>
+                            </div>
+                            <div className="text-center mt-1">
+                              <small className="text-muted fw-medium">Likes</small>
+                            </div>
+                          </div>
+                          
+                          <div className="engagement-metric">
+                            <div className="d-flex align-items-center justify-content-center gap-1 text-success">
+                              <FaEye size={20} />
+                              <span className="small fw-bold">{food.views || 0}</span>
+                            </div>
+                            <div className="text-center mt-1">
+                              <small className="text-muted fw-medium">Views</small>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
 
-        .engagement-metric {
-          min-width: 60px;
-          text-align: center;
-          background: rgba(0,0,0,0.02);
-          border-radius: 8px;
-          padding: 5px 8px;
-        }
+                      <div className="d-flex justify-content-between align-items-center mt-3 pt-2 border-top">
+                        <div className="d-flex align-items-center gap-2">
+                          <Clock size={16} className="text-primary" />
+                          <small className="fw-medium">
+                            {food.chef?.openingHours || '8am - 6pm'}
+                          </small>
+                        </div>
+                        <Badge
+                          bg={isChefOpen(food.chef?.openingHours || '8am - 2pm') ? 'success' : 'secondary'}
+                          className={`p-2 fw-medium text-${isChefOpen(food.chef?.openingHours || '8am - 2pm') ? 'light' : 'dark'}`}
+                        >
+                          {isChefOpen(food.chef?.openingHours || '8am - 2pm') ? 'Available' : 'Closed'}
+                        </Badge>
+                      </div>
+                    </div>
 
-        @media (max-width: 767.98px) {
-          .food-title {
-            font-size: 1.25rem;
-          }
-          .chef-info {
-            max-width: 130px;
-          }
-          .engagement-metric {
-            min-width: 50px;
-            padding: 4px 6px;
-          }
-        }
+                    <div className="d-flex gap-3 mt-4 mb-4">
+                      <Button 
+                        className="flex-grow-1 py-2 fw-bold"
+                        style={{ 
+                          borderRadius: '12px', 
+                          border: '2px solid #2ECC71', 
+                          color: '#2ECC71',
+                          backgroundColor: 'transparent'
+                        }}
+                        onClick={() => handlePreOrder(food)}
+                      >
+                        Pre-Order
+                      </Button>
 
-        @media (min-width: 768px) and (max-width: 1199.98px) {
-          .food-title {
-            font-size: 1.3rem;
-          }
-        }
-
-        @media (min-width: 1200px) {
-          .food-card {
-            max-width: 380px;
-            margin: 0 auto;
-          }
-          .food-title {
-            font-size: 1.4rem;
-          }
-        }
-      `}</style>
-    </div>
-
-
-</div>
-)}
-
+                      <Button 
+                        variant="primary" 
+                        className="flex-grow-1 py-2 fw-bold"
+                        style={{ 
+                          borderRadius: '12px',
+                          background: '#FF4532',
+                          border: 'none'
+                        }}
+                        onClick={() => updateCart(food, 1)}
+                      >
+                        <CartPlus className="me-2" size={20} />
+                        Add to Cart
+                      </Button>
+                    </div>
+                  </Card.Body>
+                </Card>
+              </Col>
+            ))}
+          </Row>
+        </div>
+      </div>
 
       {/* Registration Modals */}
       <ChefRegistrationModal 
@@ -1915,7 +1498,7 @@ const RiderRegistrationModal = ({ show, onClose, onSubmit, userId }) => {
         onSubmit={registerChef}
       />
 
-      <RiderRegistrationModal
+      <RiderRegistration
         show={state.showRiderReg}
         onClose={() => setState(s => ({ ...s, showRiderReg: false }))}
         onSubmit={handleRiderRegistration}
@@ -1926,177 +1509,12 @@ const RiderRegistrationModal = ({ show, onClose, onSubmit, userId }) => {
         show={state.showCart}
         onClose={() => setState(s => ({ ...s, showCart: false }))}
         cart={state.cart}
+        updateCart={updateCart}
+        onCheckout={handleCheckout}
+        orderHistory={orderHistory}
       />
     </Container>
   );
 };
 
-
-
-
-
-
-
-
-const DELIVERY_FEE = 100;
-
-const CartContainer = styled(Offcanvas)`
-  width: 380px !important;
-  box-shadow: -4px 0 20px rgba(0,0,0,0.05);
-  background: #f8f9fa;
-`;
-
-const CartItem = styled(ListGroup.Item)`
-  transition: all 0.2s ease;
-  background: transparent !important;
-  border-bottom: 1px solid #eee !important;
-  
-  &:hover {
-    transform: translateX(4px);
-    background: white !important;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-  }
-`;
-
-const FoodImage = styled.img`
-  width: 50px;
-  height: 50px;
-  border-radius: 8px;
-  object-fit: cover;
-  border: 2px solid #fff;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-`;
-
-const FixedFooter = styled.div`
-  position: sticky;
-  bottom: 0;
-  background: white;
-  padding: 1.5rem;
-  box-shadow: 0 -4px 20px rgba(0,0,0,0.05);
-  border-radius: 12px 12px 0 0;
-`;
-
-const RemoveButton = styled(Button)`
-  opacity: 0.7;
-  transition: all 0.2s ease;
-  
-  &:hover {
-    opacity: 1;
-    transform: scale(1.1);
-    color: #dc3545 !important;
-  }
-`;
-const CartSidebar = ({ show, onClose, cart, updateCart, onCheckout }) => {
-  const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-  const total = subtotal + DELIVERY_FEE;
-  
-
-  return (
-    <CartContainer show={show} onHide={onClose} placement="end">
-      <Offcanvas.Header closeButton className="border-bottom bg-white">
-        <Offcanvas.Title className="d-flex align-items-center gap-2">
-          <CartPlus fontSize={24} className="text-primary" />
-          <span className="fw-bold ">Your Food Cart</span>
-          <Badge bg="secondary"   pill>{cart.length}</Badge>
-        </Offcanvas.Title>
-      </Offcanvas.Header>
-
-      <Offcanvas.Body className="d-flex flex-column p-0">
-        <div className="flex-grow-1 overflow-auto p-3">
-          {cart.length === 0 ? (
-            <div className="text-center text-muted py-4">
-              Your cart is empty. Start adding delicious items!
-            </div>
-          ) : (
-            <ListGroup variant="flush">
-              {cart.map(item => (
-                <CartItem key={item.id} className="py-3 px-4">
-                  <Stack direction="horizontal" gap={3} className="align-items-start">
-                    <FoodImage 
-                      src={item.photoUrls || '/placeholder-food.jpg'}
-                      alt={item.title}
-                      className="mt-1"
-                    />
-                    
-                    <Stack className="flex-grow-1">
-                      <h6 className="mb-1 fw-semibold mb-2 ms-3 ">{item.title}</h6>
-                      
-                      <Stack direction="horizontal" gap={2} className="align-items-center ms-3">
-                        <Button 
-                          variant="outline-secondary" 
-                          size="sm"
-                          className="d-flex align-items-center justify-content-center p-1"
-                          style={{ width: '32px' }}
-                          onClick={() => updateCart(item, -1)}
-                          disabled={item.quantity === 1}
-                        >
-                          <Dash />
-                        </Button>
-                        
-                        <span className="text-primary fw-bold">{item.quantity}</span>
-                        
-                        <Button 
-                          variant="outline-primary" 
-                          size="sm"
-                          className="d-flex align-items-center justify-content-center p-1"
-                          style={{ width: '32px' }}
-                          onClick={() => updateCart(item, 1)}
-                        >
-                          <Plus />
-                        </Button>
-                      </Stack>
-                    </Stack>
-
-                    <Stack className="align-items-end">
-                      <div className="text-end mb-2">
-                        <span className="fw-semibold text-dark">KSh {(item.price * item.quantity).toFixed(2)}</span>
-                      </div>
-                      
-                      <Button 
-                       
-                        size="sm"
-                        className="d-flex align-items-center border-0 bgred gap-1"
-                        onClick={() => updateCart(item, -item.quantity)}
-                      >
-                        <Trash size={14} />
-                        <span   >Remove</span>
-                      </Button>
-                    </Stack>
-                  </Stack>
-                </CartItem>
-              ))}
-            </ListGroup>
-          )}
-        </div>
-
-        <FixedFooter>
-          <div className="mb-3">
-            <div className="d-flex justify-content-between mb-2">
-              <span className="text-muted">Subtotal:</span>
-              <span className="fw-semibold">KSh {subtotal.toFixed(2)}</span>
-            </div>
-            <div className="d-flex justify-content-between mb-3">
-              <span className="text-muted">Delivery Fee:</span>
-              <span className="fw-semibold">KSh {DELIVERY_FEE.toFixed(2)}</span>
-            </div>
-            <div className="d-flex justify-content-between pt-2 border-top">
-              <span className="fw-bold">Total:</span>
-              <span className="fw-bold text-primary">KSh {total.toFixed(2)}</span>
-            </div>
-          </div>
-          <Button 
-         
-            size="lg" 
-            className="w-100 fw-bold py-3 bgred border-0"
-            onClick={onCheckout}
-            disabled={cart.length === 0}
-          >
-            Proceed to Checkout →
-          </Button>
-        </FixedFooter>
-      </Offcanvas.Body>
-    </CartContainer>
-  );
-};
-
-export   default    FoodPlatform;
+export default FoodPlatform;

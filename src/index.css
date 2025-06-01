@@ -1,5 +1,6 @@
 
 /* foods */
+
 :root {
   --primary-red: #FF4532;
   --dark-red: #D93A28;
@@ -15,4 +16,11 @@ svg {
   background: linear-gradient(145deg, #ff7464, #ff4532);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
+}
+
+
+*{
+  margin:  0;
+  padding: 0;
+  box-sizing: border-box;
 }
