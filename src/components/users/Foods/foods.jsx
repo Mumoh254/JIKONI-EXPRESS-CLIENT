@@ -3,10 +3,12 @@ import {
   Container, Row, Col, Card, Button, Spinner, Alert, Badge,
   Modal, Form, Offcanvas, Stack, ListGroup, Tabs, Tab, ButtonGroup, Carousel, ProgressBar
 } from 'react-bootstrap';
+
 import {
   GeoAlt, Star, StarHalf, Cart, Scooter,
   CheckCircle, EggFried, FilterLeft, Calendar, Clock as ClockIcon, StarFill, CartPlus, Person, Clock, Instagram, Facebook, Twitter, Plus, Dash, Trash, Pencil, Bell
 } from 'react-bootstrap-icons';
+
 import { IoBarChartSharp } from "react-icons/io5";
 import { useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
@@ -21,6 +23,8 @@ import RiderRegistration from '../../modals/riderRegistration';
 import popSound from '../../../../public/audio/cliks.mp3';
 import { jwtDecode } from "jwt-decode";
 import moment from 'moment-timezone';
+import CartSidebar from '../../cartAndOrder/cart';
+import  OrderConfirmation from '../../cartAndOrder/orderConfirm'
 
 const theme = {
   primary: '#2563eb',
@@ -98,395 +102,7 @@ const StoryItem = styled.div`
   }
 `;
 
-const DELIVERY_FEE = 100;
 
-const CartContainer = styled(Offcanvas)`
-  width: 380px !important;
-  box-shadow: -4px 0 20px rgba(0,0,0,0.05);
-  background: #f8f9fa;
-`;
-
-const CartItem = styled(ListGroup.Item)`
-  transition: all 0.2s ease;
-  background: transparent !important;
-  border-bottom: 1px solid #eee !important;
-  
-  &:hover {
-    transform: translateX(4px);
-    background: white !important;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-  }
-`;
-
-const FoodImage = styled.img`
-  width: 50px;
-  height: 50px;
-  border-radius: 8px;
-  object-fit: cover;
-  border: 2px solid #fff;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-`;
-
-const FixedFooter = styled.div`
-  position: sticky;
-  bottom: 0;
-  background: white;
-  padding: 1.5rem;
-  box-shadow: 0 -4px 20px rgba(0,0,0,0.05);
-  border-radius: 12px 12px 0 0;
-`;
-
-const RemoveButton = styled(Button)`
-  opacity: 0.7;
-  transition: all 0.2s ease;
-  
-  &:hover {
-    opacity: 1;
-    transform: scale(1.1);
-    color: #dc3545 !important;
-  }
-`;
-
-const CartSidebar = ({ show, onClose, cart, updateCart, onCheckout, orderHistory }) => {
-  const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-  const total = subtotal + DELIVERY_FEE;
-  const [activeTab, setActiveTab] = useState('cart');
-
-  return (
-    <CartContainer show={show} onHide={onClose} placement="end">
-      <Offcanvas.Header closeButton className="border-bottom bg-white">
-        <Offcanvas.Title className="d-flex align-items-center gap-2">
-          <CartPlus fontSize={24} className="text-primary" />
-          <span className="fw-bold">Your Food Cart</span>
-          <Badge bg="secondary" pill>{cart.length}</Badge>
-        </Offcanvas.Title>
-      </Offcanvas.Header>
-
-      <Offcanvas.Body className="d-flex flex-column p-0">
-        <Tabs
-          activeKey={activeTab}
-          onSelect={setActiveTab}
-          id="cart-tabs"
-          className="mb-3 px-3"
-          variant="pills"
-        >
-          <Tab eventKey="cart" title="Current Order">
-            <div className="flex-grow-1 overflow-auto p-3">
-              {cart.length === 0 ? (
-                <div className="text-center text-muted py-4">
-                  Your cart is empty. Start adding delicious items!
-                </div>
-              ) : (
-                <ListGroup variant="flush">
-                  {cart.map(item => (
-                    <CartItem key={item.id} className="py-3 px-4">
-                      <Stack direction="horizontal" gap={3} className="align-items-start">
-                        <FoodImage 
-                          src={item.photoUrls?.[0] || '/placeholder-food.jpg'}
-                          alt={item.title}
-                          className="mt-1"
-                        />
-                        
-                        <Stack className="flex-grow-1">
-                          <h6 className="mb-1 fw-semibold mb-2 ms-3">{item.title}</h6>
-                          
-                          {item.isPreOrder && (
-                            <div className="ms-3 mb-2">
-                              <Badge bg="info" className="me-2">
-                                Pre-Order
-                              </Badge>
-                              <small className="text-muted">
-                                {item.preOrderDate} at {item.preOrderTime}
-                              </small>
-                            </div>
-                          )}
-                          
-                          <Stack direction="horizontal" gap={2} className="align-items-center ms-3">
-                            <Button 
-                              variant="outline-secondary" 
-                              size="sm"
-                              className="d-flex align-items-center justify-content-center p-1"
-                              style={{ width: '32px' }}
-                              onClick={() => updateCart(item, -1)}
-                              disabled={item.quantity === 1}
-                            >
-                              <Dash />
-                            </Button>
-                            
-                            <span className="text-primary fw-bold">{item.quantity}</span>
-                            
-                            <Button 
-                              variant="outline-primary" 
-                              size="sm"
-                              className="d-flex align-items-center justify-content-center p-1"
-                              style={{ width: '32px' }}
-                              onClick={() => updateCart(item, 1)}
-                            >
-                              <Plus />
-                            </Button>
-                          </Stack>
-                        </Stack>
-
-                        <Stack className="align-items-end">
-                          <div className="text-end mb-2">
-                            <span className="fw-semibold text-dark">KSh {(item.price * item.quantity).toFixed(2)}</span>
-                          </div>
-                          
-                          <Button 
-                            size="sm"
-                            className="d-flex align-items-center border-0 bgred gap-1"
-                            onClick={() => updateCart(item, -item.quantity)}
-                          >
-                            <Trash size={14} />
-                            <span>Remove</span>
-                          </Button>
-                        </Stack>
-                      </Stack>
-                    </CartItem>
-                  ))}
-                </ListGroup>
-              )}
-            </div>
-
-            <FixedFooter>
-              <div className="mb-3">
-                <div className="d-flex justify-content-between mb-2">
-                  <span className="text-muted">Subtotal:</span>
-                  <span className="fw-semibold">KSh {subtotal.toFixed(2)}</span>
-                </div>
-                <div className="d-flex justify-content-between mb-3">
-                  <span className="text-muted">Delivery Fee:</span>
-                  <span className="fw-semibold">KSh {DELIVERY_FEE.toFixed(2)}</span>
-                </div>
-                <div className="d-flex justify-content-between pt-2 border-top">
-                  <span className="fw-bold">Total:</span>
-                  <span className="fw-bold text-primary">KSh {total.toFixed(2)}</span>
-                </div>
-              </div>
-              <Button 
-                size="lg" 
-                className="w-100 fw-bold py-3 bgred border-0"
-                onClick={onCheckout}
-                disabled={cart.length === 0}
-              >
-                Proceed to Checkout →
-              </Button>
-            </FixedFooter>
-          </Tab>
-          
-          <Tab eventKey="history" title="Order History">
-            <div className="p-3">
-              {orderHistory.length === 0 ? (
-                <div className="text-center text-muted py-4">
-                  You haven't placed any orders yet
-                </div>
-              ) : (
-                <ListGroup variant="flush">
-                  {orderHistory.map(order => (
-                    <ListGroup.Item key={order.id} className="py-3 border-bottom">
-                      <div className="d-flex justify-content-between align-items-center mb-2">
-                        <div>
-                          <h6 className="mb-0 fw-bold">Order #{order.id.slice(0, 8)}</h6>
-                          <small className="text-muted">
-                            {new Date(order.date).toLocaleString()}
-                          </small>
-                        </div>
-                        <Badge bg={order.status === 'delivered' ? 'success' : 'warning'}>
-                          {order.status}
-                        </Badge>
-                      </div>
-                      
-                      <div className="mb-2">
-                        <strong>Items:</strong> 
-                        <span className="ms-2">
-                          {order.items.map(i => i.title).join(', ')}
-                        </span>
-                      </div>
-                      
-                      <div className="d-flex justify-content-between align-items-center">
-                        <div>
-                          <strong>Total:</strong> KSh {order.total.toFixed(2)}
-                        </div>
-                        
-                        <div className="d-flex gap-2">
-                          <Button 
-                            variant="outline-primary"
-                            size="sm"
-                            onClick={() => console.log('Call Chef')}
-                          >
-                            <Person className="me-1" /> Chef
-                          </Button>
-                          {order.rider && (
-                            <Button 
-                              variant="outline-success"
-                              size="sm"
-                              onClick={() => console.log('Call Rider')}
-                            >
-                              <Scooter className="me-1" /> Rider
-                            </Button>
-                          )}
-                        </div>
-                      </div>
-                    </ListGroup.Item>
-                  ))}
-                </ListGroup>
-              )}
-            </div>
-          </Tab>
-        </Tabs>
-      </Offcanvas.Body>
-    </CartContainer>
-  );
-};
-
-const OrderConfirmation = ({ cart, location, onConfirm, onBack }) => {
-  const [locationError, setLocationError] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState('mpesa');
-  const [phoneNumber, setPhoneNumber] = useState('');
-  
-  const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-  const total = subtotal + DELIVERY_FEE;
-
-  const handleConfirmOrder = () => {
-    setIsLoading(true);
-    
-    // Simulate API call
-    setTimeout(() => {
-      setIsLoading(false);
-      onConfirm();
-    }, 1500);
-  };
-
-  return (
-    <Container className="py-5">
-      <Row className="justify-content-center">
-        <Col md={8} lg={6}>
-          <Card className="shadow-sm">
-            <Card.Header className="bg-white border-0 py-4">
-              <h2 className="text-center mb-0">Confirm Your Order</h2>
-            </Card.Header>
-            
-            <Card.Body>
-              <div className="mb-4">
-                <h5 className="mb-3">Delivery Location</h5>
-                {location ? (
-                  <div className="d-flex align-items-center bg-light p-3 rounded">
-                    <GeoAlt size={24} className="text-primary me-3" />
-                    <div>
-                      <p className="mb-0 fw-bold">{location.address}</p>
-                      <small className="text-muted">
-                        Lat: {location.lat.toFixed(6)}, Lng: {location.lng.toFixed(6)}
-                      </small>
-                    </div>
-                  </div>
-                ) : (
-                  <Alert variant="warning" className="d-flex align-items-center">
-                    <ClockIcon size={20} className="me-2" />
-                    <span>Fetching your location...</span>
-                  </Alert>
-                )}
-                {locationError && (
-                  <Alert variant="danger" className="mt-2">
-                    {locationError}
-                  </Alert>
-                )}
-              </div>
-              
-              <div className="mb-4">
-                <h5 className="mb-3">Order Summary</h5>
-                <ListGroup variant="flush">
-                  {cart.map(item => (
-                    <ListGroup.Item key={item.id} className="d-flex justify-content-between">
-                      <div>
-                        {item.title} 
-                        {item.isPreOrder && (
-                          <Badge bg="info" className="ms-2">
-                            Pre-Order
-                          </Badge>
-                        )}
-                        <span className="text-muted d-block">x {item.quantity}</span>
-                      </div>
-                      <div>
-                        KSh {(item.price * item.quantity).toFixed(2)}
-                      </div>
-                    </ListGroup.Item>
-                  ))}
-                  
-                  <ListGroup.Item className="d-flex justify-content-between">
-                    <span>Subtotal</span>
-                    <span>KSh {subtotal.toFixed(2)}</span>
-                  </ListGroup.Item>
-                  
-                  <ListGroup.Item className="d-flex justify-content-between">
-                    <span>Delivery Fee</span>
-                    <span>KSh {DELIVERY_FEE.toFixed(2)}</span>
-                  </ListGroup.Item>
-                  
-                  <ListGroup.Item className="d-flex justify-content-between fw-bold fs-5">
-                    <span>Total</span>
-                    <span className="text-primary">KSh {total.toFixed(2)}</span>
-                  </ListGroup.Item>
-                </ListGroup>
-              </div>
-              
-              <div className="mb-4">
-                <h5 className="mb-3">Payment Method</h5>
-                <Form.Select 
-                  value={paymentMethod}
-                  onChange={(e) => setPaymentMethod(e.target.value)}
-                  className="mb-3"
-                >
-                  <option value="mpesa">M-Pesa</option>
-                  <option value="card">Credit/Debit Card</option>
-                  <option value="cash">Cash on Delivery</option>
-                </Form.Select>
-                
-                {paymentMethod === 'mpesa' && (
-                  <Form.Group className="mb-3">
-                    <Form.Label>M-Pesa Phone Number</Form.Label>
-                    <Form.Control 
-                      type="tel"
-                      placeholder="07XX XXX XXX"
-                      value={phoneNumber}
-                      onChange={(e) => setPhoneNumber(e.target.value)}
-                    />
-                  </Form.Group>
-                )}
-              </div>
-            </Card.Body>
-            
-            <Card.Footer className="bg-white border-0 py-3">
-              <div className="d-grid gap-3">
-                <Button 
-                  variant="primary"
-                  size="lg"
-                  onClick={handleConfirmOrder}
-                  disabled={isLoading || !location}
-                >
-                  {isLoading ? (
-                    <>
-                      <Spinner animation="border" size="sm" className="me-2" />
-                      Processing Order...
-                    </>
-                  ) : 'Confirm Order'}
-                </Button>
-                
-                <Button 
-                  variant="outline-secondary"
-                  size="lg"
-                  onClick={onBack}
-                >
-                  Back to Cart
-                </Button>
-              </div>
-            </Card.Footer>
-          </Card>
-        </Col>
-      </Row>
-    </Container>
-  );
-};
 
 const FoodPlatform = () => {
   const [state, setState] = useState({
@@ -911,7 +527,7 @@ const FoodPlatform = () => {
           key={food.id}
           className="story-item"
           onClick={() => navigate(`/chef/${food.chefId}`)}
-          style={{ marginRight: '1rem' }}
+          style={{ marginRight: '0.4rem' }}
         >
           <div className="story-image-wrapper position-relative">
             <div className="story-gradient-border">
@@ -921,15 +537,15 @@ const FoodPlatform = () => {
                 className="story-img"
               />
             </div>
-            <div className="story-details">
-              <span className="chef-name">{food.chef.user.Name}</span>
+            <div className="story-details  ">
+              <span className="chef-name  ">{food.chef.user.Name}</span>
          <Badge pill className="location-badge overflow-hidden p-0">
   <GeoAlt size={14} className="me-1 ms-1 text-white" />
 
   <marquee
     behavior="scroll"
     direction="left"
-    scrollAmount="3"
+    scrollAmount="1.3"
     className="marquee-badge w-100"
   >
     <span className="area-text text-white fw-bold me-2">

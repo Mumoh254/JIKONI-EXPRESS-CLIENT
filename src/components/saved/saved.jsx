@@ -1,10 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Row, Col, Card, Spinner, Carousel, Badge, Button } from 'react-bootstrap';
-import { HeartFill, GeoAlt, StarFill, CashCoin, Heart } from 'react-bootstrap-icons';
+import { Row, Col, Card, Spinner, Carousel, Badge, Button, Dropdown } from 'react-bootstrap';
+import { 
+  HeartFill, 
+  GeoAlt, 
+  StarFill, 
+  CashCoin, 
+  Heart, 
+  ShareFill,
+  Clock,
+  PersonCircle
+} from 'react-bootstrap-icons';
 
 const SavedFoods = ({ user }) => {
-  const BASE_URL = "http://localhost:8000/apiV1/smartcity-ke";
+  const BASE_URL = "https://neuro-apps-api-express-js-production-redy.onrender.com/apiV1/smartcity-ke";
   const [savedFoods, setSavedFoods] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -14,19 +23,28 @@ const SavedFoods = ({ user }) => {
     const fetchSavedFoods = async () => {
       try {
         setLoading(true);
-        // Simulate API delay for demo purposes
-        await new Promise(resolve => setTimeout(resolve, 1500));
-        
+        await new Promise(resolve => setTimeout(resolve, 1500)); // Simulated delay
+
         const response = await fetch(`${BASE_URL}/user/smart_ke_WT_536237943/saved-foods`);
         if (!response.ok) {
           throw new Error('Failed to fetch saved foods');
         }
 
         const data = await response.json();
-        setSavedFoods(data);
-      } catch (error) {
-        console.error('Error fetching saved foods:', error);
-        setError(error.message);
+    const enhancedData = data.map(food => ({
+  ...food,
+  likes: Math.floor(Math.random() * 1000) + 50,
+  shares: Math.floor(Math.random() * 200) + 10,
+  postedDate: new Date(Date.now() - Math.floor(Math.random() * 30) * 24 * 60 * 60 * 1000),
+  chefName: `Chef ${String(food.chefId || 'Unknown').substring(0, 6)}`,
+  isHot: Math.random() > 0.7,
+  isMostLiked: Math.random() > 0.9,
+}));
+
+        setSavedFoods(enhancedData);
+      } catch (err) {
+        console.error('Error fetching saved foods:', err);
+        setError(err.message);
       } finally {
         setLoading(false);
       }
@@ -35,18 +53,53 @@ const SavedFoods = ({ user }) => {
     fetchSavedFoods();
   }, []);
 
-  // Function to remove a saved food item
   const handleRemoveSaved = (foodId) => {
     setSavedFoods(prev => prev.filter(food => food.id !== foodId));
   };
 
-  // Filter foods based on active filter
   const filteredFoods = activeFilter === 'all' 
     ? savedFoods 
     : savedFoods.filter(food => food.cuisineType === activeFilter);
 
-  // Get unique cuisine types for filter buttons
   const cuisineTypes = [...new Set(savedFoods.map(food => food.cuisineType))];
+
+  // Calculate days ago
+  const getDaysAgo = (date) => {
+    const diffDays = Math.floor((new Date() - new Date(date)) / (1000 * 60 * 60 * 24));
+    if (diffDays === 0) return 'Today';
+    if (diffDays === 1) return 'Yesterday';
+    return `${diffDays} days ago`;
+  };
+
+  // Share functionality
+  const shareFood = (platform, food) => {
+    const message = `Check out this amazing dish "${food.title}" by ${food.chefName} on Jikoni Express! 🍲🔥`;
+    const url = `${window.location.origin}/food/${food.id}`;
+    
+    switch(platform) {
+      case 'whatsapp':
+        window.open(`https://wa.me/?text=${encodeURIComponent(`${message} ${url}`)}`, '_blank');
+        break;
+      case 'instagram':
+        alert(`Share this food to Instagram:\n${message}\n${url}`);
+        break;
+      case 'copy':
+        navigator.clipboard.writeText(`${message} ${url}`);
+        alert('Link copied to clipboard!');
+        break;
+      default:
+        if (navigator.share) {
+          navigator.share({
+            title: `${food.title} - Jikoni Express`,
+            text: message,
+            url: url,
+          });
+        } else {
+          navigator.clipboard.writeText(`${message} ${url}`);
+          alert('Link copied to clipboard!');
+        }
+    }
+  };
 
   if (error) {
     return (
@@ -62,10 +115,10 @@ const SavedFoods = ({ user }) => {
 
   return (
     <div className="container py-5">
-      <div className="text-center mb-5">
+      <div className="text-center ">
         <h1 className="fw-bold mb-3" style={{ 
           color: '#FF6B6B',
-          textShadow: '2px 2px 4px rgba(0,0,0,0.1)',
+       
           position: 'relative',
           display: 'inline-block'
         }}>
@@ -73,17 +126,17 @@ const SavedFoods = ({ user }) => {
             color: '#FF6B6B', 
             filter: 'drop-shadow(1px 1px 1px rgba(0,0,0,0.2))' 
           }} />
-          Your Saved Foods
+          Your Favourites - Share with Others
           <div className="position-absolute bottom-0 start-50 translate-middle-x" 
             style={{
               width: '80px',
               height: '4px',
-              background: 'linear-gradient(90deg, #FF6B6B, #FFD166)',
+              background: '#FF4532',
               borderRadius: '2px'
             }}
           ></div>
         </h1>
-        <p className="text-muted">Your personal collection of delicious favorites</p>
+        <p className="">Your personal collection of delicious favorites</p>
       </div>
       
       {savedFoods.length > 0 && (
@@ -156,7 +209,21 @@ const SavedFoods = ({ user }) => {
                   onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-8px)'}
                   onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}
                 >
-                  <div className="position-absolute top-3 end-3 z-2">
+                  {/* Trending Badges */}
+                  <div className="position-absolute top-3 start-3 z-2">
+                    {food.isHot && (
+                      <Badge pill bg="danger" className="me-1">
+                        🔥 Hot This Week
+                      </Badge>
+                    )}
+                    {food.isMostLiked && (
+                      <Badge pill bg="warning" text="dark" className="me-1">
+                        👑 Most Liked in Nairobi
+                      </Badge>
+                    )}
+                  </div>
+                  
+                  <div className="position-absolute top-3 end-3 z-2 d-flex gap-2">
                     <Button 
                       variant="danger" 
                       size="sm" 
@@ -166,6 +233,29 @@ const SavedFoods = ({ user }) => {
                     >
                       <HeartFill size={14} />
                     </Button>
+                    
+                    <Dropdown>
+                      <Dropdown.Toggle 
+                        variant="success" 
+                        size="sm"
+                        className="rounded-circle p-1 d-flex align-items-center justify-content-center"
+                        style={{ width: '32px', height: '32px', boxShadow: '0 2px 6px rgba(0,0,0,0.2)' }}
+                      >
+                        <ShareFill size={14} />
+                      </Dropdown.Toggle>
+
+                      <Dropdown.Menu>
+                        <Dropdown.Item onClick={() => shareFood('whatsapp', food)}>
+                          WhatsApp
+                        </Dropdown.Item>
+                        <Dropdown.Item onClick={() => shareFood('instagram', food)}>
+                          Instagram
+                        </Dropdown.Item>
+                        <Dropdown.Item onClick={() => shareFood('copy', food)}>
+                          Copy Link
+                        </Dropdown.Item>
+                      </Dropdown.Menu>
+                    </Dropdown>
                   </div>
                   
                   <Carousel interval={null} indicators={food.photoUrls?.length > 1}>
@@ -195,7 +285,7 @@ const SavedFoods = ({ user }) => {
                       <h5 className="fw-bold mb-0" style={{ color: '#2d3436' }}>
                         {food.title}
                       </h5>
-                      <Badge pill className="fs-6 fw-normal" style={{ 
+                      <Badge  className="fs-6 fw-normal" style={{ 
                         backgroundColor: '#FF6B6B',
                         boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
                       }}>
@@ -203,11 +293,48 @@ const SavedFoods = ({ user }) => {
                       </Badge>
                     </div>
 
-                    <div className="d-flex align-items-center mb-2">
-                      <GeoAlt className="me-2" style={{ color: '#6c757d' }} />
-                      <small className="text-muted">{food.location}</small>
+                    {/* Chef Info with Navigation */}
+                    <div className="d-flex align-items-center mb-1">
+                      <PersonCircle className="me-2" style={{ color: '#6c757d' }} />
+                      <Link 
+                        to={`/chef/${food.chefId}`} 
+                        className="text-decoration-none fw-medium"
+                        style={{ color: '#4a4a8a' }}
+                      >
+                        {food.chefName}
+                      </Link>
                     </div>
 
+                    {/* Location and Time */}
+                    <div className="d-flex justify-content-between mb-2">
+                      <div className="d-flex align-items-center">
+                        <GeoAlt className="me-2" style={{ color: '#6c757d' }} />
+                        <small className="text-muted">{food.location}</small>
+                      </div>
+                      <div className="d-flex align-items-center">
+                        <Clock className="me-2" style={{ color: '#6c757d' }} />
+                        <small className="text-muted">{getDaysAgo(food.postedDate)}</small>
+                      </div>
+                    </div>
+
+                    {/* Engagement Stats */}
+                    <div className="d-flex justify-content-between align-items-center mb-3 py-2 px-3 rounded"
+                      style={{ backgroundColor: '#f8f9fa' }}>
+                      <div className="d-flex align-items-center">
+                        <HeartFill className="me-1" style={{ color: '#FF6B6B' }} />
+                        <small className="fw-medium">
+                          {food.likes} {food.likes > 1 ? 'likes' : 'like'}
+                        </small>
+                      </div>
+                      <div className="d-flex align-items-center">
+                        <ShareFill className="me-1" style={{ color: '#4ECDC4' }} />
+                        <small className="fw-medium">
+                          {food.shares} {food.shares > 1 ? 'shares' : 'share'}
+                        </small>
+                      </div>
+                    </div>
+
+                    {/* Food Tags */}
                     <div className="d-flex gap-2 flex-wrap mb-3">
                       <Badge pill className="fw-normal" style={{ 
                         backgroundColor: '#4ECDC4',
@@ -243,7 +370,7 @@ const SavedFoods = ({ user }) => {
                           }}
                         >
                           <StarFill className="me-2" />
-                          View Chef
+                          View Chef Profile
                         </Link>
                         <Button variant="outline-primary" className="rounded-pill px-3 py-2">
                           Order

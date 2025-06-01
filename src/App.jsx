@@ -15,6 +15,9 @@ import Download from './components/downold/download';
 import VerifyOtp from './components/auth/verify-OTP';
 import SavedFoods from './components/saved/saved';
 import ChefDashboard from './components/chefs/chefsdashboard';
+import { FaWineBottle } from "react-icons/fa";
+import { IoIosPersonAdd } from "react-icons/io";
+
 
 const AppContainer = styled.div`
   min-height: 100vh;
@@ -172,15 +175,41 @@ function App() {
           </>
         ) : (
           <>
-            <NavLink to="/culture/foods">
-              <FiShoppingBag /> Foods
+           
+
+          
+
+            
+               <NavLink to="/jikoni/express/download">
+              <IoIosPersonAdd />Register
             </NavLink>
-            <NavLink to="/jikoni/express/download">
+
+              <NavLink to="/jikoni/express/download">
               <FiDownload /> Get App
             </NavLink>
+
+            
             <NavLink to="/saved/foods">
               <FiHeart /> Saved
             </NavLink>
+
+
+            
+               <NavLink to="/jikoni/express/download">
+              <FaWineBottle /> Liqour
+            </NavLink>
+
+
+
+ <NavLink to="/culture/foods">
+              <FiShoppingBag /> Foods
+            </NavLink>
+
+
+            
+          
+
+            
           </>
         )}
       </BottomNav>

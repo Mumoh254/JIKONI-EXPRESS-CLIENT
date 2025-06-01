@@ -1,8 +1,8 @@
 import React from 'react';
 import { Button } from 'react-bootstrap';
-import { BarChartLine, Scooter } from 'react-bootstrap-icons';
+import { BarChartLine, Scooter, ArrowReturnLeft } from 'react-bootstrap-icons';
 
-export default function ChefDashboardHeader({ setState }) {
+export default function ChefDashboardHeader({ setState, exitChefMode }) {
   return (
     <div className="d-flex justify-content-between align-items-center mb-4">
       <div>
@@ -37,6 +37,21 @@ export default function ChefDashboardHeader({ setState }) {
           }}
         >
           <Scooter className="me-2" /> Available Riders
+        </Button>
+
+        {/* EXIT BUTTON */}
+        <Button 
+          variant="danger" 
+          className="d-flex align-items-center rounded-pill px-4 py-2"
+          onClick={exitChefMode}
+          style={{
+            background: 'linear-gradient(135deg, #e74c3c 0%, #c0392b 100%)',
+            border: 'none',
+            fontWeight: 600,
+            boxShadow: '0 4px 15px rgba(231, 76, 60, 0.3)'
+          }}
+        >
+          <ArrowReturnLeft className="me-2" /> Exit Chef Mode
         </Button>
       </div>
     </div>

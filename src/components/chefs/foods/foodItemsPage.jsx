@@ -53,33 +53,35 @@ export default function FoodItemsPage() {
     }
   };
 
-  const fetchFoods = async () => {
-    setState(prev => ({ ...prev, loading: true }));
+ const fetchFoods = async () => {
+  setState(prev => ({ ...prev, loading: true }));
 
-    try {
-      const res = await axios.get(BASE_URL);
-      const allFoods = res.data;
+  try {
+    const res = await axios.get(BASE_URL);
+    const allFoods = res.data;
 
-      const chefId = localStorage.getItem('chefId');
+    const chefId = localStorage.getItem('chefId');
+    console.log("chefId from localStorage:", chefId);
 
-      const filteredFoods = chefId
-        ? allFoods.filter(food => food.chef?.id === chefId)
-        : allFoods;
+    const filteredFoods = chefId
+      ? allFoods.filter(food => String(food.chef?.id) === String(chefId))
+      : allFoods;
 
-      setState(prev => ({
-        ...prev,
-        foods: filteredFoods,
-        loading: false,
-        error: null,
-      }));
-    } catch (err) {
-      setState(prev => ({
-        ...prev,
-        loading: false,
-        error: err.message,
-      }));
-    }
-  };
+    setState(prev => ({
+      ...prev,
+      foods: filteredFoods,
+      loading: false,
+      error: null,
+    }));
+  } catch (err) {
+    setState(prev => ({
+      ...prev,
+      loading: false,
+      error: err.message,
+    }));
+  }
+};
+
 
   useEffect(() => {
     fetchFoods();
