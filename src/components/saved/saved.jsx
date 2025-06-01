@@ -16,7 +16,7 @@ import { FaWhatsapp, FaInstagram } from 'react-icons/fa';
 import   {jwtDecode}  from 'jwt-decode';
 
 const SavedFoods = ({ user }) => {
-  const BASE_URL = "http://localhost:8000/apiV1/smartcity-ke";
+  const BASE_URL = "https://neuro-apps-api-express-js-production-redy.onrender.com/apiV1/smartcity-ke";
   const [savedFoods, setSavedFoods] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
