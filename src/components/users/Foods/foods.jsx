@@ -24,6 +24,7 @@ import   RiderRegistration    from   '../../modals/riderRegistration'
 
 import popSound from '../../../../public/audio/cliks.mp3';
 
+
 const theme = {
   primary: '#2563eb',
   secondary: '#c3e703',
@@ -106,11 +107,23 @@ const StoryItem = styled.div`
 
 import { jwtDecode } from "jwt-decode"; // ✅ fixed
 
-
-
+import moment from 'moment-timezone';
 const FoodPlatform = (   food ) => {
 
+const isChefOpen = (openingHours) => {
+  if (!openingHours) return false;
 
+  const [start, end] = openingHours.split(' - ');
+
+  // Get current time in Kenyan timezone
+  const now = moment.tz('Africa/Nairobi');
+
+  // Parse the start and end times also in Kenyan timezone
+  const startTime = moment.tz(start, ['hA', 'ha', 'H:mm'], 'Africa/Nairobi');
+  const endTime = moment.tz(end, ['hA', 'ha', 'H:mm'], 'Africa/Nairobi');
+
+  return now.isBetween(startTime, endTime);
+};
 
   const [showPreOrderModal, setShowPreOrderModal] = useState(false);
   const [selectedFood, setSelectedFood] = useState(null);
@@ -249,9 +262,11 @@ const FoodPlatform = (   food ) => {
   }, []);
 
   const showNotification = (title, body) => {
+
     if (Notification.permission === "granted") {
       new Notification(title, { body });
     }
+
   };
   
   const loadData = async () => {
@@ -326,7 +341,7 @@ const FoodPlatform = (   food ) => {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ userId }),  // <- Ensure this line is correct
+      body: JSON.stringify({ userId }),  
     });
 
     const data = await response.json();
@@ -1140,96 +1155,178 @@ const RiderRegistrationModal = ({ show, onClose, onSubmit, userId }) => {
          // User Marketplace
        <div className="py-4 container-xl">
   {/* Stories Section */}
-  <div className="stories-fixed-section bg-white shadow-sm ">
-    <h4 className="mb-3 fw-bold " style={{ color: '#FF4532' }}>🍴 Jikoni Express Stories</h4>
+<div className="stories-fixed-section bg-white shadow-sm">
 
-    <div className="stories-container">
-      <div className="stories-scroll ">
-        {/* Add Story Button - Strict Addition */}
-        <div 
-          className="story-item" 
-          onClick={() => registerAsChef()}
-          style={{ marginRight: '1.5rem' }}
-        >
-          <div className="story-image-wrapper   position-relative">
-            <div className="story-gradient-border add-story-border">
-              <img
-                src="/images/story.png"
-                alt="Add Story"
-                className="story-img  "
-              />
-              <div className="add-story-plus">
-                <Plus size={28} className="text-white" />
-              </div>
+  
+  <h4 className="mb-3 fw-bold mt-3" style={{ color: '#FF4532' }}>🍴 Jikoni Express Stories</h4>
+
+  <div className="stories-container">
+    <div className="stories-scroll">
+      {/* Add Story Button */}
+      <div 
+        className="story-item" 
+        onClick={() => registerAsChef()}
+        style={{ marginRight: '1.5rem' }}
+      >
+        <div className="story-image-wrapper position-relative">
+          <div className="story-gradient-border add-story-border">
+            <img
+              src="/images/story.png"
+              alt="Add Story"
+              className="story-img"
+            />
+            <div className="add-story-plus">
+              <Plus size={28} className="text-white" />
             </div>
-         <div
-  className="story-details"
-  onClick={() => {
-    const chefId = localStorage.getItem('chefId');
-    if (chefId) {
-      // Call your functionality for posting food
-      postFood();
-    } else {
-      // Show alert or modal to register as chef
-      alert('Please register as a chef first to add a story.');
-    }
-  }}
-  style={{ cursor: 'pointer' }}
->
-  <span className="chef-name">Add Story</span>
-</div>
-
+          </div>
+          <div
+            className="story-details"
+            onClick={(e) => {
+              e.stopPropagation();
+              const chefId = localStorage.getItem('chefId');
+              if (chefId) {
+                postFood();
+              } else {
+                alert('Please register as a chef first to add a story.');
+              }
+            }}
+            style={{ cursor: 'pointer' }}
+          >
+            <span className="chef-name">Add Story</span>
           </div>
         </div>
+      </div>
 
-        {filteredFoods.map(food => (
-          <div 
-            key={food.id}
-            className="story-item"
-            onClick={() => navigate(`/chef/${food.chefId}`)}
-            style={{ marginRight: '1rem' }}
-          >
-            <div className="story-image-wrapper position-relative">
-              <div className="story-gradient-border">
-                <img
-                  src={food.photoUrls?.[0] || '/placeholder-food.jpg'}
-                  alt={food.title}
-                  className="story-img"
-                />
-              </div>
-              <div className="story-details">
-                <span className="chef-name">{food.chef.user.Name}</span>
-                <Badge pill className="location-badge">
-                  <GeoAlt size={10} className="me-1 p-1" />
-                  <span className="area-name">{food.area}</span>
-                </Badge>
-              </div>
+      {filteredFoods.map(food => (
+        <div 
+          key={food.id}
+          className="story-item"
+          onClick={() => navigate(`/chef/${food.chefId}`)}
+          style={{ marginRight: '1rem' }}
+        >
+          <div className="story-image-wrapper position-relative">
+            <div className="story-gradient-border">
+              <img
+                src={food.photoUrls?.[0] || '/placeholder-food.jpg'}
+                alt={food.title}
+                className="story-img"
+              />
+            </div>
+            <div className="story-details">
+              <span className="chef-name">{food.chef.user.Name}</span>
+         <Badge pill className="location-badge overflow-hidden p-0">
+  <GeoAlt size={14} className="me-1 ms-1 text-white" />
+
+  <marquee
+    behavior="scroll"
+    direction="left"
+    scrollAmount="3"
+    className="marquee-badge w-100"
+  >
+    <span className="area-text text-white fw-bold me-2">
+      {food.area}
+    </span>
+    
+    <span className="discount-text fw-bold">
+      | {food.discount ? `${food.discount}% OFF` : '0% OFF'}
+    </span>
+  </marquee>
+</Badge>
+
+
             </div>
           </div>
-        ))}
-      </div>
+        </div>
+      ))}
     </div>
+  </div>
 
   <style jsx>{`
+
+.location-badge {
+  background-color: #FF4532 !important;
+  color: white !important;
+  font-size: 0.65rem;
+  border: none;
+  max-width: 120px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: start;
+  overflow: hidden;
+  white-space: nowrap;
+  padding-left: 4px;
+}
+
+.marquee-badge {
+  display: block;
+  white-space: nowrap;
+  font-size: 0.65rem;
+  line-height: 1;
+}
+
+.area-text {
+  color: white;
+}
+
+.discount-text {
+  color: #FFEB3B; /* Bright Yellow for strong contrast */
+  font-weight: 800;
+  margin-left: 3px;
+}
+
+
+    /* Discount Marquee Styles */
+    .discount-marquee {
+      background: linear-gradient(90deg, #2563eb, #3b82f6, #60a5fa);
+      color: white;
+      overflow: hidden;
+      position: relative;
+      border-radius: 8px;
+    }
+    
+    .marquee-content {
+      display: inline-block;
+      white-space: nowrap;
+      animation: marquee 25s linear infinite;
+      padding: 5px 0;
+    }
+    
+    @keyframes marquee {
+      0% { transform: translateX(100%); }
+      100% { transform: translateX(-100%); }
+    }
+    
+    .discount-badge {
+      display: inline-flex;
+      align-items: center;
+      font-weight: 600;
+      font-size: 0.9rem;
+      padding: 0.25rem 0.75rem;
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 20px;
+      backdrop-filter: blur(4px);
+    }
+    
+    /* Existing Story Styles */
     .stories-container {
       position: relative;
       padding: 0 0rem;
     }
 
-      .add-story-plus {
-        position: absolute;
-        bottom: 15px;
-        right: 1px;
-        background: #FF4532;
-        width: 20px;
-        height: 20px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border: 2px solid white;
-      }
-
+    .add-story-plus {
+      position: absolute;
+      bottom: 15px;
+      right: 1px;
+      background: #FF4532;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 2px solid white;
+    }
 
     .stories-scroll {
       display: flex;
@@ -1310,6 +1407,9 @@ const RiderRegistrationModal = ({ show, onClose, onSubmit, userId }) => {
       align-items: center;
     }
 
+
+    
+
     .area-name {
       white-space: nowrap;
       overflow: hidden;
@@ -1319,6 +1419,11 @@ const RiderRegistrationModal = ({ show, onClose, onSubmit, userId }) => {
     }
 
     @media (max-width: 768px) {
+      .discount-badge {
+        font-size: 0.8rem;
+        padding: 0.2rem 0.6rem;
+      }
+      
       .story-item {
         width: 80px;
         margin-right: 1rem;
@@ -1341,7 +1446,6 @@ const RiderRegistrationModal = ({ show, onClose, onSubmit, userId }) => {
     }
   `}</style>
 </div>
-
 
 
 
@@ -1644,19 +1748,21 @@ const RiderRegistrationModal = ({ show, onClose, onSubmit, userId }) => {
                   </div>
 
                   {/* Opening Hours */}
-                  <div className="d-flex justify-content-between align-items-center mt-3 pt-2 border-top">
-                    <div className="d-flex align-items-center gap-2">
-                      <Clock size={16} className="text-primary" />
-                      <small className="fw-medium">
-                        {food.chef.openingHours || '8am - 6pm'}
-                      </small>
-                    </div>
-                    <Badge bg="light" className="text-success p-2 fw-medium">
-                      Available
-                    </Badge>
-                  </div>
-                </div>
-
+                 <div className="d-flex justify-content-between align-items-center mt-3 pt-2 border-top">
+  <div className="d-flex align-items-center gap-2">
+    <Clock size={16} className="text-primary" />
+    <small className="fw-medium">
+      {food.chef.openingHours || '8am - 6pm'}
+    </small>
+  </div>
+  <Badge
+    bg={isChefOpen(food.chef.openingHours || '8am - 2pm') ? 'success' : 'secondary'}
+    className={`p-2 fw-medium text-${isChefOpen(food.chef.openingHours || '8am - 2pm') ? 'light' : 'dark'}`}
+  >
+    {isChefOpen(food.chef.openingHours || '8am - 2pm') ? 'Available' : 'Closed'}
+  </Badge>
+</div>
+</div>
                 {/* Action Buttons */}
                 <div className="d-flex gap-3 mt-4 mb-4">
                <Button 
@@ -1687,6 +1793,7 @@ const RiderRegistrationModal = ({ show, onClose, onSubmit, userId }) => {
                   </Button>
                 </div>
               </Card.Body>
+              
             </Card>
           </Col>
         ))}

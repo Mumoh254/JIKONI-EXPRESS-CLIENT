@@ -5,6 +5,9 @@ import { StarHalf, CartPlus, GeoAlt, Clock,  EggFried   , People, Envelope, Pers
 import { format, formatDistanceToNow } from 'date-fns';
 import { GiKenya } from "react-icons/gi";
 import { BsCart } from 'react-icons/bs';
+import { FaUser } from 'react-icons/fa'; // Font Awesome User icon
+import { BsScooter } from "react-icons/bs";
+
 const ChefProfile = ({ addToCart }) => {
 
   const  BASE_URL   =   "https://neuro-apps-api-express-js-production-redy.onrender.com/apiV1/smartcity-ke"
@@ -193,7 +196,7 @@ const calculateSubtotal = () =>
               className="rounded-pill px-3 px-md-4 py-1 d-flex align-items-center"
               onClick={() => setState(s => ({ ...s, showChefReg: true }))}
             >
-              <Person className="me-1 me-md-2" />
+              <FaUser  className="me-1 me-md-2" />
               <span className="d-none d-md-inline">Chef</span>
             </Button>
             <Button 
@@ -201,7 +204,7 @@ const calculateSubtotal = () =>
               className="rounded-pill px-3 px-md-4 py-1 d-flex align-items-center"
               onClick={() => setState(s => ({ ...s, showRiderReg: true }))}
             >
-              <Scooter className="me-1 me-md-2" />
+              <BsScooter className="me-1 me-md-2" />
               <span className="d-none d-md-inline">Rider</span>
             </Button>
           </div>
