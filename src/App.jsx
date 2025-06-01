@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { HashRouter, Routes, Route, NavLink, useNavigate } from 'react-router-dom';
 import {
-  FiShoppingBag, FiDownload, FiHeart, FiBarChart2, FiUsers, FiCoffee
+  FiDownload, FiHeart, FiBarChart2, FiUsers, FiCoffee
 } from 'react-icons/fi';
 import styled from 'styled-components';
 import { useAuth } from './Context/authContext';
@@ -17,7 +17,7 @@ import SavedFoods from './components/saved/saved';
 import ChefDashboard from './components/chefs/chefsdashboard';
 import { FaWineBottle } from "react-icons/fa";
 import { IoIosPersonAdd } from "react-icons/io";
-
+import { GiHotMeal } from "react-icons/gi";
 
 const AppContainer = styled.div`
   min-height: 100vh;
@@ -202,7 +202,7 @@ function App() {
 
 
  <NavLink to="/culture/foods">
-              <FiShoppingBag /> Foods
+              <GiHotMeal /> Foods
             </NavLink>
 
 
