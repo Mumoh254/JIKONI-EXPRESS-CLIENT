@@ -293,3 +293,19 @@ svg {
   right: 20px;
   z-index: 999;
 }
+
+
+.carousel-indicators [data-bs-target] {
+  width: 10px   !important;
+  height: 10px  !important;
+  border-radius: 50%  !important;
+  background-color: #333   !important;
+  opacity: 0.5 !important;
+  margin: 0 4px   !important;
+  z-index: 2000 !important;
+}
+
+.carousel-indicators .active {
+  opacity: 1;
+  background-color: #000;
+}

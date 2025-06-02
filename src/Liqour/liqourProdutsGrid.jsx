@@ -354,18 +354,17 @@ const LiquorProductsGrid = () => {
       gap: "0.5rem",
     }}
   >
-    {product.photoUrls?.map((img, i) => (
-      <img
-        key={i}
-        src={img}
-        alt={`${product.title} - ${i + 1}`}
-        className="img-fluid"
-        style={{
-          maxHeight: "180px",
-          objectFit: "contain",
-        }}
+{product.photoUrls?.[0] && (
+  <img
+    src={product.photoUrls[0]}
+    alt={`${product.title} - 1`}
+    className="img-fluid"
+    style={{
+      minHeight: "100%",
+      objectFit: "cover",
+    }}
       />
-    ))}
+    )}
   </div>
 </div>
 
@@ -510,26 +509,26 @@ const LiquorProductsGrid = () => {
                 onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-8px)'}
                 onMouseLeave={(e) => e.currentTarget.style.transform = 'none'}
               >
-                <div className="position-relative" style={{ height: '250px', overflow: 'hidden' }}>
-                  <Carousel 
-                    interval={null} 
-                    indicators={product.photoUrls?.length > 1}
-                    controls={product.photoUrls?.length > 1}
-                    nextIcon={<span className="carousel-control-next-icon bg-dark p-2 rounded-circle" />}
-                    prevIcon={<span className="carousel-control-prev-icon bg-dark p-2 rounded-circle" />}
-                  >
-                    {product.photoUrls?.map((img, i) => (
-                      <Carousel.Item key={i}>
-                        <img
-                          src={img}
-                          alt={`${product.title} - Photo ${i+1}`}
-                          className="w-100 h-100 object-fit-cover"
-                          style={{ minHeight: '250px' }}
-                        />
-                      </Carousel.Item>
-                    ))}
-                  </Carousel>
-                  
+                <div className="position-relative p-4" style={{ height: '500px', overflow: 'hidden' }}>
+                <Carousel 
+  interval={null} 
+  indicators={product.photoUrls?.length > 1}
+ controls={false} 
+  nextIcon={<span className="carousel-control-next-icon bg-dark p-2 rounded-circle" />}
+  prevIcon={<span className="carousel-control-prev-icon bg-dark p-2 rounded-circle" />}
+>
+  {product.photoUrls?.map((img, i) => (
+    <Carousel.Item key={i}>
+      <img
+        src={img}
+        alt={`${product.title} - Photo ${i+1}`}
+        className="w-100 h-100 object-fit-cover"
+        style={{ minHeight: '100%' }}
+      />
+    </Carousel.Item>
+  ))}
+</Carousel>
+
                   <div className="position-absolute top-0 end-0 m-3">
                     <Badge className="price-tag fw-bold px-3 py-2" 
                       style={{ 
@@ -673,30 +672,25 @@ const LiquorProductsGrid = () => {
                   </div>
 
                   <div className="d-flex justify-content-between align-items-center mb-3">
-                    <div className="d-flex align-items-center">
-                      <span className="me-2 fw-medium" style={{ color: theme.dark }}>Quantity:</span>
-                      <div className="d-flex align-items-center border rounded-pill px-2" style={{ backgroundColor: 'white' }}>
-                        <Button 
-                          variant="link" 
-                          className="p-0"
-                          onClick={() => handleQuantityChange(product.id, -1)}
-                          disabled={quantities[product.id] <= 1}
-                        >
-                          <Dash size={20} />
-                        </Button>
-                        <span className="mx-2 fw-bold" style={{ minWidth: '25px', textAlign: 'center' }}>
-                          {quantities[product.id] || 1}
-                        </span>
-                        <Button 
-                          variant="link" 
-                          className="p-0"
-                          onClick={() => handleQuantityChange(product.id, 1)}
-                          disabled={quantities[product.id] >= product.stock}
-                        >
-                          <Plus size={20} />
-                        </Button>
-                      </div>
-                    </div>
+                <div className="d-flex align-items-center">
+  <Button 
+    variant="outline-primary" 
+    className=" px-4 py-1 fw-semibold"
+    onClick={() => handleViewDetail(product)}
+                      style={{ 
+                        width: '100%', 
+                        fontWeight: 500,
+                        letterSpacing: "0.5px",
+                        background: "transparent",
+                        border: `1px solid ${theme.primary}`,
+                        color: theme.primary,
+                        transition: "all 0.3s ease"
+                      }}
+  >
+    View Details
+  </Button>
+</div>
+
                     
                     <div className="stock-info">
                       <small className={product.stock > 5 ? "text-success fw-bold" : "text-danger fw-bold"}>
@@ -877,48 +871,51 @@ const LiquorProductsGrid = () => {
                   </div>
                   
                   <div className="d-flex align-items-center mb-4">
-                    <div className="me-3">
-                      <span className="fw-medium me-2">Quantity:</span>
-                      <div className="d-flex align-items-center border rounded-pill px-2" style={{ backgroundColor: 'white' }}>
-                        <Button 
-                          variant="link" 
-                          className="p-0"
-                          onClick={() => handleQuantityChange(selectedProduct.id, -1)}
-                          disabled={quantities[selectedProduct.id] <= 1}
-                        >
-                          <Dash size={20} />
-                        </Button>
-                        <span className="mx-2 fw-bold" style={{ minWidth: '25px', textAlign: 'center' }}>
-                          {quantities[selectedProduct.id] || 1}
-                        </span>
-                        <Button 
-                          variant="link" 
-                          className="p-0"
-                          onClick={() => handleQuantityChange(selectedProduct.id, 1)}
-                          disabled={quantities[selectedProduct.id] >= selectedProduct.stock}
-                        >
-                          <Plus size={20} />
-                        </Button>
-                      </div>
+                  
+              
+                   <div className="d-flex gap-3 mt-4 mb-4">
+                      <Button 
+                        className="flex-grow-1 py-2 fw-bold"
+                        style={{ 
+                          borderRadius: '12px', 
+                          border: `2px solid ${theme.primary}`, 
+                          color: theme.primary,
+                          backgroundColor: 'transparent'
+                        }}
+                        onClick={() => handlePreOrder(product)}
+                      >
+                        Pre-Order
+                      </Button>
+
+                      <Button 
+                        variant="primary" 
+                        className="flex-grow-1 py-2 fw-bold"
+                        style={{ 
+                          borderRadius: '12px',
+                          background: theme.secondary,
+                          border: 'none'
+                        }}
+                        onClick={() => updateCart(product, 1)}
+                      >
+                        <CartPlus className="me-2" size={20} />
+                        Add to Cart
+                      </Button>
+
+
+                         <Button 
+                        className="flex-grow-1 py-2 fw-bold"
+                        style={{ 
+                          borderRadius: '12px', 
+                          border: `2px solid ${theme.primary}`, 
+                          color: theme.primary,
+                          backgroundColor: 'transparent'
+                        }}
+                        onClick={() => handlePreOrder(product)}
+                      >
+                         Close 
+                      </Button>
+
                     </div>
-                    
-                    <Button 
-                      variant="primary" 
-                      className="py-2 px-4 fw-bold"
-                      style={{ 
-                        borderRadius: '12px',
-                        background: theme.primary,
-                        border: 'none',
-                        fontSize: '1.1rem'
-                      }}
-                      onClick={() => {
-                        handleAddToCart(selectedProduct);
-                        setShowDetail(false);
-                      }}
-                    >
-                      <CartPlus className="me-2" size={20} />
-                      Add to Cart
-                    </Button>
                   </div>
                   
                   <div className="bg-light p-3 rounded" style={{ border: `1px solid ${theme.primary}20` }}>
