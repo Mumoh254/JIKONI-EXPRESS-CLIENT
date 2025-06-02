@@ -543,7 +543,7 @@ const LiquorProductsGrid = () => {
                   <AgeVerificationBadge />
                   
                   <div className="position-absolute top-0 start-0 m-3">
-                    <Badge pill bg="danger" className="px-3 py-2 fw-bold">
+                    <Badge  bg="danger" className="px-3 py-2 fw-bold">
                       {product.alcoholPercentage}% ABV
                     </Badge>
                   </div>
@@ -551,8 +551,8 @@ const LiquorProductsGrid = () => {
                   <div className="position-absolute bottom-0 end-0 m-3">
                     <Button 
                       variant="light" 
-                      className="rounded-circle p-2 d-flex align-items-center justify-content-center"
-                      style={{ width: '40px', height: '40px' }}
+                      className=" p-2 d-flex align-items-center justify-content-center"
+                      style={{ width: '35px', height: '35px' }}
                       onClick={() => handleViewDetail(product)}
                     >
                       <InfoCircle size={20} />
@@ -562,9 +562,9 @@ const LiquorProductsGrid = () => {
 
                 <Card.Body className="d-flex flex-column pt-3 pb-0">
                   <div className="d-flex justify-content-between align-items-center mb-2">
-                    <Badge pill style={{ 
-                      background: 'rgba(139, 69, 19, 0.15)', 
-                      color: theme.primary,
+                    <Badge  style={{ 
+                      background: 'rgba(231, 102, 10, 0.15)', 
+                      color: 'white',
                       fontSize: '0.9rem'
                     }}>
                       {product.category}
