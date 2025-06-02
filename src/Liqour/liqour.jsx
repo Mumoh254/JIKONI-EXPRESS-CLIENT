@@ -781,7 +781,7 @@ const Liqour = () => {
           </Modal>
 
           {/* Liquor Products Grid */}
-          <Row className="g-4 py-3">
+          <Row className="g-1 ">
       <LiquorProductsGrid  />
           </Row>
         </div>
