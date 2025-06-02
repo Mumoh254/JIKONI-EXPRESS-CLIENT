@@ -8,6 +8,8 @@ import {
   Eye, InfoCircle, ShieldCheck, Plus, Dash, Fire
 } from 'react-bootstrap-icons';
 
+
+import   PremiumTrendingCarousel   from '../Liqour/premium'
 const LiquorProductsGrid = () => {
 
    const carouselRef = useRef(null);
@@ -32,9 +34,8 @@ const LiquorProductsGrid = () => {
       rating: 4.8,
       createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
       photoUrls: [
-        "data:image/jpeg;base64,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",
-        "https://images.unsplash.com/photo-1600271886742-f049cd5bba3b?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=600&q=80",
-        "https://images.unsplash.com/photo-1601053952941-5e3b1b2f3b0b?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=600&q=80"
+        "https://www.oaks.delivery/wp-content/uploads/image-49-300x300.png",
+       "https://www.oaks.delivery/wp-content/uploads/image-49-300x300.png"
       ],
       vendor: {
         id: 101,
@@ -63,7 +64,7 @@ const LiquorProductsGrid = () => {
       createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
       photoUrls: [
         "https://www.oaks.delivery/wp-content/uploads/image-49-300x300.png",
-        "https://images.unsplash.com/photo-1599594201378-9e51b1f6c0a2?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=600&q=80"
+   "https://www.oaks.delivery/wp-content/uploads/image-49-300x300.png"
       ],
       vendor: {
         id: 102,
@@ -92,7 +93,7 @@ const LiquorProductsGrid = () => {
       createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
       photoUrls: [
         "https://www.oaks.delivery/wp-content/uploads/image-49-300x300.png",
-        "https://images.unsplash.com/photo-1601053952941-5e3b1b2f3b0b?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=600&q=80"
+     "https://www.oaks.delivery/wp-content/uploads/image-49-300x300.png"
       ],
       vendor: {
         id: 103,
@@ -120,7 +121,7 @@ const LiquorProductsGrid = () => {
       createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
       photoUrls: [
         "https://www.oaks.delivery/wp-content/uploads/image-49-300x300.png",
-        "https://images.unsplash.com/photo-1601053952941-5e3b1b2f3b0b?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=600&q=80"
+  "https://www.oaks.delivery/wp-content/uploads/image-49-300x300.png"
       ],
       vendor: {
         id: 104,
@@ -270,6 +271,8 @@ const LiquorProductsGrid = () => {
   return (
     <div className="liquor-products-grid py-5" style={{ backgroundColor: theme.light }}>
       <div className="container">
+
+
         <div className="text-center mb-5">
           <h2 className="display-5 fw-bold mb-3" style={{ color: theme.primary }}>
             Premium Liquor Collection
@@ -280,136 +283,209 @@ const LiquorProductsGrid = () => {
         </div>
 
         {/* Top Trending Section */}
-        <div className="mb-5">
-          <div className="d-flex align-items-center mb-4">
-            <Fire className="text-danger me-2" size={28} />
-            <h3 className="fw-bold mb-0" style={{ color: theme.primary }}>Top Trending</h3>
+   <div className="mb-5">
+      <div className="trending-carousel-container py-4 position-relative">
+        {/* Header with Fire Icon and Scroll Buttons */}
+        <div className="d-flex align-items-center justify-content-between mb-4 px-4">
+          <div className="d-flex align-items-center">
+            <Fire className="text-warning me-2" size={28} style={{ filter: "drop-shadow(0 0 4px rgba(197, 164, 103, 0.6))" }} />
+            <h3 className="fw-bold mb-0" style={{ color: theme.primary, letterSpacing: "1px", textShadow: "0 2px 4px rgba(0,0,0,0.2)" }}>
+              TOP TRENDING SPIRITS
+            </h3>
           </div>
-
-
-    <div className="trending-carousel-container py-4" style={{ position: 'relative' }}>
-      <div className="d-flex align-items-center justify-content-between mb-4 px-4">
-        <div className="d-flex align-items-center">
-          <Fire className="text-danger me-2" size={28} />
-          <h3 className="fw-bold mb-0" style={{ color: theme.primary }}>Top Trending Spirits</h3>
+          <div className="d-flex gap-2">
+            <Button 
+              variant="outline-light" 
+              className="rounded-circle p-2 d-flex align-items-center justify-content-center scroll-btn"
+              style={{ width: '42px', height: '42px', border: `1px solid ${theme.primary}` }}
+              onClick={scrollLeft}
+            >
+              &lt;
+            </Button>
+            <Button 
+              variant="outline-light" 
+              className="rounded-circle p-2 d-flex align-items-center justify-content-center scroll-btn"
+              style={{ width: '42px', height: '42px', border: `1px solid ${theme.primary}` }}
+              onClick={scrollRight}
+            >
+              &gt;
+            </Button>
+          </div>
         </div>
-        <div className="d-flex gap-2">
-          <Button 
-            variant="outline-primary" 
-            className="rounded-circle p-2 d-flex align-items-center justify-content-center"
-            style={{ width: '40px', height: '40px' }}
-            onClick={scrollLeft}
-          >
-            &lt;
-          </Button>
-          <Button 
-            variant="outline-primary" 
-            className="rounded-circle p-2 d-flex align-items-center justify-content-center"
-            style={{ width: '40px', height: '40px' }}
-            onClick={scrollRight}
-          >
-            &gt;
-          </Button>
-        </div>
-      </div>
-      
-      <div 
-        ref={carouselRef}
-        className="trending-carousel d-flex gap-4 px-4 pb-4"
-        style={{ 
-          overflowX: 'auto', 
-          scrollbarWidth: 'none',
-          scrollSnapType: 'x mandatory',
-          msOverflowStyle: 'none',
-          '&::-webkit-scrollbar': { display: 'none' }
+
+        {/* Carousel Scrollable List */}
+        <div
+          ref={carouselRef}
+          className="trending-carousel d-flex gap-4 px-4 pb-4"
+        >
+          {products.map(product => (
+            <div 
+              key={product.id} 
+              className="trending-item flex-shrink-0"
+              style={{ 
+                width: '300px',
+                scrollSnapAlign: 'start',
+                transition: 'transform 0.3s ease, box-shadow 0.3s ease'
+              }}
+            >
+              <Card className="h-100 overflow-hidden border-0" 
+                style={{ 
+                  borderRadius: '16px', 
+                  background: 'rgba(255, 255, 255, 0.8)',
+                  backdropFilter: 'blur(10px)',
+            
+              
+                  transition: 'transform 0.3s ease, box-shadow 0.3s ease'
+                }}
+              >
+                <div className="position-relative d-flex align-items-center" 
+                  style={{ 
+                    height: '220px',
+                
+                  }}
+                >
+               <div className="w-50 h-100 d-flex align-items-center justify-content-center p-3">
+  <div
+    className="w-100 h-100 d-flex align-items-center justify-content-center rounded"
+    style={{
+      backdropFilter: "blur(5px)",
+      border: "1px solid rgba(197, 164, 103, 0.1)",
+      overflowX: "auto",
+      gap: "0.5rem",
+    }}
+  >
+    {product.photoUrls?.map((img, i) => (
+      <img
+        key={i}
+        src={img}
+        alt={`${product.title} - ${i + 1}`}
+        className="img-fluid"
+        style={{
+          maxHeight: "180px",
+          objectFit: "contain",
         }}
-      >
-        {trendingProducts.map(product => (
-          <div 
-            key={product.id} 
-            className="trending-item flex-shrink-0"
-            style={{ 
-              width: '300px', 
-              scrollSnapAlign: 'start',
-              transition: 'transform 0.3s ease'
-            }}
-          >
-            <Card className="h-100 border-0 overflow-hidden shadow-sm" style={{ borderRadius: '16px' }}>
-              <div className="position-relative d-flex align-items-center" style={{ height: '200px', backgroundColor: '#f0f2ff' }}>
-                <div className="w-50 h-100 d-flex align-items-center justify-content-center">
-                  <img
-                    src={product.photoUrl}
-                    alt={product.title}
-                    className="img-fluid"
-                    style={{ maxHeight: '180px', objectFit: 'contain' }}
-                  />
-                </div>
-                <div className="w-50 p-3">
-                  <Badge pill bg="danger" className="mb-2">
-                    Trending
-                  </Badge>
-                  <h5 className="fw-bold mb-1" style={{ color: theme.dark, fontSize: '1.1rem' }}>{product.title}</h5>
-                  <div className="d-flex align-items-center mb-2">
-                    <StarFill className="text-warning me-1" size={14} />
-                    <span className="fw-medium">{product.rating}</span>
-                  </div>
-                  <p className="mb-2 text-muted small">{product.brand}</p>
-                  <h4 className="fw-bold" style={{ color: theme.primary, fontSize: '1.4rem' }}>
-                    KES {product.price.toLocaleString()}
-                  </h4>
-                  <Button 
-                    variant="outline-primary" 
-                    size="sm"
-                    className="mt-2"
-                    onClick={() => handleViewDetail(product)}
-                    style={{ width: '100%' }}
-                  >
-                    View Details
-                  </Button>
-                </div>
-              </div>
-            </Card>
-          </div>
-        ))}
-      </div>
-      
-      <style jsx>{`
-        .trending-carousel {
-          scrollbar-width: none; /* Firefox */
-          -ms-overflow-style: none; /* IE and Edge */
-        }
-        
-        .trending-carousel::-webkit-scrollbar {
-          display: none; /* Chrome, Safari, Opera */
-        }
-        
-        .trending-item:hover {
-          transform: translateY(-5px);
-        }
-        
-        .trending-carousel-container::before,
-        .trending-carousel-container::after {
-          content: '';
-          position: absolute;
-          top: 0;
-          bottom: 0;
-          width: 80px;
-          pointer-events: none;
-          z-index: 10;
-        }
-        
-        .trending-carousel-container::before {
-          left: 0;
-          background: linear-gradient(90deg, rgba(245,247,255,0.8) 0%, rgba(245,247,255,0) 100%);
-        }
-        
-        .trending-carousel-container::after {
-          right: 0;
-          background: linear-gradient(270deg, rgba(245,247,255,0.8) 0%, rgba(245,247,255,0) 100%);
-        }
-      `}</style>
-    </div>
+      />
+    ))}
+  </div>
+</div>
 
+                  <div className="w-50 p-3">
+                    <Badge pill className="mb-2" 
+                      style={{ 
+                        background: "linear-gradient(135deg, #C5A467 0%, #8A6D3B 100%)", 
+                        border: "none",
+                        fontWeight: 500,
+                        letterSpacing: "0.5px"
+                      }}
+                    >
+                      TRENDING
+                    </Badge>
+                    <h5 className="fw-bold mb-1" style={{ color: theme.light, fontSize: '1.1rem' }}>{product.title}</h5>
+                    <div className="d-flex align-items-center mb-2">
+                      <StarFill className="text-warning me-1" size={14} />
+                      <span className="fw-medium" style={{ color: "#ddd" }}>{product.rating}</span>
+                    </div>
+                    <p className="mb-2 small" style={{ color: "#aaa" }}>{product.brand}</p>
+                    <h4 className="fw-bold mb-3" style={{ color: theme.primary, fontSize: '1.4rem', textShadow: "0 2px 4px rgba(0,0,0,0.3)" }}>
+                      KES {product.price.toLocaleString()}
+                    </h4>
+                    <Button 
+                      variant="outline-light" 
+                      size="sm"
+                      className="mt-1 view-details-btn"
+                      onClick={() => handleViewDetail(product)}
+                      style={{ 
+                        width: '100%', 
+                        fontWeight: 500,
+                        letterSpacing: "0.5px",
+                        background: "transparent",
+                        border: `1px solid ${theme.primary}`,
+                        color: theme.primary,
+                        transition: "all 0.3s ease"
+                      }}
+                    >
+                      VIEW DETAILS
+                    </Button>
+                  </div>
+                </div>
+              </Card>
+            </div>
+          ))}
+        </div>
+
+        {/* CSS Styling */}
+        <style jsx>{`
+          .trending-carousel {
+            overflow-x: auto;
+            scroll-snap-type: x mandatory;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+            padding-bottom: 12px;
+          }
+          
+          .trending-carousel::-webkit-scrollbar {
+            display: none;
+          }
+          
+          .trending-item {
+            scroll-snap-align: start;
+          }
+          
+          .trending-item:hover {
+            transform: translateY(-8px);
+            z-index: 5;
+          }
+          
+          .trending-item:hover .card {
+          
+            border: 1px solid rgba(197, 164, 103, 0.4);
+          }
+          
+          .trending-carousel-container::before,
+          .trending-carousel-container::after {
+            content: '';
+            position: absolute;
+            top: 70px;
+            bottom: 25px;
+            width: 100px;
+            pointer-events: none;
+            z-index: 10;
+            transition: opacity 0.3s ease;
+          }
+          
+          .trending-carousel-container::before {
+            left: 0;
+         
+          }
+          
+          .trending-carousel-container::after {
+            right: 0;
+         
+          }
+          
+          .scroll-btn {
+            transition: all 0.3s ease;
+          }
+          
+          .scroll-btn:hover {
+            background: ${theme.primary} !important;
+            color: #1a1a1a !important;
+            transform: scale(1.05);
+            border: 1px solid ${theme.primary} !important;
+          }
+          
+          .view-details-btn:hover {
+            background: ${theme.primary} !important;
+            color: #1a1a1a !important;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(197, 164, 103, 0.3);
+          }
+          
+          .badge {
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+          }
+        `}</style>
+      </div>
 
 
 
