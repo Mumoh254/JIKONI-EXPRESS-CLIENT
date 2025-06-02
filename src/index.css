@@ -286,3 +286,10 @@ svg {
       font-size: 0.95rem;
     }
   }
+
+
+  .floating-icons {
+  top: 80px; /* Adjust based on your header height */
+  right: 20px;
+  z-index: 999;
+}
