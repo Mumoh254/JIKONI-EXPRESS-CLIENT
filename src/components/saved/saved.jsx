@@ -57,7 +57,7 @@ const SavedFoods = ({ user }) => {
         
         await new Promise(resolve => setTimeout(resolve, 1500));
         
-        const response = await fetch(`${BASE_URL}/user/${userId}/saved-foods`);
+        const response = await fetch(`${BASE_URL}/user/smart_ke_WT_536237943/saved-foods`);
         if (!response.ok) {
           throw new Error('Failed to fetch saved foods');
         }

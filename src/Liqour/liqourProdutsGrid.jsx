@@ -9,8 +9,39 @@ import {
 } from 'react-bootstrap-icons';
 
 
-import   PremiumTrendingCarousel   from '../Liqour/premium'
+
+import {
+  updateCart,
+  handlePreOrder,
+  handleSubmitPreOrder,
+handleCheckout,
+  handleConfirmOrder
+} from '../components/cart&Orser/cart';
+
+
+import popSound from '../../public/audio/cliks.mp3'; // ✅ your sound file
+
+
 const LiquorProductsGrid = () => {
+
+
+  
+  
+    const [showPreOrderModal, setShowPreOrderModal] = useState(false);
+    const [selectedFood, setSelectedFood] = useState(null);
+    const [preOrderForm, setPreOrderForm] = useState({
+      date: '',
+      time: '',
+      instructions: '',
+      servings: 1
+    });
+    const [orderHistory, setOrderHistory] = useState([]);
+
+  const playSound2 = () => {
+  const audio = new Audio(popSound);
+  audio.play().catch(err => console.error("Sound playback failed:", err));
+};
+
 
    const carouselRef = useRef(null);
   const theme = {
@@ -252,6 +283,115 @@ const LiquorProductsGrid = () => {
       carouselRef.current.scrollBy({ left: 300, behavior: 'smooth' });
     }
   };
+
+
+
+
+  
+    const updateCart = (item, quantityChange) => {
+      playSound();
+      setState(prev => {
+        const existingItem = prev.cart.find(i => i.id === item.id);
+        let newCart = [...prev.cart];
+        
+        if (existingItem) {
+          const newQuantity = existingItem.quantity + quantityChange;
+          if (newQuantity <= 0) {
+            newCart = newCart.filter(i => i.id !== item.id);
+          } else {
+            newCart = newCart.map(i => 
+              i.id === item.id ? { ...i, quantity: newQuantity } : i
+            );
+          }
+        } else if (quantityChange > 0) {
+          newCart.push({ 
+            ...item,
+            quantity: 1,
+            price: Number(item.price)
+          });
+        }
+        
+        return { ...prev, cart: newCart };
+      });
+    };
+  
+    const handlePreOrder = (food) => {
+      setSelectedFood(food);
+      setShowPreOrderModal(true);
+      setPreOrderForm({
+        date: '',
+        time: '',
+        instructions: '',
+        servings: 1
+      });
+    };
+  
+    const handleSubmitPreOrder = () => {
+      const preOrderItem = {
+        ...selectedFood,
+        isPreOrder: true,
+        preOrderDate: preOrderForm.date,
+        preOrderTime: preOrderForm.time,
+        instructions: preOrderForm.instructions,
+        quantity: preOrderForm.servings
+      };
+      
+      updateCart(preOrderItem, preOrderForm.servings);
+      setShowPreOrderModal(false);
+    };
+  
+    const handleCheckout = () => {
+      // Get user's current location
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            const { latitude, longitude } = position.coords;
+            // Reverse geocode to get address (mock)
+            const mockAddress = "123 Main St, Nairobi, Kenya";
+            setState(prev => ({
+              ...prev,
+              showCart: false,
+              showOrderConfirmation: true,
+              userLocation: {
+                lat: latitude,
+                lng: longitude,
+                address: mockAddress
+              }
+            }));
+          },
+          (error) => {
+            setState(prev => ({
+              ...prev,
+              showOrderConfirmation: true,
+              locationError: "Failed to get your location: " + error.message
+            }));
+          }
+        );
+      } else {
+        setState(prev => ({
+          ...prev,
+          showOrderConfirmation: true,
+          locationError: "Geolocation is not supported by your browser"
+        }));
+      }
+    };
+  
+    const handleConfirmOrder = () => {
+      Swal.fire({
+        title: 'Order Confirmed!',
+        text: 'Your order has been placed successfully',
+        icon: 'success',
+        confirmButtonText: 'Continue Shopping'
+      }).then(() => {
+        // Clear cart and go back to food platform
+        setState(prev => ({
+          ...prev,
+          cart: [],
+          showOrderConfirmation: false
+        }));
+      });
+    };
+  
   
   const AgeVerificationBadge = () => (
     <OverlayTrigger
@@ -708,7 +848,7 @@ const LiquorProductsGrid = () => {
                           color: theme.primary,
                           backgroundColor: 'transparent'
                         }}
-                        onClick={() => handlePreOrder(product)}
+                          onClick={() => handlePreOrder(food)}
                       >
                         Pre-Order
                       </Button>
@@ -721,7 +861,7 @@ const LiquorProductsGrid = () => {
                           background: theme.secondary,
                           border: 'none'
                         }}
-                        onClick={() => updateCart(product, 1)}
+                        onClick={() => updateCart(product, 1 ,   playSound2)}
                       >
                         <CartPlus className="me-2" size={20} />
                         Add to Cart
