@@ -39,7 +39,8 @@ const ShareModal = ({ show, handleClose, food }) => {
 
   const hashtags = ['#JikoniExpress', '#TasteKenya', '#EatLocal', '#KenyanFood'];
 
-  const message = `Just discovered this ${dishType} by ${food.chefName} in ${chefLocation} on Jikoni Express! 🍲🔥\n\n"${food.title}" - ${food.description?.substring(0, 100)}...\n\n${hashtags.join(' ')}`;
+  // Added fire emojis to the message
+  const message = `Just discovered this ${dishType} by ${food.chefName} in ${chefLocation} on Jikoni Express! 🍲🔥🔥\n\n"${food.title}" - ${food.description?.substring(0, 100)}...\n\n${hashtags.join(' ')}`;
   const url = `${window.location.origin}/food/${food.id}`;
   const imageUrl = food.photoUrls?.[0] || 'https://via.placeholder.com/400x300?text=Food+Image'; // Fallback image
 
@@ -95,7 +96,7 @@ const ShareModal = ({ show, handleClose, food }) => {
   return (
     <Modal show={show} onHide={handleClose} centered size="lg">
       <Modal.Header closeButton className="border-0 pb-0">
-        <Modal.Title className="text-center w-100 fw-bold" style={{ color: '#FF4532' }}>Share This Delicious Food!</Modal.Title>
+        <Modal.Title className="text-center w-100 fw-bold" style={{ color: '#FF4532' }}>Share This Delicious Food! 😋</Modal.Title>
       </Modal.Header>
       <Modal.Body className="pt-0">
         {food && (
@@ -117,65 +118,65 @@ const ShareModal = ({ show, handleClose, food }) => {
         <div className="d-flex flex-wrap justify-content-center gap-3">
           <Button
             variant="light"
-            className="d-flex flex-column align-items-center p-3 shadow-sm rounded-lg"
+            className="d-flex flex-column align-items-center p-2 shadow-sm rounded-lg" // Reduced padding
             onClick={() => shareToPlatform('whatsapp')}
-            style={{ minWidth: '120px', fontSize: '0.9rem', color: '#333', border: '1px solid #e0e0e0' }}
+            style={{ minWidth: '100px', fontSize: '0.9rem', color: '#FF4532', border: '1px solid #FF4532', backgroundColor: 'transparent' }} // Updated styles
           >
             <FaWhatsapp size={35} className="mb-2" style={{ color: '#25D366' }} />
             WhatsApp
           </Button>
           <Button
             variant="light"
-            className="d-flex flex-column align-items-center p-3 shadow-sm rounded-lg"
+            className="d-flex flex-column align-items-center p-2 shadow-sm rounded-lg" // Reduced padding
             onClick={() => shareToPlatform('instagram')}
-            style={{ minWidth: '120px', fontSize: '0.9rem', color: '#333', border: '1px solid #e0e0e0' }}
+            style={{ minWidth: '100px', fontSize: '0.9rem', color: '#FF4532', border: '1px solid #FF4532', backgroundColor: 'transparent' }} // Updated styles
           >
             <FaInstagram size={35} className="mb-2" style={{ color: '#E1306C' }} />
             Instagram
           </Button>
           <Button
             variant="light"
-            className="d-flex flex-column align-items-center p-3 shadow-sm rounded-lg"
+            className="d-flex flex-column align-items-center p-2 shadow-sm rounded-lg" // Reduced padding
             onClick={() => shareToPlatform('facebook')}
-            style={{ minWidth: '120px', fontSize: '0.9rem', color: '#333', border: '1px solid #e0e0e0' }}
+            style={{ minWidth: '100px', fontSize: '0.9rem', color: '#FF4532', border: '1px solid #FF4532', backgroundColor: 'transparent' }} // Updated styles
           >
             <FaFacebook size={35} className="mb-2" style={{ color: '#1877F2' }} />
             Facebook
           </Button>
           <Button
             variant="light"
-            className="d-flex flex-column align-items-center p-3 shadow-sm rounded-lg"
+            className="d-flex flex-column align-items-center p-2 shadow-sm rounded-lg" // Reduced padding
             onClick={() => shareToPlatform('twitter')}
-            style={{ minWidth: '120px', fontSize: '0.9rem', color: '#333', border: '1px solid #e0e0e0' }}
+            style={{ minWidth: '100px', fontSize: '0.9rem', color: '#FF4532', border: '1px solid #FF4532', backgroundColor: 'transparent' }} // Updated styles
           >
             <FaTwitter size={35} className="mb-2" style={{ color: '#1DA1F2' }} />
             Twitter
           </Button>
           <Button
             variant="light"
-            className="d-flex flex-column align-items-center p-3 shadow-sm rounded-lg"
+            className="d-flex flex-column align-items-center p-2 shadow-sm rounded-lg" // Reduced padding
             onClick={() => shareToPlatform('linkedin')}
-            style={{ minWidth: '120px', fontSize: '0.9rem', color: '#333', border: '1px solid #e0e0e0' }}
+            style={{ minWidth: '100px', fontSize: '0.9rem', color: '#FF4532', border: '1px solid #FF4532', backgroundColor: 'transparent' }} // Updated styles
           >
             <FaLinkedin size={35} className="mb-2" style={{ color: '#0A66C2' }} />
             LinkedIn
           </Button>
           <Button
             variant="light"
-            className="d-flex flex-column align-items-center p-3 shadow-sm rounded-lg"
+            className="d-flex flex-column align-items-center p-2 shadow-sm rounded-lg" // Reduced padding
             onClick={() => shareToPlatform('email')}
-            style={{ minWidth: '120px', fontSize: '0.9rem', color: '#333', border: '1px solid #e0e0e0' }}
+            style={{ minWidth: '100px', fontSize: '0.9rem', color: '#FF4532', border: '1px solid #FF4532', backgroundColor: 'transparent' }} // Updated styles
           >
             <FaEnvelope size={35} className="mb-2" style={{ color: '#D44638' }} />
             Email
           </Button>
           <Button
             variant="light"
-            className="d-flex flex-column align-items-center p-3 shadow-sm rounded-lg"
+            className="d-flex flex-column align-items-center p-2 shadow-sm rounded-lg" // Reduced padding
             onClick={() => shareToPlatform('copy')}
-            style={{ minWidth: '120px', fontSize: '0.9rem', color: '#333', border: '1px solid #e0e0e0' }}
+            style={{ minWidth: '100px', fontSize: '0.9rem', color: '#FF4532', border: '1px solid #FF4532', backgroundColor: 'transparent' }} // Updated styles
           >
-            <i className="bi bi-link-45deg mb-2" style={{ fontSize: '35px', color: '#6c757d' }}></i>
+            <i className="bi bi-link-45deg mb-2" style={{ fontSize: '35px', color: '#FF4532' }}></i> {/* Updated color */}
             Copy Link
           </Button>
         </div>
@@ -461,17 +462,19 @@ const SavedFoods = ({ user }) => {
 
                     <Button
                       variant="success"
-                      className="d-flex align-items-center justify-content-center"
+                      className="d-flex flex-column align-items-center justify-content-center p-2" // Added flex-column, align-items-center, justify-content-center, reduced padding
                       style={{
                         backgroundColor: '#2ECC71',
                         border: 'none',
                         width: '40px', // Increased size
                         height: '40px', // Increased size
                         borderRadius: '50%', // Make it circular
+                        fontSize: '0.7rem' // Smaller font size for label
                       }}
                       onClick={() => openShareModal(food)} // Open custom share modal
                     >
                       <ShareFill size={22} /> {/* Bigger icon */}
+                      <span className="mt-1">Share</span> {/* Added text label */}
                     </Button>
                   </div>
 
@@ -504,6 +507,7 @@ const SavedFoods = ({ user }) => {
                       </h5>
                       <Badge className="fs-6 fw-normal" style={{
                         backgroundColor: '#FF4532',
+                        color: 'white',
                         padding: '0.4em 0.7em'
                       }}>
                         KES {food.price}
