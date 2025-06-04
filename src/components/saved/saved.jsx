@@ -13,7 +13,7 @@ import {
   Chat
 } from 'react-bootstrap-icons';
 import { FaWhatsapp, FaInstagram } from 'react-icons/fa';
-import   {jwtDecode}  from 'jwt-decode';
+import {jwtDecode } from 'jwt-decode';
 
 const SavedFoods = ({ user }) => {
   const BASE_URL = "https://neuro-apps-api-express-js-production-redy.onrender.com/apiV1/smartcity-ke";
@@ -26,78 +26,60 @@ const SavedFoods = ({ user }) => {
   const [selectedFood, setSelectedFood] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
-  
-  // Get user ID from token
-  useEffect(() => {
-    const getUserIdFromToken = () => {
-      const token = localStorage.getItem("token");
-      if (!token) return null;
-      try {
-        const decoded = jwtDecode(token);
-        return decoded?.id || decoded?.userId || decoded?._id || null;
-      } catch (error) {
-        console.error("Invalid token:", error);
-        return null;
-      }
-    };
 
-    const id = getUserIdFromToken();
-    setUserId(id);
-  }, []);
 
-  // Fetch saved foods
+  // Fetch saved foods from API
   useEffect(() => {
+
+
     const fetchSavedFoods = async () => {
+      setLoading(true);
+      setError(null);
       try {
-        setLoading(true);
-        
-        if (!userId) {
-          throw new Error('User ID not available');
-        }
-        
-        await new Promise(resolve => setTimeout(resolve, 1500));
-        
-        const response = await fetch(`${BASE_URL}/user/smart_ke_WT_536237943/saved-foods`);
-        if (!response.ok) {
-          throw new Error('Failed to fetch saved foods');
-        }
+     
+        // Fetch saved foods for the user
+        const response = await fetch(`https://neuro-apps-api-express-js-production-redy.onrender.com/apiV1/smartcity-ke/user/smart_ke_WT_536237943/saved-foods`);
+        console.log( 'liked'  ,    response)
+        if (!response.ok) throw new Error('Failed to fetch saved foods');
 
         const data = await response.json();
+
+        // Enhance data with additional properties for UI
         const enhancedData = data.map(food => ({
           ...food,
           likes: Math.floor(Math.random() * 1000) + 50,
           shares: Math.floor(Math.random() * 200) + 10,
           postedDate: new Date(Date.now() - Math.floor(Math.random() * 30) * 24 * 60 * 60 * 1000),
-          chefName: food.chef?.username ? `Chef ${food.chef.username}` : `Chef ${String(food.chefId || 'Unknown').substring(0, 6)}`,
+          chefName: food.chef?.username
+            ? `Chef ${food.chef.username}`
+            : `Chef ${String(food.chefId || 'Unknown').substring(0, 6)}`,
           isHot: Math.random() > 0.7,
           isMostLiked: Math.random() > 0.9,
         }));
 
         setSavedFoods(enhancedData);
       } catch (err) {
-        console.error('Error fetching saved foods:', err);
         setError(err.message);
+        console.error(err);
       } finally {
         setLoading(false);
       }
     };
 
-    if (userId) {
-      fetchSavedFoods();
-    }
+    fetchSavedFoods();
   }, [userId]);
 
   const handleRemoveSaved = (foodId) => {
     setSavedFoods(prev => prev.filter(food => food.id !== foodId));
   };
 
-  const filteredFoods = activeFilter === 'all' 
-    ? savedFoods 
+  const filteredFoods = activeFilter === 'all'
+    ? savedFoods
     : savedFoods.filter(food => food.cuisineType === activeFilter);
 
-  const cuisineTypes = [...new Set(savedFoods.map(food => food.cuisineType))];
+  const cuisineTypes = [...new Set(savedFoods.map(food => food.cuisineType).filter(Boolean))];
 
-  // Calculate days ago
+  // Calculate days ago helper
   const getDaysAgo = (date) => {
     const diffDays = Math.floor((new Date() - new Date(date)) / (1000 * 60 * 60 * 24));
     if (diffDays === 0) return 'Today';
@@ -105,34 +87,33 @@ const SavedFoods = ({ user }) => {
     return `${diffDays} days ago`;
   };
 
-  // Enhanced share functionality
+  // Share functionality
   const shareFood = (platform, food) => {
     const dishTypes = {
       'ugali': 'delicious Ugali',
       'nyama choma': 'juicy Nyama Choma',
       'chapati': 'flaky Chapati',
       'githeri': 'hearty Githeri',
-      'mandazi': 'sweet Mandazi'
+      'mandazi': 'sweet Mandazi',
     };
-    
     const locations = {
       'nairobi': 'Nairobi',
       'westlands': 'Westlands',
       'kisumu': 'Kisumu',
       'mombasa': 'Mombasa',
-      'nakuru': 'Nakuru'
+      'nakuru': 'Nakuru',
     };
-    
+
     const dishType = dishTypes[food.cuisineType?.toLowerCase()] || 'amazing dish';
     const chefLocation = locations[food.location?.toLowerCase()] || 'your city';
-    
+
     const hashtags = ['#JikoniExpress', '#TasteKenya', '#EatLocal', '#KenyanFood'];
-    
+
     const message = `Just discovered this ${dishType} by ${food.chefName} in ${chefLocation} on Jikoni Express! 🍲🔥\n\n"${food.title}" - ${food.description?.substring(0, 100)}...\n\n${hashtags.join(' ')}`;
-    
+
     const url = `${window.location.origin}/food/${food.id}`;
-    
-    switch(platform) {
+
+    switch (platform) {
       case 'whatsapp':
         window.open(`https://wa.me/?text=${encodeURIComponent(`${message}\n\nCheck it out: ${url}`)}`, '_blank');
         break;
@@ -163,43 +144,40 @@ const SavedFoods = ({ user }) => {
     setShowSuggestModal(true);
   };
 
-  // Search users (mock implementation)
+  // Mock search users
   const searchUsers = (query) => {
     if (!query.trim()) {
       setSearchResults([]);
       return;
     }
-    
-    // Mock user data
     const mockUsers = [
-      { id: 1, name: 'John Kamau', avatar: null },
-      { id: 2, name: 'Mary Wambui', avatar: null },
-      { id: 3, name: 'Peter Otieno', avatar: null },
-      { id: 4, name: 'Sarah Akinyi', avatar: null },
-      { id: 5, name: 'David Mwangi', avatar: null },
+      { id: 1, name: 'John Kamau' },
+      { id: 2, name: 'Mary Wambui' },
+      { id: 3, name: 'Peter Otieno' },
+      { id: 4, name: 'Sarah Akinyi' },
+      { id: 5, name: 'David Mwangi' },
     ];
-    
-    const results = mockUsers.filter(user => 
+    const results = mockUsers.filter(user =>
       user.name.toLowerCase().includes(query.toLowerCase())
     );
-    
     setSearchResults(results);
   };
 
-  // Handle search input change
   const handleSearchChange = (e) => {
     const query = e.target.value;
     setSearchQuery(query);
     searchUsers(query);
   };
 
-  // Handle suggestion
   const handleSuggest = (userId) => {
-    alert(`Suggested ${selectedFood.title} to user ${userId}!`);
+    alert(`Suggested "${selectedFood.title}" to user ID ${userId}!`);
     setShowSuggestModal(false);
     setSearchQuery('');
     setSearchResults([]);
   };
+
+  if (loading) return <div className="text-center my-5"><Spinner animation="border" /> Loading saved foods...</div>;
+  if (error) return <div className="text-danger text-center my-5">Error: {error}</div>;
 
   if (error) {
     return (
