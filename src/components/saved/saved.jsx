@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Row, Col, Card, Spinner, Carousel, Badge, Button, Dropdown, Modal, Form } from 'react-bootstrap';
+import { Row, Col, Card, Spinner, Carousel, Badge, Button, Modal } from 'react-bootstrap';
 import {
   HeartFill,
   GeoAlt,
@@ -8,14 +8,10 @@ import {
   ShareFill,
   Clock,
   PersonCircle,
-  Search,
-  Person,
-  Chat
+  Person
 } from 'react-bootstrap-icons';
 import { FaWhatsapp, FaInstagram, FaFacebook, FaTwitter, FaLinkedin, FaEnvelope } from 'react-icons/fa';
-import { jwtDecode } from 'jwt-decode';
 
-// Reusable Share Modal Component
 const ShareModal = ({ show, handleClose, food }) => {
   if (!food) return null;
 
@@ -26,6 +22,7 @@ const ShareModal = ({ show, handleClose, food }) => {
     'githeri': 'hearty Githeri',
     'mandazi': 'sweet Mandazi',
   };
+  
   const locations = {
     'nairobi': 'Nairobi',
     'westlands': 'Westlands',
@@ -37,12 +34,13 @@ const ShareModal = ({ show, handleClose, food }) => {
   const dishType = dishTypes[food.cuisineType?.toLowerCase()] || 'amazing dish';
   const chefLocation = locations[food.location?.toLowerCase()] || 'your city';
 
-  const hashtags = ['#JikoniExpress', '#TasteKenya', '#EatLocal', '#KenyanFood'];
-
-  // Added fire emojis to the message
+  // Updated hashtags with more fire emojis and Jikoni Express promotion
+  const hashtags = ['#JikoniExpress', '#KenyanFood', '#Foodie', '#LocalChefs', '#FoodSharing'];
+  
+  // Enhanced message with more fire emojis
   const message = `Just discovered this ${dishType} by ${food.chefName} in ${chefLocation} on Jikoni Express! 🍲🔥🔥\n\n"${food.title}" - ${food.description?.substring(0, 100)}...\n\n${hashtags.join(' ')}`;
   const url = `${window.location.origin}/food/${food.id}`;
-  const imageUrl = food.photoUrls?.[0] || 'https://via.placeholder.com/400x300?text=Food+Image'; // Fallback image
+  const imageUrl = food.photoUrls?.[0] || 'https://via.placeholder.com/400x300?text=Food+Image';
 
   const shareToPlatform = (platform) => {
     switch (platform) {
@@ -59,13 +57,11 @@ const ShareModal = ({ show, handleClose, food }) => {
         window.open(`https://www.linkedin.com/shareArticle?mini=true&url=${encodeURIComponent(url)}&title=${encodeURIComponent(food.title)}&summary=${encodeURIComponent(message)}&source=${encodeURIComponent(window.location.origin)}`, '_blank');
         break;
       case 'instagram':
-        // Instagram sharing via web is limited. Usually requires a mobile app or direct posting.
-        // For web, we can only suggest copying the link.
         navigator.clipboard.writeText(`${message}\n\n${url}\n\n(For Instagram, please paste this into your story or post caption)`);
         alert('Content copied to clipboard for Instagram! Please paste it into your story or post caption.');
         break;
       case 'email':
-        window.open(`mailto:?subject=${encodeURIComponent(`Check out this food on Jikoni Express: ${food.title}`)}&body=${encodeURIComponent(`${message}\n\nFind more here: ${url}`)}`, '_blank');
+        window.open(`mailto:?subject=${encodeURIComponent(`🔥 Check out this food on Jikoni Express: ${food.title}`)}&body=${encodeURIComponent(`${message}\n\nFind more here: ${url}`)}`, '_blank');
         break;
       case 'copy':
         navigator.clipboard.writeText(`${message}\n\n${url}`);
@@ -77,14 +73,10 @@ const ShareModal = ({ show, handleClose, food }) => {
             title: `${food.title} - Jikoni Express`,
             text: message,
             url: url,
-            files: imageUrl ? [new File([new Blob()], 'image.png', { type: 'image/png' })] : [] // Placeholder for actual image sharing
-          }).then(() => console.log('Successful share'))
-            .catch((error) => {
-              console.error('Error sharing', error);
-              // Fallback to copy if Web Share API fails
-              navigator.clipboard.writeText(`${message}\n\n${url}`);
-              alert('Could not share directly. Link copied to clipboard!');
-            });
+          }).catch(() => {
+            navigator.clipboard.writeText(`${message}\n\n${url}`);
+            alert('Link copied to clipboard!');
+          });
         } else {
           navigator.clipboard.writeText(`${message}\n\n${url}`);
           alert('Link copied to clipboard!');
@@ -96,7 +88,9 @@ const ShareModal = ({ show, handleClose, food }) => {
   return (
     <Modal show={show} onHide={handleClose} centered size="lg">
       <Modal.Header closeButton className="border-0 pb-0">
-        <Modal.Title className="text-center w-100 fw-bold" style={{ color: '#FF4532' }}>Share This Delicious Food! 😋</Modal.Title>
+        <Modal.Title className="text-center w-100 fw-bold" style={{ color: '#FF4532' }}>
+          Share This Delicious Food! 🔥😋
+        </Modal.Title>
       </Modal.Header>
       <Modal.Body className="pt-0">
         {food && (
@@ -118,67 +112,80 @@ const ShareModal = ({ show, handleClose, food }) => {
         <div className="d-flex flex-wrap justify-content-center gap-3">
           <Button
             variant="light"
-            className="d-flex flex-column align-items-center p-2 shadow-sm rounded-lg" // Reduced padding
+            className="d-flex flex-column align-items-center p-2 shadow-sm rounded-lg"
             onClick={() => shareToPlatform('whatsapp')}
-            style={{ minWidth: '100px', fontSize: '0.9rem', color: '#FF4532', border: '1px solid #FF4532', backgroundColor: 'transparent' }} // Updated styles
+            style={{ minWidth: '100px', fontSize: '0.9rem', color: '#FF4532', border: '1px solid #FF4532' }}
           >
             <FaWhatsapp size={35} className="mb-2" style={{ color: '#25D366' }} />
             WhatsApp
           </Button>
           <Button
             variant="light"
-            className="d-flex flex-column align-items-center p-2 shadow-sm rounded-lg" // Reduced padding
+            className="d-flex flex-column align-items-center p-2 shadow-sm rounded-lg"
             onClick={() => shareToPlatform('instagram')}
-            style={{ minWidth: '100px', fontSize: '0.9rem', color: '#FF4532', border: '1px solid #FF4532', backgroundColor: 'transparent' }} // Updated styles
+            style={{ minWidth: '100px', fontSize: '0.9rem', color: '#FF4532', border: '1px solid #FF4532' }}
           >
             <FaInstagram size={35} className="mb-2" style={{ color: '#E1306C' }} />
             Instagram
           </Button>
           <Button
             variant="light"
-            className="d-flex flex-column align-items-center p-2 shadow-sm rounded-lg" // Reduced padding
+            className="d-flex flex-column align-items-center p-2 shadow-sm rounded-lg"
             onClick={() => shareToPlatform('facebook')}
-            style={{ minWidth: '100px', fontSize: '0.9rem', color: '#FF4532', border: '1px solid #FF4532', backgroundColor: 'transparent' }} // Updated styles
+            style={{ minWidth: '100px', fontSize: '0.9rem', color: '#FF4532', border: '1px solid #FF4532' }}
           >
             <FaFacebook size={35} className="mb-2" style={{ color: '#1877F2' }} />
             Facebook
           </Button>
           <Button
             variant="light"
-            className="d-flex flex-column align-items-center p-2 shadow-sm rounded-lg" // Reduced padding
+            className="d-flex flex-column align-items-center p-2 shadow-sm rounded-lg"
             onClick={() => shareToPlatform('twitter')}
-            style={{ minWidth: '100px', fontSize: '0.9rem', color: '#FF4532', border: '1px solid #FF4532', backgroundColor: 'transparent' }} // Updated styles
+            style={{ minWidth: '100px', fontSize: '0.9rem', color: '#FF4532', border: '1px solid #FF4532' }}
           >
             <FaTwitter size={35} className="mb-2" style={{ color: '#1DA1F2' }} />
             Twitter
           </Button>
           <Button
             variant="light"
-            className="d-flex flex-column align-items-center p-2 shadow-sm rounded-lg" // Reduced padding
+            className="d-flex flex-column align-items-center p-2 shadow-sm rounded-lg"
             onClick={() => shareToPlatform('linkedin')}
-            style={{ minWidth: '100px', fontSize: '0.9rem', color: '#FF4532', border: '1px solid #FF4532', backgroundColor: 'transparent' }} // Updated styles
+            style={{ minWidth: '100px', fontSize: '0.9rem', color: '#FF4532', border: '1px solid #FF4532' }}
           >
             <FaLinkedin size={35} className="mb-2" style={{ color: '#0A66C2' }} />
             LinkedIn
           </Button>
           <Button
             variant="light"
-            className="d-flex flex-column align-items-center p-2 shadow-sm rounded-lg" // Reduced padding
+            className="d-flex flex-column align-items-center p-2 shadow-sm rounded-lg"
             onClick={() => shareToPlatform('email')}
-            style={{ minWidth: '100px', fontSize: '0.9rem', color: '#FF4532', border: '1px solid #FF4532', backgroundColor: 'transparent' }} // Updated styles
+            style={{ minWidth: '100px', fontSize: '0.9rem', color: '#FF4532', border: '1px solid #FF4532' }}
           >
             <FaEnvelope size={35} className="mb-2" style={{ color: '#D44638' }} />
             Email
           </Button>
           <Button
             variant="light"
-            className="d-flex flex-column align-items-center p-2 shadow-sm rounded-lg" // Reduced padding
+            className="d-flex flex-column align-items-center p-2 shadow-sm rounded-lg"
             onClick={() => shareToPlatform('copy')}
-            style={{ minWidth: '100px', fontSize: '0.9rem', color: '#FF4532', border: '1px solid #FF4532', backgroundColor: 'transparent' }} // Updated styles
+            style={{ minWidth: '100px', fontSize: '0.9rem', color: '#FF4532', border: '1px solid #FF4532' }}
           >
-            <i className="bi bi-link-45deg mb-2" style={{ fontSize: '35px', color: '#FF4532' }}></i> {/* Updated color */}
+            <i className="bi bi-link-45deg mb-2" style={{ fontSize: '35px', color: '#FF4532' }}></i>
             Copy Link
           </Button>
+        </div>
+        
+        {/* Jikoni Express Promotion */}
+        <div className="mt-4 p-3 rounded text-center" style={{ backgroundColor: '#FFF8F7', border: '1px solid #FFE0DD' }}>
+          <h5 className="fw-bold mb-2" style={{ color: '#FF4532' }}>Why Share on Jikoni Express?</h5>
+          <p className="mb-2">
+            <span className="d-inline-block mx-2">🌟 Support Local Chefs</span> • 
+            <span className="d-inline-block mx-2">🔥 Discover Amazing Foods</span> • 
+            <span className="d-inline-block mx-2">❤️ Build Food Communities</span>
+          </p>
+          <p className="mb-0 small">
+            Every share helps Kenyan chefs grow their business and brings more delicious food to you!
+          </p>
         </div>
       </Modal.Body>
       <Modal.Footer className="border-0 pt-0 justify-content-center">
@@ -190,39 +197,23 @@ const ShareModal = ({ show, handleClose, food }) => {
   );
 };
 
-
 const SavedFoods = ({ user }) => {
-  const BASE_URL = "https://neuro-apps-api-express-js-production-redy.onrender.com/apiV1/smartcity-ke";
   const [savedFoods, setSavedFoods] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeFilter, setActiveFilter] = useState('all');
-  const [userId, setUserId] = useState(null);
-  const [showSuggestModal, setShowSuggestModal] = useState(false);
-  const [selectedFood, setSelectedFood] = useState(null);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState([]);
-
-  // New state for share modal
   const [showShareModal, setShowShareModal] = useState(false);
   const [selectedFoodForShare, setSelectedFoodForShare] = useState(null);
 
-
-  // Fetch saved foods from API
   useEffect(() => {
     const fetchSavedFoods = async () => {
       setLoading(true);
       setError(null);
       try {
-
-        // Fetch saved foods for the user
         const response = await fetch(`https://neuro-apps-api-express-js-production-redy.onrender.com/apiV1/smartcity-ke/user/smart_ke_WT_536237943/saved-foods`);
-        console.log('liked', response)
         if (!response.ok) throw new Error('Failed to fetch saved foods');
-
+        
         const data = await response.json();
-
-        // Enhance data with additional properties for UI
         const enhancedData = data.map(food => ({
           ...food,
           likes: Math.floor(Math.random() * 1000) + 50,
@@ -234,21 +225,37 @@ const SavedFoods = ({ user }) => {
           isHot: Math.random() > 0.7,
           isMostLiked: Math.random() > 0.9,
         }));
-
+        
         setSavedFoods(enhancedData);
       } catch (err) {
         setError(err.message);
-        console.error(err);
       } finally {
         setLoading(false);
       }
     };
-
+    
     fetchSavedFoods();
-  }, [userId]);
+  }, []);
 
   const handleRemoveSaved = (foodId) => {
     setSavedFoods(prev => prev.filter(food => food.id !== foodId));
+  };
+
+  const getDaysAgo = (date) => {
+    const diffDays = Math.floor((new Date() - new Date(date)) / (1000 * 60 * 60 * 24));
+    if (diffDays === 0) return 'Today';
+    if (diffDays === 1) return 'Yesterday';
+    return `${diffDays} days ago`;
+  };
+
+  const openShareModal = (food) => {
+    setSelectedFoodForShare(food);
+    setShowShareModal(true);
+  };
+
+  const closeShareModal = () => {
+    setShowShareModal(false);
+    setSelectedFoodForShare(null);
   };
 
   const filteredFoods = activeFilter === 'all'
@@ -257,68 +264,8 @@ const SavedFoods = ({ user }) => {
 
   const cuisineTypes = [...new Set(savedFoods.map(food => food.cuisineType).filter(Boolean))];
 
-  // Calculate days ago helper
-  const getDaysAgo = (date) => {
-    const diffDays = Math.floor((new Date() - new Date(date)) / (1000 * 60 * 60 * 24));
-    if (diffDays === 0) return 'Today';
-    if (diffDays === 1) return 'Yesterday';
-    return `${diffDays} days ago`;
-  };
-
-  // Open share modal
-  const openShareModal = (food) => {
-    setSelectedFoodForShare(food);
-    setShowShareModal(true);
-  };
-
-  // Close share modal
-  const closeShareModal = () => {
-    setShowShareModal(false);
-    setSelectedFoodForShare(null);
-  };
-
-
-  // Open suggest modal
-  const openSuggestModal = (food) => {
-    setSelectedFood(food);
-    setShowSuggestModal(true);
-  };
-
-  // Mock search users
-  const searchUsers = (query) => {
-    if (!query.trim()) {
-      setSearchResults([]);
-      return;
-    }
-    const mockUsers = [
-      { id: 1, name: 'John Kamau' },
-      { id: 2, name: 'Mary Wambui' },
-      { id: 3, name: 'Peter Otieno' },
-      { id: 4, name: 'Sarah Akinyi' },
-      { id: 5, name: 'David Mwangi' },
-    ];
-    const results = mockUsers.filter(user =>
-      user.name.toLowerCase().includes(query.toLowerCase())
-    );
-    setSearchResults(results);
-  };
-
-  const handleSearchChange = (e) => {
-    const query = e.target.value;
-    setSearchQuery(query);
-    searchUsers(query);
-  };
-
-  const handleSuggest = (userId) => {
-    alert(`Suggested "${selectedFood.title}" to user ID ${userId}!`);
-    setShowSuggestModal(false);
-    setSearchQuery('');
-    setSearchResults([]);
-  };
-
   if (loading) return <div className="text-center my-5"><Spinner animation="border" /> Loading saved foods...</div>;
-  if (error) return <div className="text-danger text-center my-5">Error: {error}</div>;
-
+  
   if (error) {
     return (
       <div className="container py-5 text-center">
@@ -335,18 +282,12 @@ const SavedFoods = ({ user }) => {
     <div className="container py-4">
       {/* Platform Header */}
       <div className="text-center mb-4">
-        <h1 className="fw-bold mb-1" style={{
-          color: '#FF4532',
-          fontSize: '2.2rem'
-        }}>
-          <HeartFill className="me-2" style={{
-            color: '#FF4532',
-            fontSize: '1.8rem'
-          }} />
+        <h1 className="fw-bold mb-1" style={{ color: '#FF4532', fontSize: '2.2rem' }}>
+          <HeartFill className="me-2" style={{ color: '#FF4532', fontSize: '1.8rem' }} />
           Your Food Favorites
         </h1>
         <p className="mb-0" style={{ fontSize: '1.1rem' }}>
-          Discover, save, and share Kenya's best homemade meals
+          These are your favorite meals - share them with friends and family!
         </p>
       </div>
 
@@ -383,14 +324,7 @@ const SavedFoods = ({ user }) => {
         </div>
       )}
 
-      {loading ? (
-        <div className="d-flex justify-content-center py-5">
-          <div className="text-center">
-            <Spinner animation="border" variant="primary" style={{ width: '3rem', height: '3rem' }} />
-            <p className="mt-3 fw-medium">Loading your delicious favorites...</p>
-          </div>
-        </div>
-      ) : savedFoods.length === 0 ? (
+      {savedFoods.length === 0 ? (
         <div className="text-center py-5" style={{ maxWidth: '600px', margin: '0 auto' }}>
           <div className="mb-4">
             <div style={{
@@ -446,35 +380,21 @@ const SavedFoods = ({ user }) => {
                     )}
                   </div>
 
-                  {/* Action Buttons */}
-                  <div className="position-absolute top-3 end-3 z-2 d-flex gap-2">
+                  {/* Action Buttons - Only keep remove button */}
+                  <div className="position-absolute top-3 end-3 z-2">
                     <Button
                       variant="danger"
                       className="d-flex align-items-center justify-content-center p-2"
                       style={{
                         backgroundColor: '#FF4532',
-                        border: 'none'
+                        border: 'none',
+                        width: '40px',
+                        height: '40px',
+                        borderRadius: '50%',
                       }}
                       onClick={() => handleRemoveSaved(food.id)}
                     >
                       <HeartFill size={18} />
-                    </Button>
-
-                    <Button
-                      variant="success"
-                      className="d-flex flex-column align-items-center justify-content-center p-2" // Added flex-column, align-items-center, justify-content-center, reduced padding
-                      style={{
-                        backgroundColor: '#2ECC71',
-                        border: 'none',
-                        width: '40px', // Increased size
-                        height: '40px', // Increased size
-                        borderRadius: '50%', // Make it circular
-                        fontSize: '0.7rem' // Smaller font size for label
-                      }}
-                      onClick={() => openShareModal(food)} // Open custom share modal
-                    >
-                      <ShareFill size={22} /> {/* Bigger icon */}
-                      <span className="mt-1">Share</span> {/* Added text label */}
                     </Button>
                   </div>
 
@@ -573,6 +493,12 @@ const SavedFoods = ({ user }) => {
                       </Badge>
                     </div>
 
+                    {/* Share Note */}
+                    <div className="alert alert-info mb-3 py-2 text-center">
+                      <HeartFill className="text-danger me-1" />
+                      <strong>Your favorite!</strong> Share with friends and family
+                    </div>
+
                     {/* Action Buttons */}
                     <div className="mt-auto d-flex gap-2">
                       <Link
@@ -602,10 +528,10 @@ const SavedFoods = ({ user }) => {
                           color: 'white',
                           border: 'none'
                         }}
-                        onClick={() => openSuggestModal(food)}
+                        onClick={() => openShareModal(food)}
                       >
-                        <Chat className="me-1" />
-                        Suggest
+                        <ShareFill className="me-1" />
+                        Share
                       </Button>
                     </div>
                   </Card.Body>
@@ -622,84 +548,12 @@ const SavedFoods = ({ user }) => {
         </>
       )}
 
-      {/* Suggest Modal */}
-      <Modal show={showSuggestModal} onHide={() => setShowSuggestModal(false)} centered>
-        <Modal.Header closeButton>
-          <Modal.Title>Suggest Food to a Friend</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          {selectedFood && (
-            <div className="mb-3">
-              <p className="mb-1">Suggesting: <strong>{selectedFood.title}</strong></p>
-              <p className="mb-2 text-muted">by {selectedFood.chefName}</p>
-              <img
-                src={selectedFood.photoUrls?.[0] || '/placeholder-food.jpg'}
-                alt={selectedFood.title}
-                className="img-fluid rounded"
-                style={{ maxHeight: '150px' }}
-              />
-            </div>
-          )}
-
-          <Form.Group className="mb-3">
-            <Form.Label>Search users</Form.Label>
-            <div className="input-group">
-              <span className="input-group-text">
-                <Search />
-              </span>
-              <Form.Control
-                type="text"
-                placeholder="Search by name"
-                value={searchQuery}
-                onChange={handleSearchChange}
-              />
-            </div>
-          </Form.Group>
-
-          <div className="mt-3">
-            <h6 className="mb-2">Search Results</h6>
-            {searchResults.length > 0 ? (
-              <div className="list-group">
-                {searchResults.map(user => (
-                  <div
-                    key={user.id}
-                    className="list-group-item list-group-item-action d-flex justify-content-between align-items-center"
-                  >
-                    <div>
-                      <Person className="me-2" />
-                      {user.name}
-                    </div>
-                    <Button
-                      size="sm"
-                      style={{ backgroundColor: '#FF4532', border: 'none' }}
-                      onClick={() => handleSuggest(user.id)}
-                    >
-                      Suggest
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-muted text-center py-3">
-                {searchQuery ? 'No users found' : 'Start typing to search users'}
-              </p>
-            )}
-          </div>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowSuggestModal(false)}>
-            Close
-          </Button>
-        </Modal.Footer>
-      </Modal>
-
-      {/* Custom Share Modal */}
+      {/* Share Modal */}
       <ShareModal
         show={showShareModal}
         handleClose={closeShareModal}
         food={selectedFoodForShare}
       />
-
 
       {/* Platform Promotion */}
       <div className="text-center mt-5 pt-4">
@@ -755,11 +609,11 @@ const SavedFoods = ({ user }) => {
                   alignItems: 'center',
                   justifyContent: 'center'
                 }}>
-                  <Chat style={{ fontSize: '1.5rem', color: 'white' }} />
+                  <i className="bi bi-people" style={{ fontSize: '1.5rem', color: 'white' }} />
                 </div>
               </div>
-              <h5 className="mb-2">Suggest to Friends</h5>
-              <p className="mb-0">Share your favorite meals with friends and family</p>
+              <h5 className="mb-2">Build Community</h5>
+              <p className="mb-0">Connect with food lovers across Kenya</p>
             </div>
           </Col>
         </Row>
