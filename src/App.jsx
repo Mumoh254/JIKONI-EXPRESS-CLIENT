@@ -19,6 +19,7 @@ import { FaWineBottle } from "react-icons/fa";
 import { IoIosPersonAdd } from "react-icons/io";
 import { GiHotMeal } from "react-icons/gi";
 import  Liqour   from './Liqour/liqour'
+import LiqourProfile from './Liqour/liqourProfile';
 
 const AppContainer = styled.div`
   min-height: 100vh;
@@ -157,6 +158,7 @@ function App() {
              <Route path="/jikoni-express/liqour-shots" element={<Liqour />} />
           <Route path="/culture/foods" element={<FoodPlatform />} />
           <Route path="/chef/:id" element={<ChefProfile />} />
+            <Route path="/liqour/:id" element={<LiqourProfile />} />
           <Route path="/jikoni/express/download" element={<Download />} />
           <Route path="/saved/foods" element={<SavedFoods />} />
           <Route path="/chef/dashboard" element={<ChefDashboard setIsChefMode={setIsChefMode} />} />

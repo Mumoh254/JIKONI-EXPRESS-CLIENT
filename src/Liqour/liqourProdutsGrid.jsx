@@ -5,7 +5,7 @@ import {
 } from 'react-bootstrap';
 import { 
   Clock, StarFill, CartPlus, Heart, HeartFill, 
-  Eye, InfoCircle, ShieldCheck, Plus, Dash, Fire
+  Eye, InfoCircle, ShieldCheck, Plus, Dash, Fire  ,   Calendar, Clock as ClockIcon, 
 } from 'react-bootstrap-icons';
 
 
@@ -25,7 +25,26 @@ import popSound from '../../public/audio/cliks.mp3'; // ✅ your sound file
 const LiquorProductsGrid = () => {
 
 
-  
+   const [state, setState] = useState({
+      foods: [],
+      orders: [],
+      cart: [],
+      showCart: false,
+      loading: true,
+      error: null,
+      showChefReg: false,
+      showRiderReg: false,
+      showFoodPost: false,
+      showAnalytics: false,
+      showBikers: false,
+      showEditFood: null,
+      isChefMode: localStorage.getItem('isChef') === 'true',
+      isRiderMode: localStorage.getItem('isRider') === 'true',
+      filters: { area: 'all', specialty: 'all', mealType: 'all' },
+      showOrderConfirmation: false,
+      userLocation: null,
+      locationError: null
+    });
   
     const [showPreOrderModal, setShowPreOrderModal] = useState(false);
     const [selectedFood, setSelectedFood] = useState(null);
@@ -289,7 +308,7 @@ const LiquorProductsGrid = () => {
 
   
     const updateCart = (item, quantityChange) => {
-      playSound();
+
       setState(prev => {
         const existingItem = prev.cart.find(i => i.id === item.id);
         let newCart = [...prev.cart];
@@ -848,7 +867,7 @@ const LiquorProductsGrid = () => {
                           color: theme.primary,
                           backgroundColor: 'transparent'
                         }}
-                          onClick={() => handlePreOrder(food)}
+                          onClick={() => handlePreOrder(product)}
                       >
                         Pre-Order
                       </Button>
@@ -920,6 +939,164 @@ const LiquorProductsGrid = () => {
           z-index: 10;
         }
       `}</style>
+
+
+
+
+
+
+           <Modal show={showPreOrderModal} onHide={() => setShowPreOrderModal(false)} centered>
+                  <Modal.Header closeButton className="border-0 pb-0 bg-white">
+                    <Modal.Title className="fw-bold text-dark">Pre-Order Your Meal</Modal.Title>
+                  </Modal.Header>
+                  
+                  <Modal.Body className="bg-white py-4">
+                    {selectedFood && (
+                      <div className="d-flex align-items-center mb-4">
+                        <div className="me-3" style={{ 
+                          width: '80px', 
+                          height: '80px', 
+                          overflow: 'hidden',
+                          borderRadius: '12px' 
+                        }}>
+                          <img 
+                            src={selectedFood.photoUrls[0]} 
+                            alt={selectedFood.title}
+                            className="w-100 h-100 object-fit-cover"
+                          />
+                        </div>
+                        <div>
+                          <h5 className="mb-1 fw-bold text-dark">{selectedFood.title}</h5>
+                          <div className="d-flex align-items-center">
+                            <Badge pill style={{
+                              background: 'linear-gradient(45deg, #FF6B6B, #FF4532)',
+                              color: '#fff',
+                              border: 'none',
+                              padding: '0.4em 0.8em'
+                            }}>
+                              {selectedFood.mealType}
+                            </Badge>
+                            <span className="fw-bold text-danger ms-2">KES {selectedFood.price}</span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+      
+                    <Form>
+                      <Row className="g-3">
+                        <Col md={6}>
+                          <Form.Group controlId="preOrderDate">
+                            <Form.Label className="fw-medium mb-2">Delivery Date</Form.Label>
+                            <div className="input-group border rounded-3 overflow-hidden">
+                              <span className="input-group-text bg-white border-0">
+                                <Calendar size={18} className="text-muted" />
+                              </span>
+                              <Form.Control 
+                                type="date" 
+                                aria-label="Delivery Date"
+                                value={preOrderForm.date}
+                                onChange={(e) => setPreOrderForm({...preOrderForm, date: e.target.value})}
+                                min={new Date().toISOString().split('T')[0]}
+                                className="border-0 py-2 px-3"
+                                style={{ outline: 'none', boxShadow: 'none' }}
+                              />
+                            </div>
+                            <small className="text-muted mt-1 d-block">Select delivery date</small>
+                          </Form.Group>
+                        </Col>
+      
+                        <Col md={6}>
+                          <Form.Group controlId="preOrderTime">
+                            <Form.Label className="fw-medium mb-2">Delivery Time</Form.Label>
+                            <div className="input-group border rounded-3 overflow-hidden">
+                              <span className="input-group-text bg-white border-0">
+                                <Clock size={18} className="text-muted" />
+                              </span>
+                              <Form.Control 
+                                type="time" 
+                                aria-label="Delivery Time"
+                                value={preOrderForm.time}
+                                onChange={(e) => setPreOrderForm({...preOrderForm, time: e.target.value})}
+                                className="border-0 py-2 px-3"
+                                style={{ outline: 'none', boxShadow: 'none' }}
+                              />
+                            </div>
+                            <small className="text-muted mt-1 d-block">Choose convenient time</small>
+                          </Form.Group>
+                        </Col>
+      
+                        <Col md={6}>
+                          <Form.Group controlId="servings">
+                            <Form.Label className="fw-medium mb-2">Number of Servings</Form.Label>
+                            <Form.Select 
+                              aria-label="Number of Servings"
+                              value={preOrderForm.servings}
+                              onChange={(e) => setPreOrderForm({...preOrderForm, servings: parseInt(e.target.value)})}
+                              className="py-2 px-3 border rounded-3"
+                              style={{ 
+                                height: 'calc(2.5rem + 10px)',
+                                boxShadow: 'none'
+                              }}
+                            >
+                              {[1,2,3,4,5,6,7,8].map(num => (
+                                <option key={num} value={num}>{num} serving{num > 1 ? 's' : ''}</option>
+                              ))}
+                            </Form.Select>
+                          </Form.Group>
+                        </Col>
+      
+                        <Col md={6}>
+                          <Form.Group controlId="totalPrice">
+                            <Form.Label className="fw-medium mb-2">Total Price</Form.Label>
+                            <div className="d-flex align-items-center justify-content-center h-100 bg-light rounded-3 py-2">
+                              <h4 className="mb-0 fw-bold text-danger">
+                                {selectedFood ? `KES ${(selectedFood.price * preOrderForm.servings).toFixed(2)}` : ''}
+                              </h4>
+                            </div>
+                          </Form.Group>
+                        </Col>
+      
+                        <Col xs={12}>
+                          <Form.Group controlId="specialInstructions">
+                            <Form.Label className="fw-medium mb-2">Special Instructions</Form.Label>
+                            <Form.Control 
+                              as="textarea" 
+                              rows={3} 
+                              placeholder="Any dietary restrictions or special requests..."
+                              value={preOrderForm.instructions}
+                              onChange={(e) => setPreOrderForm({...preOrderForm, instructions: e.target.value})}
+                              className="border rounded-3 p-3"
+                              style={{ boxShadow: 'none' }}
+                            />
+                            <small className="text-muted mt-1 d-block">We'll accommodate your requests</small>
+                          </Form.Group>
+                        </Col>
+                      </Row>
+                    </Form>
+                  </Modal.Body>
+      
+                  <Modal.Footer className="bg-white border-0 pt-0">
+                    <Button 
+                      variant="outline-secondary" 
+                      className="fw-medium px-4 py-2"
+                      onClick={() => setShowPreOrderModal(false)}
+                    >
+                      Cancel
+                    </Button>
+                    <Button 
+                      className="px-4 py-2 fw-bold text-white"
+                      style={{
+                        background: '#FF4532',
+                        border: 'none'
+                      }}
+                      onClick={handleSubmitPreOrder}
+                      disabled={!preOrderForm.date || !preOrderForm.time}
+                    >
+                      Confirm Pre-Order
+                    </Button>
+                  </Modal.Footer>
+                </Modal>
+      
   
       
       {/* Product Detail Modal */}

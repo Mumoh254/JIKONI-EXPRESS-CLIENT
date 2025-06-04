@@ -461,117 +461,67 @@ const Liqour = () => {
 
   return (
     <Container fluid className="px-0" style={{ backgroundColor: theme.light }}>
-      {/* Header */}
-<header className="header bg-white shadow-sm sticky-top position-relative">
-  <div className="container py-2">
-    {/* Brand section - Full width */}
-    <div className="d-flex align-items-center gap-2 gap-md-3 mb-2">
-      <GiKenya className="text-primary header-icon" />
-      <h1 className="m-0 brand-title">
-        <span className="text-primary">Jikoni</span>
-        <span className="text-danger px-1">Liqour & Shots</span>
-      </h1>
-    </div>
-
-    {/* Action buttons - Floating on right for small screens */}
-    <div className="action-buttons d-none d-md-flex justify-content-end align-items-center gap-2">
-      {/* Desktop layout (inline buttons) */}
-      {!state.isVendorMode && !state.isDeliveryMode && (
-        <>
-          <Button 
-            variant="outline-primary"
-            className="rounded-pill d-flex align-items-center"
-            onClick={() => setState(s => ({ ...s, showVendorReg: true }))}
-          >
-            <Person className="me-2" />
-            <span>Vendor</span>
-          </Button>
-          <Button 
-            variant="outline-success"
-            className="rounded-pill d-flex align-items-center"
-            onClick={() => setState(s => ({ ...s, showDeliveryReg: true }))}
-          >
-            <Scooter className="me-2" />
-            <span>Delivery</span>
-          </Button>
-        </>
-      )}
-
-      {state.isVendorMode && (
-        <Button 
-          variant="danger"
-          className="rounded-pill"
-          onClick={() => {
-            localStorage.removeItem('vendorId');
-            setState(s => ({ ...s, isVendorMode: false }));
-          }}
-        >
-          Exit Vendor Mode
-        </Button>
-      )}
-
-      <Button 
-        variant="warning"
-        className="rounded-pill position-relative"
-        onClick={() => setState(s => ({ ...s, showCart: true }))} 
-      >
-        <Cart className="me-2" />
-        Cart
-        <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-          {state.cart.reduce((sum, i) => sum + i.quantity, 0)}
-          <span className="visually-hidden">items in cart</span>
-        </span>
-      </Button>
-    </div>
-  </div>
-
-  {/* Floating buttons for small screens */}
-  <div className="floating-icons   align-self-end d-flex flex-column d-md-none position-fixed">
-    {!state.isVendorMode && !state.isDeliveryMode && (
-      <>
-        <Button 
-          variant="outline-primary"
-          className="rounded-pill mb-2"
-          onClick={() => setState(s => ({ ...s, showVendorReg: true }))}
-        >
-          <Person />
-        </Button>
-        <Button 
-          variant="outline-success"
-          className="rounded-pill mb-2"
-          onClick={() => setState(s => ({ ...s, showDeliveryReg: true }))}
-        >
-          <Scooter />
-        </Button>
-      </>
-    )}
-
-    {state.isVendorMode && (
-      <Button 
-        variant="danger"
-        className="rounded-pill mb-2"
-        onClick={() => {
-          localStorage.removeItem('vendorId');
-          setState(s => ({ ...s, isVendorMode: false }));
-        }}
-      >
-        Exit
-      </Button>
-    )}
-
-    <Button 
-      variant="warning"
-      className="rounded-pill position-relative"
-      onClick={() => setState(s => ({ ...s, showCart: true }))} 
-    >
-      <Cart />
-      <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-        {state.cart.reduce((sum, i) => sum + i.quantity, 0)}
-        <span className="visually-hidden">items in cart</span>
-      </span>
-    </Button>
-  </div>
-</header>
+     <header className="header bg-white shadow-sm sticky-top">
+            <div className="container">
+              <div className="d-flex justify-content-between align-items-center py-2 py-md-2">
+                <div className="d-flex align-items-center gap-2 gap-md-3">
+                  <GiKenya className="text-primary header-icon" />
+                  <h1 className="m-0 brand-title">
+                    <span className="text-primary">Jikoni</span>
+                    <span className="text-danger px-1">Liqour</span>
+                  </h1>
+                </div>
+                <div className="d-flex gap-2 gap-md-3 align-items-center">
+                  {!state.isChefMode && !state.isRiderMode && (
+                    <div className="d-flex gap-1 gap-md-2">
+                      <Button 
+                        variant="outline-primary"
+                        className="rounded-pill px-3 px-md-4 py-1 d-flex align-items-center"
+                        onClick={() => setState(s => ({ ...s, showChefReg: true }))}
+                      >
+                        <Person className="me-1 me-md-2" />
+                        <span className="d-none d-md-inline">Chef</span>
+                      </Button>
+                      <Button 
+                        variant="outline-success"
+                        className="rounded-pill px-3 px-md-4 py-1 d-flex align-items-center"
+                        onClick={() => setState(s => ({ ...s, showRiderReg: true }))}
+                      >
+                        <Scooter className="me-1 me-md-2" />
+                        <span className="d-none d-md-inline">Rider</span>
+                      </Button>
+                    </div>
+                  )}
+                  {state.isChefMode && (
+                    <Button 
+                      variant="danger"
+                      className="rounded-pill px-3  px-md-4 py-1"
+                      onClick={() => {
+                        localStorage.removeItem('chefId');
+                        setState(s => ({ ...s, isChefMode: false }));
+                      }}
+                    >
+                      <span className="d-none d-md-inline">Exit Chef Mode</span>
+                      <span className="d-md-none">Exit</span>
+                    </Button>
+                  )}
+                  <Button 
+                    variant="warning"
+                    className="rounded-pill px-3 me-2 mt-1  px-md-2 py-1 position-relative"
+                    onClick={() => setState(s => ({ ...s, showCart: true }))} 
+                    style={{ minWidth: 'auto' }}
+                  >
+                    <Cart className="me-2  me-md-2" />
+                    <span className="d-none d-md-inline">Cart</span>
+                    <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                      {state.cart.reduce((sum, i) => sum + i.quantity, 0)}
+                      <span className="visually-hidden">items in cart</span>
+                    </span>
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </header>
 
 
 <div className="py-4 container-xl">

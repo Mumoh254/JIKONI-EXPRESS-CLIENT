@@ -8,16 +8,7 @@ import { BsCart } from 'react-icons/bs';
 import { FaUser } from 'react-icons/fa'; // Font Awesome User icon
 import { BsScooter } from "react-icons/bs";
 
-
-import {
-  updateCart,
-  handlePreOrder,
-  handleSubmitPreOrder,
-handleCheckout,
-  handleConfirmOrder
-} from '../../cart&Orser/cart';
-
-const ChefProfile = ({ addToCart }) => {
+const LiqourProfile = ({ addToCart }) => {
 
   const  BASE_URL   =   "https://neuro-apps-api-express-js-production-redy.onrender.com/apiV1/smartcity-ke"
   
@@ -75,27 +66,12 @@ const ChefProfile = ({ addToCart }) => {
   };
 
 
-  const newColors = {
-  primary: '#4CAF50', // A fresh green
-  primaryDark: '#388E3C', // A darker shade of green
-  secondary: '#607D8B', // A cool gray
-  text: '#333333', // Dark text
-  background: '#F5F5F5' // Light background
-};
-
-const modalColors = {
-  primary: '#4CAF50', // A fresh green
-  primaryDark: '#388E3C', // A darker shade of green
-  text: '#333333', // Dark text
-  background: '#F5F5F5', // Light background for modal body
-  headerBackground: '#E0E0E0' // Slightly darker background for header
-};
 
   
 
   // Add this cart management logic
 const updateCart = (item, quantityChange) => {
-
+  playSound()
   setState(prev => {
     const existingItem = prev.cart.find(i => i.id === item.id);
     let newCart = [...prev.cart];
@@ -706,7 +682,7 @@ const calculateSubtotal = () =>
                       fontSize: '0.8rem',
                       borderRadius: '6px'
                     }}
-                    onClick={() => updateCart(food)}
+                    onClick={() => addToCart(food)}
                   >
                     <CartPlus style={{ width: '14px', height: '14px', marginRight: '4px' }} />
                     Add
@@ -886,42 +862,25 @@ const calculateSubtotal = () =>
         </Row>
       </div>
 
-    
+      {/* Hire Chef Modal */}
       <Modal show={showHireModal} onHide={() => setShowHireModal(false)} centered>
         <Modal.Header 
           closeButton 
-          style={{ 
-            borderColor: newColors.primary,
-            backgroundColor: newColors.background, // Added background color to header
-            borderBottom: 'none' // Remove default border for cleaner look
-          }}
+          style={{ borderColor: colors.primary }}
         >
-          {/* Chef Mockup Image */}
-        <div className="w-100 text-center mb-3">
-  <img 
-    src="/images/hire.png" 
-    alt="Hire a Chef"
-    style={{ maxWidth: '150px', borderRadius: '50%', border: `3px solid ${newColors.primary}` }}
-  />
-</div>
-
-          <Modal.Title className="w-100 text-center" style={{ color: newColors.primary, marginTop: '10px' }}>
+          <Modal.Title style={{ color: colors.primary }}>
             Hire {chef.user?.Name}
           </Modal.Title>
         </Modal.Header>
         
         <Form onSubmit={handleHireSubmit}>
-          <Modal.Body style={{ backgroundColor: newColors.background, color: newColors.text }}>
+          <Modal.Body>
             {requestStatus === 'success' && (
-              <div className="alert alert-success">Request sent successfully! A KES 100 hiring fee applies.</div>
+              <div className="alert alert-success">Request sent successfully!</div>
             )}
             {requestStatus === 'error' && (
               <div className="alert alert-danger">Failed to send request. Please try again.</div>
             )}
-
-            <p className="text-muted" style={{ color: newColors.secondary }}>
-              Please note: A **KES 100** fee will be charged for this hiring request.
-            </p>
 
             <Form.Group className="mb-3">
               <Form.Label>Event Type</Form.Label>
@@ -929,27 +888,14 @@ const calculateSubtotal = () =>
                 required
                 value={hireDetails.eventType}
                 onChange={(e) => setHireDetails({...hireDetails, eventType: e.target.value})}
-                style={{ borderColor: newColors.primary, color: newColors.text }}
+                style={{ borderColor: colors.primary }}
               >
                 <option value="">Select event type</option>
                 <option>Wedding</option>
                 <option>Corporate Event</option>
                 <option>Birthday Party</option>
                 <option>Private Dinner</option>
-                <option>Other</option>
               </Form.Select>
-            </Form.Group>
-
-            <Form.Group className="mb-3">
-              <Form.Label>Type of Food</Form.Label>
-              <Form.Control
-                type="text"
-                placeholder="e.g., Kenyan, Italian, Vegan"
-                required
-                value={hireDetails.typeOfFood}
-                onChange={(e) => setHireDetails({...hireDetails, typeOfFood: e.target.value})}
-                style={{ borderColor: newColors.primary, color: newColors.text }}
-              />
             </Form.Group>
 
             <Row className="g-3 mb-3">
@@ -961,7 +907,7 @@ const calculateSubtotal = () =>
                     required
                     value={hireDetails.date}
                     onChange={(e) => setHireDetails({...hireDetails, date: e.target.value})}
-                    style={{ borderColor: newColors.primary, color: newColors.text }}
+                    style={{ borderColor: colors.primary }}
                   />
                 </Form.Group>
               </Col>
@@ -973,36 +919,7 @@ const calculateSubtotal = () =>
                     required
                     value={hireDetails.time}
                     onChange={(e) => setHireDetails({...hireDetails, time: e.target.value})}
-                    style={{ borderColor: newColors.primary, color: newColors.text }}
-                  />
-                </Form.Group>
-              </Col>
-            </Row>
-
-            <Row className="g-3 mb-3">
-              <Col md={6}>
-                <Form.Group>
-                  <Form.Label>Number of Hours</Form.Label>
-                  <Form.Control 
-                    type="number" 
-                    min="1"
-                    required
-                    value={hireDetails.hours}
-                    onChange={(e) => setHireDetails({...hireDetails, hours: e.target.value})}
-                    style={{ borderColor: newColors.primary, color: newColors.text }}
-                  />
-                </Form.Group>
-              </Col>
-              <Col md={6}>
-                <Form.Group>
-                  <Form.Label>Number of Days</Form.Label>
-                  <Form.Control 
-                    type="number" 
-                    min="1"
-                    required
-                    value={hireDetails.days}
-                    onChange={(e) => setHireDetails({...hireDetails, days: e.target.value})}
-                    style={{ borderColor: newColors.primary, color: newColors.text }}
+                    style={{ borderColor: colors.primary }}
                   />
                 </Form.Group>
               </Col>
@@ -1015,7 +932,7 @@ const calculateSubtotal = () =>
                 min="1"
                 value={hireDetails.people}
                 onChange={(e) => setHireDetails({...hireDetails, people: e.target.value})}
-                style={{ borderColor: newColors.primary, color: newColors.text }}
+                style={{ borderColor: colors.primary }}
               />
             </Form.Group>
 
@@ -1026,24 +943,24 @@ const calculateSubtotal = () =>
                 rows={3}
                 value={hireDetails.notes}
                 onChange={(e) => setHireDetails({...hireDetails, notes: e.target.value})}
-                style={{ borderColor: newColors.primary, color: newColors.text }}
+                style={{ borderColor: colors.primary }}
               />
             </Form.Group>
           </Modal.Body>
           
-          <Modal.Footer style={{ backgroundColor: newColors.background }}>
+          <Modal.Footer>
             <Button 
               variant="secondary" 
               onClick={() => setShowHireModal(false)}
-              style={{ color: newColors.primary, borderColor: newColors.primary }}
+              style={{ color: colors.primary }}
             >
               Close
             </Button>
             <Button 
               type="submit" 
               style={{ 
-                backgroundColor: newColors.primary,
-                borderColor: newColors.primaryDark,
+                backgroundColor: colors.primary,
+                borderColor: colors.primaryDark,
                 color: 'white'
               }}
               disabled={requestStatus === 'loading'}
@@ -1053,91 +970,8 @@ const calculateSubtotal = () =>
           </Modal.Footer>
         </Form>
       </Modal>
-
-
-
- <Modal show={showBioModal} onHide={() => setShowBioModal(false)} centered>
-      <Modal.Header 
-        closeButton 
-        style={{ 
-          borderColor: modalColors.primary,
-          backgroundColor: modalColors.headerBackground,
-          color: modalColors.text,
-          borderBottom: '1px solid',
-          borderRadius: '5px 5px 0 0' // Rounded corners top
-        }}
-      >
-        <Modal.Title style={{ color: modalColors.primary }}>
-          Bio: {chef.user?.Name}
-        </Modal.Title>
-      </Modal.Header>
-
-      <Modal.Body style={{ backgroundColor: modalColors.background, color: modalColors.text }}>
-        {/* Chef's Profile Picture (Optional: if chef object has a profile pic URL) */}
-        {chef.user?.profilePic && (
-          <div className="text-center mb-3">
-            <img 
-              src={chef.user.profilePic} 
-              alt={`${chef.user?.Name}'s profile`} 
-              style={{ 
-                width: '100px', 
-                height: '100px', 
-                borderRadius: '50%', 
-                objectFit: 'cover',
-                border: `2px solid ${modalColors.primary}`
-              }} 
-            />
-          </div>
-        )}
-        
-        {/* Chef's Full Name (if not already in title) */}
-        {/* <p><strong>Name:</strong> {chef.user?.Name}</p> */}
-
-        {/* Chef's Specialty/Cuisine */}
-        {chef.profile?.specialty && (
-          <p><strong>Specialty:</strong> {chef.profile.specialty}</p>
-        )}
-
-        {/* Chef's Experience */}
-        {chef.profile?.experience && (
-          <p><strong>Experience:</strong> {chef.profile.experience}</p>
-        )}
-        
-        {/* Chef's Bio/Description */}
-        {chef.profile?.bio ? (
-          <p><strong>About Me:</strong> {chef.profile.bio}</p>
-        ) : (
-          <p className="text-muted">No detailed biography available yet.</p>
-        )}
-
-        {/* Other relevant chef details you might have */}
-        {chef.profile?.location && (
-          <p><strong>Location:</strong> {chef.profile.location}</p>
-        )}
-        {chef.profile?.hourlyRate && (
-          <p><strong>Hourly Rate:</strong> KES {chef.profile.hourlyRate}</p>
-        )}
-      </Modal.Body>
-
-      <Modal.Footer style={{ backgroundColor: modalColors.background, borderTop: '1px solid #ddd' }}>
-        <Button 
-          variant="secondary" 
-          onClick={() => setShowBioModal(false)}
-          style={{ 
-            color: modalColors.primary, 
-            borderColor: modalColors.primary,
-            backgroundColor: 'transparent' // Make background transparent for secondary look
-          }}
-        >
-          Close
-        </Button>
-      </Modal.Footer>
-    </Modal>
-  
-
-
     </div>
   );
-
 };
-export default ChefProfile;
+
+export default LiqourProfile;
