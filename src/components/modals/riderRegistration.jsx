@@ -1,87 +1,293 @@
-
-
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
-  Container, Row, Col, Card, Button, Spinner, Alert, Badge,
-  Modal, Form, Offcanvas,  Stack  , ListGroup, Tabs, Tab , ButtonGroup, Carousel, ProgressBar
+  Modal, Form, Button, Spinner // Keep necessary react-bootstrap components for structure
 } from 'react-bootstrap';
 import {
-  GeoAlt,  Star, StarHalf   ,Cart,  Scooter,
-  CheckCircle, EggFried, FilterLeft,    StarFill, CartPlus, Person, Clock,  Instagram, Facebook, Twitter , Plus,  Dash, Trash, Pencil, Bell
-} from 'react-bootstrap-icons';
+  FiUser, FiMapPin, FiTruck, FiClock, FiCheckSquare, FiHash // Use react-icons for more modern feel
+} from 'react-icons/fi'; // Import icons for form fields
+import styled, { keyframes } from 'styled-components'; // Import styled-components and keyframes
 
+// --- Jikoni Express Color Palette ---
+const colors = {
+  primary: '#FF4532', // Jikoni Red
+  secondary: '#00C853', // Jikoni Green
+  darkText: '#1A202C', // Dark text for headings
+  lightBackground: '#F0F2F5', // Light background for inputs/page
+  cardBackground: '#FFFFFF', // White for the modal background
+  borderColor: '#D1D9E6', // Light border for inputs
+  errorText: '#EF4444', // Red for errors
+  placeholderText: '#A0AEC0', // Muted text for placeholders
+  buttonHover: '#E6392B', // Darker red on button hover
+  disabledButton: '#CBD5E1', // Gray for disabled buttons
+  gradientStart: '#FF6F59', // Lighter red for gradient
+  successGreen: '#28A745', // For positive feedback
+};
 
-const RiderRegistration = ({ show, onClose, onSubmit }) => (
-  <Modal show={show} onHide={onClose} centered>
-    <Modal.Header closeButton>
-      <Modal.Title>Rider Registration</Modal.Title>
-    </Modal.Header>
-    <Modal.Body>
-      <Form
-        onSubmit={e => {
-          e.preventDefault();
-          onSubmit(Object.fromEntries(new FormData(e.target)));
-        }}
-      >
-        <Form.Group className="mb-3">
-          <Form.Label>National ID</Form.Label>
-          <Form.Control name="nationalId" type="text" required />
-        </Form.Group>
+// --- Animations ---
+const slideIn = keyframes`
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+`;
 
-        <Form.Group className="mb-3">
-          <Form.Label>City</Form.Label>
-          <Form.Control name="city" type="text" required />
-        </Form.Group>
+// --- Styled Components ---
 
-        <Form.Group className="mb-3">
-          <Form.Label>Area</Form.Label>
-          <Form.Control name="area" type="text" required />
-        </Form.Group>
+const StyledModalHeader = styled(Modal.Header)`
+  background: linear-gradient(90deg, ${colors.primary} 0%, ${colors.gradientStart} 100%);
+  color: ${colors.cardBackground};
+  border-bottom: none;
+  padding: 1.5rem 2rem;
+  border-top-left-radius: 16px;
+  border-top-right-radius: 16px;
 
-        <Form.Group className="mb-3">
-          <Form.Label>Neighborhood</Form.Label>
-          <Form.Control name="neighborhood" type="text" required />
-        </Form.Group>
+  .modal-title {
+    font-weight: 700;
+    font-size: 1.8rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  }
 
-        <Form.Group className="mb-3">
-          <Form.Label>Vehicle Type</Form.Label>
-          <Form.Select name="vehicle" required>
-            <option>Bicycle</option>
-            <option>Motorcycle</option>
-            <option>Car</option>
-          </Form.Select>
-        </Form.Group>
+  .btn-close {
+    filter: invert(1) grayscale(100%) brightness(200%); /* Make close button white */
+    &:hover {
+      opacity: 0.8;
+    }
+  }
+`;
 
-        <Form.Group className="mb-3">
-          <Form.Label>Registration Number Plate</Form.Label>
-          <Form.Control name="registrationPlate" type="text" required />
-        </Form.Group>
+const StyledModalBody = styled(Modal.Body)`
+  padding: 2rem;
+  background-color: ${colors.cardBackground};
+  animation: ${slideIn} 0.5s ease-out;
+  border-bottom-left-radius: 16px;
+  border-bottom-right-radius: 16px;
+`;
 
-        <Form.Group className="mb-3">
-          <Form.Label>Preferred Work Hours</Form.Label>
-          <Form.Control name="workHours" type="text" placeholder="e.g. 9am - 5pm" required />
-        </Form.Group>
+const FormGroup = styled(Form.Group)`
+  margin-bottom: 1.5rem;
+  position: relative;
 
-        <Form.Group className="mb-3">
-          <Form.Label>Service Area</Form.Label>
-          <Form.Control name="serviceArea" type="text" required />
-        </Form.Group>
+  label {
+    font-weight: 600;
+    color: ${colors.darkText};
+    margin-bottom: 0.5rem;
+    display: block;
+    font-size: 0.95rem;
+  }
+`;
 
-        <Form.Group className="mb-3">
-          <Form.Check
-            name="terms"
-            type="checkbox"
-            label="I agree to the Terms and Conditions"
-            required
-          />
-        </Form.Group>
+const IconWrapper = styled.div`
+  position: absolute;
+  top: 65%; /* Adjust to align with input field */
+  left: 1rem;
+  transform: translateY(-50%);
+  color: ${colors.placeholderText};
+  font-size: 1.1rem;
+`;
 
-        <Button type="submit" variant="primary" block>
-          Register
-        </Button>
-      </Form>
-    </Modal.Body>
-  </Modal>
-);
+const InputField = styled(Form.Control)`
+  width: 100%;
+  padding: 0.85rem 1rem 0.85rem 3rem; /* Add padding for icon */
+  border: 1px solid ${colors.borderColor};
+  border-radius: 10px;
+  font-size: 1rem;
+  color: ${colors.darkText};
+  background-color: ${colors.lightBackground};
+  transition: all 0.3s ease;
 
-export  default   RiderRegistration
+  &::placeholder {
+    color: ${colors.placeholderText};
+  }
+
+  &:focus {
+    outline: none;
+    border-color: ${colors.primary};
+    box-shadow: 0 0 0 3px rgba(255, 69, 50, 0.2);
+    background-color: ${colors.cardBackground};
+  }
+`;
+
+const SelectField = styled(Form.Select)`
+  width: 100%;
+  padding: 0.85rem 1rem 0.85rem 3rem; /* Add padding for icon */
+  border: 1px solid ${colors.borderColor};
+  border-radius: 10px;
+  font-size: 1rem;
+  color: ${colors.darkText};
+  background-color: ${colors.lightBackground};
+  appearance: none; /* Hide default select arrow */
+  transition: all 0.3s ease;
+
+  &:focus {
+    outline: none;
+    border-color: ${colors.primary};
+    box-shadow: 0 0 0 3px rgba(255, 69, 50, 0.2);
+    background-color: ${colors.cardBackground};
+  }
+`;
+
+const CheckboxField = styled(Form.Check)`
+  .form-check-input {
+    border-color: ${colors.borderColor};
+    &:checked {
+      background-color: ${colors.secondary};
+      border-color: ${colors.secondary};
+    }
+    &:focus {
+      box-shadow: 0 0 0 3px rgba(0, 200, 83, 0.2); /* Green glow for checkbox focus */
+    }
+  }
+  .form-check-label {
+    color: ${colors.darkText};
+    font-size: 0.95rem;
+    margin-left: 0.5rem;
+  }
+`;
+
+const SubmitButton = styled(Button)`
+  width: 100%;
+  padding: 0.9rem;
+  background: ${colors.primary};
+  color: ${colors.cardBackground};
+  border: none;
+  border-radius: 10px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.1s ease, box-shadow 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+
+  &:hover {
+    background: ${colors.buttonHover};
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(255, 69, 50, 0.2);
+  }
+
+  &:active {
+    transform: translateY(0);
+    box-shadow: none;
+  }
+
+  &:disabled {
+    background: ${colors.disabledButton};
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+  }
+`;
+
+const FormHeaderIcon = styled.span`
+  font-size: 2.2rem;
+  color: ${colors.cardBackground};
+`;
+
+const RiderRegistration = ({ show, onClose, onSubmit }) => {
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setSubmitting(true);
+    const formData = Object.fromEntries(new FormData(e.target));
+    await onSubmit(formData); // Assume onSubmit handles its own async logic
+    setSubmitting(false);
+  };
+
+  return (
+    <Modal show={show} onHide={onClose} centered size="lg"> {/* Increased size for better spacing */}
+      <StyledModalHeader closeButton>
+        <Modal.Title>
+          <FormHeaderIcon><FiTruck /></FormHeaderIcon>
+          Become a Jikoni Rider!
+        </Modal.Title>
+      </StyledModalHeader>
+      <StyledModalBody>
+        <p className="text-muted text-center mb-4">Join our team and start delivering delicious food across Nairobi!</p>
+        <Form onSubmit={handleSubmit}>
+          <div className="row"> {/* Use Bootstrap grid for better layout */}
+            <div className="col-md-6">
+              <FormGroup>
+                <Form.Label>National ID</Form.Label>
+                <IconWrapper><FiUser /></IconWrapper>
+                <InputField name="nationalId" type="text" required />
+              </FormGroup>
+
+              <FormGroup>
+                <Form.Label>City</Form.Label>
+                <IconWrapper><FiMapPin /></IconWrapper>
+                <InputField name="city" type="text" required defaultValue="Nairobi" disabled />
+              </FormGroup>
+
+              <FormGroup>
+                <Form.Label>Area</Form.Label>
+                <IconWrapper><FiMapPin /></IconWrapper>
+                <InputField name="area" type="text" required />
+              </FormGroup>
+
+              <FormGroup>
+                <Form.Label>Neighborhood</Form.Label>
+                <IconWrapper><FiMapPin /></IconWrapper>
+                <InputField name="neighborhood" type="text" required />
+              </FormGroup>
+            </div>
+            <div className="col-md-6">
+              <FormGroup>
+                <Form.Label>Vehicle Type</Form.Label>
+                <IconWrapper><FiTruck /></IconWrapper>
+                <SelectField name="vehicle" required>
+                  <option value="">Select your vehicle type</option> {/* Added default empty option */}
+                  <option>Bicycle</option>
+                  <option>Motorcycle</option>
+                  <option>Car</option>
+                </SelectField>
+              </FormGroup>
+
+              <FormGroup>
+                <Form.Label>Registration Number Plate</Form.Label>
+                <IconWrapper><FiHash /></IconWrapper>
+                <InputField name="registrationPlate" type="text" required />
+              </FormGroup>
+
+              <FormGroup>
+                <Form.Label>Preferred Work Hours</Form.Label>
+                <IconWrapper><FiClock /></IconWrapper>
+                <InputField name="workHours" type="text" placeholder="e.g. 9am - 5pm or Flexible" required />
+              </FormGroup>
+
+              <FormGroup>
+                <Form.Label>Service Area</Form.Label>
+                <IconWrapper><FiMapPin /></IconWrapper>
+                <InputField name="serviceArea" type="text" required />
+              </FormGroup>
+            </div>
+          </div> {/* End Row */}
+
+          <FormGroup className="mb-4 text-center"> {/* Centered checkbox */}
+            <CheckboxField
+              name="terms"
+              type="checkbox"
+              label="I agree to Jikoni Express Rider Terms and Conditions"
+              required
+            />
+          </FormGroup>
+
+          <SubmitButton type="submit" disabled={submitting}>
+            {submitting ? (
+              <>
+                <Spinner as="span" animation="border" size="sm" role="status" aria-hidden="true" />
+                <span className="ms-2">Registering...</span>
+              </>
+            ) : (
+              'Register as a Jikoni Rider'
+            )}
+          </SubmitButton>
+        </Form>
+      </StyledModalBody>
+    </Modal>
+  );
+};
+
+export default RiderRegistration;
