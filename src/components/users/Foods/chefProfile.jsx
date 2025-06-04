@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { Row, Col, Card, Carousel, Badge,  Button, Spinner, Tabs, Tab, Modal, Form } from 'react-bootstrap';
+import { Row, Col, Card, Carousel, Badge, InputGroup    ,   Button, Spinner, Tabs, Tab, Modal, Form } from 'react-bootstrap';
 import { StarHalf, CartPlus, GeoAlt, Clock,  EggFried   , People, Envelope, PersonBadge  ,    CheckCircleFill  ,  StarFill , PinMapFill  ,   AwardFill , ClockHistory ,   HeartFill ,  PersonLinesFill   ,  EyeFill,CashCoin } from 'react-bootstrap-icons';
 import { format, formatDistanceToNow } from 'date-fns';
 import { GiKenya } from "react-icons/gi";
@@ -16,6 +16,10 @@ import {
 handleCheckout,
   handleConfirmOrder
 } from '../../cart&Orser/cart';
+
+
+
+
 
 const ChefProfile = ({ addToCart }) => {
 
@@ -37,6 +41,33 @@ const ChefProfile = ({ addToCart }) => {
   const [requestStatus, setRequestStatus] = useState(null);
     const [showBioModal, setShowBioModal] = useState(false); // New state for bio modal
 
+const [mpesaPhone, setMpesaPhone] = useState('');
+const [paymentProcessing, setPaymentProcessing] = useState(false);
+const [paymentComplete, setPaymentComplete] = useState(false);
+
+
+const initiateMpesaPayment = async () => {
+  setPaymentProcessing(true);
+  
+  try {
+    // In a real app, this would call your backend API
+    // that initiates the M-Pesa STK push
+    const response = await axios.post('/api/mpesa/payment', {
+      phone: mpesaPhone,
+      amount: 100,
+      reference: `CHEF-${chef.id}-${Date.now()}`
+    });
+    
+    // Simulate payment confirmation delay
+    setTimeout(() => {
+      setPaymentProcessing(false);
+      setPaymentComplete(true);
+    }, 3000);
+  } catch (error) {
+    setPaymentProcessing(false);
+    alert('Payment failed. Please try again.');
+  }
+};
 
 
     
@@ -885,175 +916,482 @@ const calculateSubtotal = () =>
           </Col>
         </Row>
       </div>
-
-    
-      <Modal show={showHireModal} onHide={() => setShowHireModal(false)} centered>
-        <Modal.Header 
-          closeButton 
+<Modal 
+  show={showHireModal} 
+  onHide={() => setShowHireModal(false)} 
+  centered
+  size="lg"
+  style={{ fontFamily: "'Poppins', sans-serif" }}
+>
+  {/* Chef Image Header */}
+  <Modal.Header 
+    closeButton 
+    className="position-relative"
+    style={{ 
+      border: 'none',
+      backgroundColor: colors.lightBackground,
+      padding: '2rem 1.5rem 0',
+      borderRadius: '0'
+    }}
+  >
+    <div className="position-absolute top-0 start-50 translate-middle" style={{ top: '-60px' }}>
+      <div 
+        className="rounded-circle overflow-hidden border-4"
+        style={{
+          width: '120px',
+          height: '120px',
+          borderColor: colors.primary,
+          backgroundColor: 'white',
+          boxShadow: '0 4px 15px rgba(0,0,0,0.2)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}
+      >
+        <img 
+          src="/images/hire.png" 
+          alt="Hire a Chef"
+          className="img-fluid"
           style={{ 
-            borderColor: newColors.primary,
-            backgroundColor: newColors.background, // Added background color to header
-            borderBottom: 'none' // Remove default border for cleaner look
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover'
+          }}
+        />
+      </div>
+    </div>
+    
+    <Modal.Title 
+      className="w-100 text-center mt-4 pt-4" 
+      style={{ 
+        color: colors.primary,
+        fontWeight: 700,
+        fontSize: '1.8rem',
+        letterSpacing: '0.5px'
+      }}
+    >
+      Hire {chef.user?.Name}
+    </Modal.Title>
+  </Modal.Header>
+  
+  <Form onSubmit={handleHireSubmit}>
+    <Modal.Body 
+      style={{ 
+        backgroundColor: colors.lightBackground,
+        padding: '1.5rem 2rem',
+        borderBottomLeftRadius: '0.3rem',
+        borderBottomRightRadius: '0.3rem'
+      }}
+    >
+      {/* Status Messages */}
+      {requestStatus === 'success' && (
+        <div 
+          className="alert alert-success d-flex align-items-center" 
+          style={{ 
+            borderLeft: `4px solid ${colors.secondary}`,
+            backgroundColor: '#e8f5e9'
           }}
         >
-          {/* Chef Mockup Image */}
-        <div className="w-100 text-center mb-3">
-  <img 
-    src="/images/hire.png" 
-    alt="Hire a Chef"
-    style={{ maxWidth: '150px', borderRadius: '50%', border: `3px solid ${newColors.primary}` }}
-  />
-</div>
+          <i className="bi bi-check-circle-fill me-2"></i>
+          Request sent successfully! Chef has been notified.
+        </div>
+      )}
+      
+      {requestStatus === 'error' && (
+        <div 
+          className="alert alert-danger d-flex align-items-center"
+          style={{ borderLeft: `4px solid ${colors.errorText}` }}
+        >
+          <i className="bi bi-exclamation-circle-fill me-2"></i>
+          Failed to send request. Please try again.
+        </div>
+      )}
 
-          <Modal.Title className="w-100 text-center" style={{ color: newColors.primary, marginTop: '10px' }}>
-            Hire {chef.user?.Name}
-          </Modal.Title>
-        </Modal.Header>
-        
-        <Form onSubmit={handleHireSubmit}>
-          <Modal.Body style={{ backgroundColor: newColors.background, color: newColors.text }}>
-            {requestStatus === 'success' && (
-              <div className="alert alert-success">Request sent successfully! A KES 100 hiring fee applies.</div>
-            )}
-            {requestStatus === 'error' && (
-              <div className="alert alert-danger">Failed to send request. Please try again.</div>
-            )}
-
-            <p className="text-muted" style={{ color: newColors.secondary }}>
-              Please note: A **KES 100** fee will be charged for this hiring request.
-            </p>
-
-            <Form.Group className="mb-3">
-              <Form.Label>Event Type</Form.Label>
-              <Form.Select
-                required
-                value={hireDetails.eventType}
-                onChange={(e) => setHireDetails({...hireDetails, eventType: e.target.value})}
-                style={{ borderColor: newColors.primary, color: newColors.text }}
-              >
-                <option value="">Select event type</option>
-                <option>Wedding</option>
-                <option>Corporate Event</option>
-                <option>Birthday Party</option>
-                <option>Private Dinner</option>
-                <option>Other</option>
-              </Form.Select>
-            </Form.Group>
-
-            <Form.Group className="mb-3">
-              <Form.Label>Type of Food</Form.Label>
-              <Form.Control
-                type="text"
-                placeholder="e.g., Kenyan, Italian, Vegan"
-                required
-                value={hireDetails.typeOfFood}
-                onChange={(e) => setHireDetails({...hireDetails, typeOfFood: e.target.value})}
-                style={{ borderColor: newColors.primary, color: newColors.text }}
-              />
-            </Form.Group>
-
-            <Row className="g-3 mb-3">
-              <Col md={6}>
-                <Form.Group>
-                  <Form.Label>Date</Form.Label>
-                  <Form.Control 
-                    type="date" 
-                    required
-                    value={hireDetails.date}
-                    onChange={(e) => setHireDetails({...hireDetails, date: e.target.value})}
-                    style={{ borderColor: newColors.primary, color: newColors.text }}
-                  />
-                </Form.Group>
-              </Col>
-              <Col md={6}>
-                <Form.Group>
-                  <Form.Label>Time</Form.Label>
-                  <Form.Control 
-                    type="time" 
-                    required
-                    value={hireDetails.time}
-                    onChange={(e) => setHireDetails({...hireDetails, time: e.target.value})}
-                    style={{ borderColor: newColors.primary, color: newColors.text }}
-                  />
-                </Form.Group>
-              </Col>
-            </Row>
-
-            <Row className="g-3 mb-3">
-              <Col md={6}>
-                <Form.Group>
-                  <Form.Label>Number of Hours</Form.Label>
-                  <Form.Control 
-                    type="number" 
-                    min="1"
-                    required
-                    value={hireDetails.hours}
-                    onChange={(e) => setHireDetails({...hireDetails, hours: e.target.value})}
-                    style={{ borderColor: newColors.primary, color: newColors.text }}
-                  />
-                </Form.Group>
-              </Col>
-              <Col md={6}>
-                <Form.Group>
-                  <Form.Label>Number of Days</Form.Label>
-                  <Form.Control 
-                    type="number" 
-                    min="1"
-                    required
-                    value={hireDetails.days}
-                    onChange={(e) => setHireDetails({...hireDetails, days: e.target.value})}
-                    style={{ borderColor: newColors.primary, color: newColors.text }}
-                  />
-                </Form.Group>
-              </Col>
-            </Row>
-
-            <Form.Group className="mb-3">
-              <Form.Label>Number of People</Form.Label>
-              <Form.Control 
-                type="number" 
-                min="1"
-                value={hireDetails.people}
-                onChange={(e) => setHireDetails({...hireDetails, people: e.target.value})}
-                style={{ borderColor: newColors.primary, color: newColors.text }}
-              />
-            </Form.Group>
-
-            <Form.Group>
-              <Form.Label>Special Requests</Form.Label>
-              <Form.Control 
-                as="textarea" 
-                rows={3}
-                value={hireDetails.notes}
-                onChange={(e) => setHireDetails({...hireDetails, notes: e.target.value})}
-                style={{ borderColor: newColors.primary, color: newColors.text }}
-              />
-            </Form.Group>
-          </Modal.Body>
-          
-          <Modal.Footer style={{ backgroundColor: newColors.background }}>
-            <Button 
-              variant="secondary" 
-              onClick={() => setShowHireModal(false)}
-              style={{ color: newColors.primary, borderColor: newColors.primary }}
-            >
-              Close
-            </Button>
-            <Button 
-              type="submit" 
-              style={{ 
-                backgroundColor: newColors.primary,
-                borderColor: newColors.primaryDark,
-                color: 'white'
+      {/* Payment Steps */}
+      {!paymentComplete && (
+        <>
+          {/* Fee Notice */}
+          <div 
+            className="mb-4 p-3 rounded text-center"
+            style={{ 
+              backgroundColor: '#e8f5e9',
+              border: `1px dashed ${colors.primary}`,
+              position: 'relative'
+            }}
+          >
+            <span 
+              className="position-absolute top-0 start-0 px-2 py-1 rounded-end"
+              style={{
+                backgroundColor: colors.primary,
+                color: 'white',
+                fontSize: '0.8rem',
+                fontWeight: 600
               }}
-              disabled={requestStatus === 'loading'}
             >
-              {requestStatus === 'loading' ? 'Sending...' : 'Send Request'}
-            </Button>
-          </Modal.Footer>
-        </Form>
-      </Modal>
+              STEP 1
+            </span>
+            <p className="mb-0" style={{ color: colors.primary, fontWeight: 500 }}>
+              Please complete the <strong>KES 200</strong> hiring fee payment via M-Pesa
+            </p>
+          </div>
 
+          {/* M-Pesa Payment Section */}
+          <div className="payment-section p-4 mb-4" style={{ 
+            backgroundColor: colors.cardBackground, 
+            borderRadius: '10px',
+            border: `1px solid ${colors.borderColor}`
+          }}>
+            <h5 className="mb-3" style={{ fontWeight: 600, color: colors.darkText }}>
+              <i className="bi bi-wallet2 me-2"></i>
+              Pay via M-Pesa
+            </h5>
+            
+            <div className="d-flex align-items-center mb-3">
+              <div className="me-3">
+                <img 
+                  src="/images/mpesa.png" 
+                  alt="M-Pesa" 
+                  style={{ width: '60px' }} 
+                />
+              </div>
+              <div>
+                <p className="mb-0" style={{ fontWeight: 500 }}>Paybill: 247247</p>
+                <p className="mb-0" style={{ fontWeight: 500 }}>Account: JIKONI-CHEF</p>
+              </div>
+            </div>
+            
+            <Form.Group className="mb-3">
+              <Form.Label style={{ fontWeight: 600, color: colors.darkText }}>
+                <i className="bi bi-phone me-2"></i>
+                Your M-Pesa Phone Number
+              </Form.Label>
+              <InputGroup>
+                <InputGroup.Text style={{ backgroundColor: colors.borderColor }}>+254</InputGroup.Text>
+                <Form.Control
+                  type="tel"
+                  placeholder="7XX XXX XXX"
+                  required
+                  value={mpesaPhone}
+                  onChange={(e) => setMpesaPhone(e.target.value)}
+                  style={{ 
+                    borderColor: colors.primary,
+                    color: colors.darkText,
+                    borderRadius: '0 8px 8px 0',
+                    padding: '0.75rem'
+                  }}
+                />
+              </InputGroup>
+              <Form.Text className="text-muted">
+                You'll receive a payment request on this number
+              </Form.Text>
+            </Form.Group>
+            
+            <div className="text-center mt-4">
+              <Button 
+                variant="success"
+                onClick={initiateMpesaPayment}
+                style={{
+                  backgroundColor: colors.primary,
+                  borderColor: colors.buttonHover,
+                  fontWeight: 600,
+                  padding: '0.5rem 2rem',
+                  borderRadius: '8px',
+                  '&:hover': {
+                    backgroundColor: colors.buttonHover
+                  }
+                }}
+                disabled={paymentProcessing}
+              >
+                {paymentProcessing ? (
+                  <>
+                    <span className="spinner-border spinner-border-sm me-2" role="status"></span>
+                    Processing Payment...
+                  </>
+                ) : (
+                  <>
+                    <i className="bi bi-send-check me-2"></i>
+                    Pay KES 200 via M-Pesa
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        </>
+      )}
+      
+      {/* Form Section - Only show after payment */}
+      {paymentComplete && (
+        <>
+          <div 
+            className="mb-4 p-3 rounded text-center"
+            style={{ 
+              backgroundColor: '#e8f5e9',
+              border: `1px dashed ${colors.primary}`,
+              position: 'relative'
+            }}
+          >
+            <span 
+              className="position-absolute top-0 start-0 px-2 py-1 rounded-end"
+              style={{
+                backgroundColor: colors.primary,
+                color: 'white',
+                fontSize: '0.8rem',
+                fontWeight: 600
+              }}
+            >
+              STEP 2
+            </span>
+            <p className="mb-0" style={{ color: colors.primary, fontWeight: 500 }}>
+              Payment received! Please complete the hiring details
+            </p>
+          </div>
+          
+          <div className="row g-3">
+            {/* Event Type */}
+            <div className="col-md-6">
+              <Form.Group>
+                <Form.Label style={{ fontWeight: 600, color: colors.darkText }}>
+                  <i className="bi bi-calendar-event me-2"></i>
+                  Event Type
+                </Form.Label>
+                <Form.Select
+                  required
+                  value={hireDetails.eventType}
+                  onChange={(e) => setHireDetails({...hireDetails, eventType: e.target.value})}
+                  style={{ 
+                    borderColor: colors.primary,
+                    color: colors.darkText,
+                    borderRadius: '8px',
+                    padding: '0.75rem',
+                    boxShadow: 'none'
+                  }}
+                >
+                  <option value="">Select event type</option>
+                  <option>Wedding</option>
+                  <option>Corporate Event</option>
+                  <option>Birthday Party</option>
+                  <option>Private Dinner</option>
+                  <option>Other</option>
+                </Form.Select>
+              </Form.Group>
+            </div>
+
+            {/* Food Type */}
+            <div className="col-md-6">
+              <Form.Group>
+                <Form.Label style={{ fontWeight: 600, color: colors.darkText }}>
+                  <i className="bi bi-egg-fried me-2"></i>
+                  Type of Food
+                </Form.Label>
+                <Form.Control
+                  type="text"
+                  placeholder="e.g., Kenyan, Italian, Vegan"
+                  required
+                  value={hireDetails.typeOfFood}
+                  onChange={(e) => setHireDetails({...hireDetails, typeOfFood: e.target.value})}
+                  style={{ 
+                    borderColor: colors.primary,
+                    color: colors.darkText,
+                    borderRadius: '8px',
+                    padding: '0.75rem'
+                  }}
+                />
+              </Form.Group>
+            </div>
+
+            {/* Date & Time */}
+            <div className="col-md-6">
+              <Form.Group>
+                <Form.Label style={{ fontWeight: 600, color: colors.darkText }}>
+                  <i className="bi bi-calendar-date me-2"></i>
+                  Date
+                </Form.Label>
+                <Form.Control 
+                  type="date" 
+                  required
+                  value={hireDetails.date}
+                  onChange={(e) => setHireDetails({...hireDetails, date: e.target.value})}
+                  style={{ 
+                    borderColor: colors.primary,
+                    color: colors.darkText,
+                    borderRadius: '8px',
+                    padding: '0.75rem'
+                  }}
+                />
+              </Form.Group>
+            </div>
+
+            <div className="col-md-6">
+              <Form.Group>
+                <Form.Label style={{ fontWeight: 600, color: colors.darkText }}>
+                  <i className="bi bi-clock me-2"></i>
+                  Time
+                </Form.Label>
+                <Form.Control 
+                  type="time" 
+                  required
+                  value={hireDetails.time}
+                  onChange={(e) => setHireDetails({...hireDetails, time: e.target.value})}
+                  style={{ 
+                    borderColor: colors.primary,
+                    color: colors.darkText,
+                    borderRadius: '8px',
+                    padding: '0.75rem'
+                  }}
+                />
+              </Form.Group>
+            </div>
+
+            {/* Hours & Days */}
+            <div className="col-md-6">
+              <Form.Group>
+                <Form.Label style={{ fontWeight: 600, color: colors.darkText }}>
+                  <i className="bi bi-hourglass-split me-2"></i>
+                  Number of Hours
+                </Form.Label>
+                <Form.Control 
+                  type="number" 
+                  min="1"
+                  required
+                  value={hireDetails.hours}
+                  onChange={(e) => setHireDetails({...hireDetails, hours: e.target.value})}
+                  style={{ 
+                    borderColor: colors.primary,
+                    color: colors.darkText,
+                    borderRadius: '8px',
+                    padding: '0.75rem'
+                  }}
+                />
+              </Form.Group>
+            </div>
+
+            <div className="col-md-6">
+              <Form.Group>
+                <Form.Label style={{ fontWeight: 600, color: colors.darkText }}>
+                  <i className="bi bi-calendar-week me-2"></i>
+                  Number of Days
+                </Form.Label>
+                <Form.Control 
+                  type="number" 
+                  min="1"
+                  required
+                  value={hireDetails.days}
+                  onChange={(e) => setHireDetails({...hireDetails, days: e.target.value})}
+                  style={{ 
+                    borderColor: colors.primary,
+                    color: colors.darkText,
+                    borderRadius: '8px',
+                    padding: '0.75rem'
+                  }}
+                />
+              </Form.Group>
+            </div>
+
+            {/* People & Notes */}
+            <div className="col-12">
+              <Form.Group className="mb-3">
+                <Form.Label style={{ fontWeight: 600, color: colors.darkText }}>
+                  <i className="bi bi-people me-2"></i>
+                  Number of People
+                </Form.Label>
+                <Form.Control 
+                  type="number" 
+                  min="1"
+                  value={hireDetails.people}
+                  onChange={(e) => setHireDetails({...hireDetails, people: e.target.value})}
+                  style={{ 
+                    borderColor: colors.primary,
+                    color: colors.darkText,
+                    borderRadius: '8px',
+                    padding: '0.75rem'
+                  }}
+                />
+              </Form.Group>
+            </div>
+
+            <div className="col-12">
+              <Form.Group>
+                <Form.Label style={{ fontWeight: 600, color: colors.darkText }}>
+                  <i className="bi bi-chat-left-text me-2"></i>
+                  Special Requests
+                </Form.Label>
+                <Form.Control 
+                  as="textarea" 
+                  rows={3}
+                  placeholder="Any dietary restrictions, specific dishes, or other requirements..."
+                  value={hireDetails.notes}
+                  onChange={(e) => setHireDetails({...hireDetails, notes: e.target.value})}
+                  style={{ 
+                    borderColor: colors.primary,
+                    color: colors.darkText,
+                    borderRadius: '8px',
+                    padding: '0.75rem'
+                  }}
+                />
+              </Form.Group>
+            </div>
+          </div>
+        </>
+      )}
+    </Modal.Body>
+    
+    <Modal.Footer 
+      style={{ 
+        backgroundColor: colors.lightBackground,
+        borderTop: `1px solid ${colors.borderColor}`,
+        padding: '1rem 2rem',
+        justifyContent: 'space-between'
+      }}
+    >
+      <Button 
+        variant="outline-secondary" 
+        onClick={() => setShowHireModal(false)}
+        style={{ 
+          color: colors.darkText,
+          borderColor: colors.borderColor,
+          borderRadius: '8px',
+          padding: '0.5rem 1.5rem',
+          fontWeight: 600,
+          transition: 'all 0.3s'
+        }}
+      >
+        Cancel
+      </Button>
+      
+      {paymentComplete && (
+        <Button 
+          type="submit" 
+          style={{ 
+            backgroundColor: colors.primary,
+            borderColor: colors.buttonHover,
+            color: 'white',
+            borderRadius: '8px',
+            padding: '0.5rem 2rem',
+            fontWeight: 600,
+            boxShadow: `0 4px 8px rgba(${hexToRgb(colors.primary)}, 0.3)`,
+            transition: 'all 0.3s',
+            '&:hover': {
+              backgroundColor: colors.buttonHover
+            }
+          }}
+          disabled={requestStatus === 'loading'}
+        >
+          {requestStatus === 'loading' ? (
+            <>
+              <span className="spinner-border spinner-border-sm me-2" role="status"></span>
+              Sending Request...
+            </>
+          ) : (
+            <>
+              <i className="bi bi-send-check me-2"></i>
+              Confirm Hiring Request
+            </>
+          )}
+        </Button>
+      )}
+    </Modal.Footer>
+  </Form>
+</Modal>
 
 
  <Modal show={showBioModal} onHide={() => setShowBioModal(false)} centered>
@@ -1090,7 +1428,7 @@ const calculateSubtotal = () =>
           </div>
         )}
         
-        {/* Chef's Full Name (if not already in title) */}
+   
         {/* <p><strong>Name:</strong> {chef.user?.Name}</p> */}
 
         {/* Chef's Specialty/Cuisine */}
