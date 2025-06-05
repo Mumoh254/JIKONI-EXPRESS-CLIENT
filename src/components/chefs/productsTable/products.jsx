@@ -1,11 +1,11 @@
 import React from "react";
+import UseProducts from "../useproduct";
 import Swal from "sweetalert2";
 import { FaEye, FaEdit, FaTrash, FaSync } from "react-icons/fa";
-import { Table, Container, Button, Spinner, Alert } from "react-bootstrap";
+import { Table, Container, Button, Spinner, Alert, Form } from "react-bootstrap";
 import slugify from "slugify";
-import UseProducts from "./useProducts"; // Make sure this file exports your hook correctly
 
-const FoodItemsTable = () => {
+const AdminProductsTable = () => {
   const { products, loading, error, fetchProducts } = UseProducts();
 
   const handleView = (product) => {
@@ -13,12 +13,12 @@ const FoodItemsTable = () => {
       title: `<strong>${product.name}</strong>`,
       html: `
         <div class="text-left">
-          <img src="${product.image}" alt="${product.name}" style="width: 100px; height: auto; margin-bottom: 10px;" />
           <p><b>Slug:</b> ${product.slug}</p>
           <p><b>Category:</b> ${product.category}</p>
-          <p><b>Price:</b> KSH ${product.price}</p>
+          <p><b>Price:</b> $${product.price}</p>
           <p><b>Stock:</b> ${product.quantity}</p>
-          <p><b>Sizes:</b> ${Array.isArray(product.sizes) ? product.sizes.join(", ") : "N/A"}</p>
+        <p><b>Sizes:</b> ${Array.isArray(product.sizes) ? product.sizes.join(", ") : "N/A"}</p>
+
           <p><b>Description:</b> ${product.description}</p>
         </div>
       `,
@@ -49,7 +49,7 @@ const FoodItemsTable = () => {
           });
 
           if (!response.ok) throw new Error('Failed to delete product');
-
+          
           Swal.fire('Deleted!', 'Product has been deleted.', 'success');
           fetchProducts();
         } catch (error) {
@@ -66,7 +66,8 @@ const FoodItemsTable = () => {
         <input id="name" class="swal2-input" placeholder="Product Name" value="${product.name}">
         <input id="price" type="number" class="swal2-input" placeholder="Price" value="${product.price}">
         <input id="quantity" type="number" class="swal2-input" placeholder="Stock Quantity" value="${product.quantity}">
-        <input id="sizes" class="swal2-input" placeholder="Sizes (comma separated)" value="${Array.isArray(product.sizes) ? product.sizes.join(", ") : ""}">
+      <input id="sizes" class="swal2-input" placeholder="Sizes (comma separated)" value="${Array.isArray(product.sizes) ? product.sizes.join(", ") : ""}">
+
       `,
       focusConfirm: false,
       showCancelButton: true,
@@ -94,7 +95,7 @@ const FoodItemsTable = () => {
           });
 
           if (!response.ok) throw new Error('Failed to update product');
-
+          
           Swal.fire('Updated!', 'Product has been updated.', 'success');
           fetchProducts();
         } catch (error) {
@@ -104,21 +105,17 @@ const FoodItemsTable = () => {
     });
   };
 
-  if (loading) {
-    return (
-      <div className="d-flex justify-content-center mt-5">
-        <Spinner animation="border" variant="primary" />
-      </div>
-    );
-  }
+  if (loading) return (
+    <div className="d-flex justify-content-center mt-5">
+      <Spinner animation="border" variant="primary" />
+    </div>
+  );
 
-  if (error) {
-    return (
-      <Container className="mt-4">
-        <Alert variant="danger">Error: {error}</Alert>
-      </Container>
-    );
-  }
+  if (error) return (
+    <Container className="mt-4">
+      <Alert variant="danger">Error: {error}</Alert>
+    </Container>
+  );
 
   return (
     <Container className="py-4">
@@ -133,36 +130,32 @@ const FoodItemsTable = () => {
         <thead className="bg-light">
           <tr>
             <th>#</th>
-            <th>Image</th>
-            <th>Name</th>
-            <th>Created</th>
+            <th>Product Name</th>
+            <th>Slug</th>
             <th>Price</th>
-    
-         
+            <th>Stock</th>
+            <th>Brand</th>
+            <th>Sizes</th>
+           
             <th>Actions</th>
           </tr>
         </thead>
         <tbody>
           {products.length === 0 ? (
             <tr>
-              <td colSpan="8" className="text-center py-4">No products found</td>
+              <td colSpan="7" className="text-center py-4">No products found</td>
             </tr>
           ) : (
             products.map((product, index) => (
               <tr key={product._id}>
                 <td>{index + 1}</td>
-                <td>
-                  <img
-                    src={product.photoUrls
-}
-                    alt={product.name}
-                    style={{ width: "50px", height: "50px", objectFit: "cover", borderRadius: "5px" }}
-                  />
-                </td>
                 <td>{product.title}</td>
-                <td>{new Date(product.createdAt).toLocaleDateString()}</td>
-                <td>KSH: {product.price}</td>
-            
+                <td>{product.slug}</td>
+                <td> KSH: {product.price}</td>
+                <td>{product.quantity}</td>
+                <td>{product.brand}</td>
+                <td>{Array.isArray(product.sizes) ? product.sizes.join(", ") : "N/A"}</td>
+
                 <td>
                   <div className="d-flex gap-2">
                     <Button variant="outline-primary" size="sm" onClick={() => handleView(product)}>
@@ -185,4 +178,4 @@ const FoodItemsTable = () => {
   );
 };
 
-export default FoodItemsTable;
+export default AdminProductsTable;

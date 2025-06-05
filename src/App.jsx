@@ -21,6 +21,7 @@ import { GiHotMeal } from "react-icons/gi";
 import  Liqour   from './Liqour/liqour'
 import LiqourProfile from './Liqour/liqourProfile';
 
+
 const AppContainer = styled.div`
   min-height: 100vh;
   position: relative;
@@ -118,6 +119,9 @@ const BottomNav = styled.nav`
 `;
 
 function App() {
+
+
+  
   const navigate = useNavigate();
   const { user, logout } = useAuth();
 
