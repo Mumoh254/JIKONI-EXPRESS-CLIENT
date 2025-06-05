@@ -20,6 +20,7 @@ import { IoIosPersonAdd } from "react-icons/io";
 import { GiHotMeal } from "react-icons/gi";
 import  Liqour   from './Liqour/liqour'
 import LiqourProfile from './Liqour/liqourProfile';
+import  Board from './components/Rider/riderBoard'
 
 
 const AppContainer = styled.div`
@@ -127,6 +128,8 @@ function App() {
 
   const [username, setUsername] = useState('');
   const [isChefMode, setIsChefMode] = useState(false);
+  const [isRiderMode, setIsRiderMode] = useState(false);
+
 
   // Set username from token
   useEffect(() => {
@@ -138,12 +141,17 @@ function App() {
 
   // Redirect if isChef is true
   useEffect(() => {
-    const isChef = localStorage.getItem('isChef');
-    if (isChef === 'true') {
-      setIsChefMode(true);
-      navigate('/chef/dashboard');
-    }
-  }, [navigate]);
+  const isChef = localStorage.getItem('isChef');
+  const isRider = localStorage.getItem('isRider');
+
+  if (isChef === 'true') {
+    setIsChefMode(true);
+    navigate('/chef/dashboard');
+  } else if (isRider === 'true') {
+    setIsRiderMode(true);
+    navigate('/rider/dashboard');
+  }
+}, [navigate]);
 
   const handleLogout = () => {
     logout();
@@ -165,63 +173,60 @@ function App() {
             <Route path="/liqour/:id" element={<LiqourProfile />} />
           <Route path="/jikoni/express/download" element={<Download />} />
           <Route path="/saved/foods" element={<SavedFoods />} />
+
+            <Route path="/rider/dashboard" element={<Board />} />
+
+          
           <Route path="/chef/dashboard" element={<ChefDashboard setIsChefMode={setIsChefMode} />} />
         </Routes>
       </MainContent>
 
-      <BottomNav>
-        {isChefMode ? (
-          <>
-            <NavLink to="/chef/dashboard#analytics">
-              <FiBarChart2 /> Analytics
-            </NavLink>
-            <NavLink to="/chef/dashboard#riders">
-              <FiUsers /> Riders
-            </NavLink>
-            <NavLink to="/chef/dashboard">
-              <FiCoffee /> Foods
-            </NavLink>
-          </>
-        ) : (
-          <>
-           
+    <BottomNav>
+  {isChefMode ? (
+    <>
+      <NavLink to="/chef/dashboard#analytics">
+        <FiBarChart2 /> Analytics
+      </NavLink>
+      <NavLink to="/chef/dashboard#riders">
+        <FiUsers /> Riders
+      </NavLink>
+      <NavLink to="/chef/dashboard">
+        <FiCoffee /> Foods
+      </NavLink>
+    </>
+  ) : isRiderMode ? (
+    <>
+      <NavLink to="/rider/dashboard#orders">
+        <FiBarChart2 /> Orders
+      </NavLink>
+      <NavLink to="/rider/dashboard#profile">
+        <FiUsers /> Profile
+      </NavLink>
+      <NavLink to="/rider/dashboard">
+        <FiCoffee /> Dashboard
+      </NavLink>
+    </>
+  ) : (
+    <>
+      <NavLink to="/register">
+        <IoIosPersonAdd /> Register
+      </NavLink>
+      <NavLink to="/jikoni/express/download">
+        <FiDownload /> Get App
+      </NavLink>
+      <NavLink to="/saved/foods">
+        <FiHeart /> Saved
+      </NavLink>
+      <NavLink to="/jikoni-express/liqour-shots">
+        <FaWineBottle /> Liqour
+      </NavLink>
+      <NavLink to="/culture/foods">
+        <GiHotMeal /> Foods
+      </NavLink>
+    </>
+  )}
+</BottomNav>
 
-          
-
-            
-               <NavLink to="/register">
-              <IoIosPersonAdd />Register
-            </NavLink>
-
-              <NavLink to="/jikoni/express/download">
-              <FiDownload /> Get App
-            </NavLink>
-
-            
-            <NavLink to="/saved/foods">
-              <FiHeart /> Saved
-            </NavLink>
-
-
-            
-               <NavLink to="/jikoni-express/liqour-shots">
-              <FaWineBottle /> Liqour
-            </NavLink>
-
-
-
- <NavLink to="/culture/foods">
-              <GiHotMeal /> Foods
-            </NavLink>
-
-
-            
-          
-
-            
-          </>
-        )}
-      </BottomNav>
     </AppContainer>
   );
 }

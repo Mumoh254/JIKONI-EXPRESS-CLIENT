@@ -309,3 +309,96 @@ svg {
   opacity: 1;
   background-color: #000;
 }
+
+
+/* board */
+
+.container {
+  font-family: Arial, sans-serif;
+  padding: 1rem;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.profile-section {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.profile-image {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+}
+
+.card {
+  border: 1px solid #ccc;
+  padding: 1rem;
+  margin: 1rem 0;
+  border-radius: 8px;
+}
+
+.order-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.badge {
+  padding: 5px 10px;
+  border-radius: 12px;
+  color: white;
+}
+
+.badge.new { background: blue; }
+.badge.assigned { background: orange; }
+.badge.in { background: green; }
+.badge.delivered { background: gray; }
+
+.stats {
+  display: flex;
+  justify-content: space-between;
+}
+
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0,0,0,0.5);
+}
+
+.modal-content {
+  background: white;
+  padding: 2rem;
+  margin: 10% auto;
+  width: 80%;
+  border-radius: 10px;
+  position: relative;
+}
+
+.close-btn {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+}
+
+.footer {
+  margin-top: 2rem;
+  display: flex;
+  justify-content: space-around;
+}
+
+.notif-badge {
+  background: red;
+  color: white;
+  padding: 0 8px;
+  border-radius: 12px;
+  margin-left: 5px;
+}

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Modal, Form, Button, Spinner // Keep necessary react-bootstrap components for structure
 } from 'react-bootstrap';
@@ -6,8 +6,9 @@ import {
   FiUser, FiMapPin, FiTruck, FiClock, FiCheckSquare, FiHash // Use react-icons for more modern feel
 } from 'react-icons/fi'; // Import icons for form fields
 import styled, { keyframes } from 'styled-components'; // Import styled-components and keyframes
-
+import   { getUserNameFromToken  } from '../../handler/tokenDecorder'
 // --- Jikoni Express Color Palette ---
+import { SiCoinmarketcap } from "react-icons/si";
 const colors = {
   primary: '#FF4532', // Jikoni Red
   secondary: '#00C853', // Jikoni Green
@@ -186,18 +187,37 @@ const FormHeaderIcon = styled.span`
 `;
 
 const RiderRegistration = ({ show, onClose, onSubmit }) => {
+   const [user, setUser] = useState(null);
   const [submitting, setSubmitting] = useState(false);
+const [agreedToTerms, setAgreedToTerms] = useState(false);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setSubmitting(true);
-    const formData = Object.fromEntries(new FormData(e.target));
-    await onSubmit(formData); // Assume onSubmit handles its own async logic
-    setSubmitting(false);
-  };
+  useEffect(() => {
+    const userData = getUserNameFromToken();
+    setUser(userData);
+  }, []);
+
+    console.log(user)
+
+  if (!user) return <p>Loading user info...</p>
+
+ const handleSubmit = async (e) => {
+  e.preventDefault();
+  setSubmitting(true);
+
+  const formData = new FormData(e.target);
+  const data = Object.fromEntries(formData.entries());
+
+  // Manually override the checkbox with the boolean state
+  data.agreedToTerms = agreedToTerms;
+  data.userId = user?.id || user?._id;
+
+  await onSubmit(data);
+  setSubmitting(false);
+};
+
 
   return (
-    <Modal show={show} onHide={onClose} centered size="lg"> {/* Increased size for better spacing */}
+    <Modal show={show} onHide={onClose} centered size="lg"> 
       <StyledModalHeader closeButton>
         <Modal.Title>
           <FormHeaderIcon><FiTruck /></FormHeaderIcon>
@@ -207,7 +227,7 @@ const RiderRegistration = ({ show, onClose, onSubmit }) => {
       <StyledModalBody>
         <p className="text-muted text-center mb-4">Join our team and start delivering delicious food across Nairobi!</p>
         <Form onSubmit={handleSubmit}>
-          <div className="row"> {/* Use Bootstrap grid for better layout */}
+          <div className="row">
             <div className="col-md-6">
               <FormGroup>
                 <Form.Label>National ID</Form.Label>
@@ -237,7 +257,8 @@ const RiderRegistration = ({ show, onClose, onSubmit }) => {
               <FormGroup>
                 <Form.Label>Vehicle Type</Form.Label>
                 <IconWrapper><FiTruck /></IconWrapper>
-                <SelectField name="vehicle" required>
+             <SelectField name="vehicleType" required>
+
                   <option value="">Select your vehicle type</option> {/* Added default empty option */}
                   <option>Bicycle</option>
                   <option>Motorcycle</option>
@@ -257,6 +278,13 @@ const RiderRegistration = ({ show, onClose, onSubmit }) => {
                 <InputField name="workHours" type="text" placeholder="e.g. 9am - 5pm or Flexible" required />
               </FormGroup>
 
+
+               <FormGroup>
+                <Form.Label>Service City</Form.Label>
+                <IconWrapper><iCoinmarketcap  /></IconWrapper>
+                <InputField name="city" type="text" required />
+              </FormGroup>
+
               <FormGroup>
                 <Form.Label>Service Area</Form.Label>
                 <IconWrapper><FiMapPin /></IconWrapper>
@@ -266,12 +294,18 @@ const RiderRegistration = ({ show, onClose, onSubmit }) => {
           </div> {/* End Row */}
 
           <FormGroup className="mb-4 text-center"> {/* Centered checkbox */}
-            <CheckboxField
-              name="terms"
-              type="checkbox"
-              label="I agree to Jikoni Express Rider Terms and Conditions"
-              required
-            />
+   <FormGroup className="mb-4 text-center">
+  <CheckboxField
+    name="agreedToTerms"
+    type="checkbox"
+    label="I agree to Jikoni Express Rider Terms and Conditions"
+    checked={agreedToTerms}
+    onChange={(e) => setAgreedToTerms(e.target.checked)}
+    required
+  />
+</FormGroup>
+
+
           </FormGroup>
 
           <SubmitButton type="submit" disabled={submitting}>

@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import {
-  Modal, Form, Button, Spinner // Keep necessary react-bootstrap components for structure
+  Modal, Form, Button, Spinner 
 } from 'react-bootstrap';
 import {
   FiBriefcase, FiAward, FiMapPin, FiGlobe, FiFeather, FiCheckSquare, FiSend, FiStar // Using react-icons for modern appeal
-} from 'react-icons/fi'; // Import icons for form fields
-import styled, { keyframes } from 'styled-components'; // Import styled-components and keyframes
+} from 'react-icons/fi'; 
+import styled, { keyframes } from 'styled-components'; 
 
 // --- Jikoni Express Color Palette ---
 const colors = {

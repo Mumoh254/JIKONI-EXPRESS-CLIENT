@@ -138,7 +138,9 @@ const FoodItemsTable = () => {
             <th>Created</th>
             <th>Price</th>
     
-         
+          
+
+          
             <th>Actions</th>
           </tr>
         </thead>
