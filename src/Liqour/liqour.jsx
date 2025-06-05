@@ -25,7 +25,7 @@ import popSound from '../handler/playSound';
     import  LiquorProductsGrid     from  '../Liqour/liqourProdutsGrid'
 import { jwtDecode } from "jwt-decode"; 
 import moment from 'moment-timezone';
-import CartSidebar from '../components/cartAndOrder/cart';
+import  {CartSidebar}  from '../components/cartAndOrder/cart';
 import OrderConfirmation from '../components/cartAndOrder/orderConfirm'
 
 
