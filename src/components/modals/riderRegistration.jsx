@@ -294,17 +294,12 @@ const [agreedToTerms, setAgreedToTerms] = useState(false);
           </div> {/* End Row */}
 
           <FormGroup className="mb-4 text-center"> {/* Centered checkbox */}
-   <FormGroup className="mb-4 text-center">
-  <CheckboxField
-    name="agreedToTerms"
-    type="checkbox"
-    label="I agree to Jikoni Express Rider Terms and Conditions"
-    checked={agreedToTerms}
-    onChange={(e) => setAgreedToTerms(e.target.checked)}
-    required
-  />
-</FormGroup>
-
+     <CheckboxField
+  name="agreedToTerms"
+  type="checkbox"
+  label="I agree to Jikoni Express Rider Terms and Conditions"
+  required
+/>
 
           </FormGroup>
 

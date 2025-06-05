@@ -330,7 +330,7 @@ const Board = () => {
           marginBottom: '15px',
           fontSize: '18px'
         }}>
-          Today's Earnings: <span style={{ color: colors.primary }}> KSH {earnings.today.toFixed(2)}</span>
+          Today's Earnings: <span style={{ color: colors.primary }}>${earnings.today.toFixed(2)}</span>
         </h2>
         
         <div style={{ 
@@ -360,7 +360,7 @@ const Board = () => {
               fontWeight: 'bold',
               color: colors.primary
             }}>
-              KSH {(earnings.today / earnings.totalDeliveries).toFixed(2)}
+              ${(earnings.today / earnings.totalDeliveries).toFixed(2)}
             </div>
             <div style={{
               fontSize: '14px',
