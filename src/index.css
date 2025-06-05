@@ -313,10 +313,6 @@ svg {
 
 /* board */
 
-.container {
-  font-family: Arial, sans-serif;
-  padding: 1rem;
-}
 
 .header {
   display: flex;

@@ -198,7 +198,6 @@ const [agreedToTerms, setAgreedToTerms] = useState(false);
 
     console.log(user)
 
-  if (!user) return <p>Loading user info...</p>
 
  const handleSubmit = async (e) => {
   e.preventDefault();

@@ -24,7 +24,7 @@ const Board = () => {
   });
   const [profile, setProfile] = useState({
     name: 'John Rider',
-    photo: 'https://randomuser.me/api/portraits/men/32.jpg',
+    photo: '/images/delivery.png',
     available: true,
   });
   const [notifications, setNotifications] = useState([]);
