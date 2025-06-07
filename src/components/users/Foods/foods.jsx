@@ -505,6 +505,7 @@ const onClose = () => setShowModal(false);
                 <span className="text-danger px-1">Express</span>
               </h1>
             </div>
+            
             <div className="d-flex gap-2 gap-md-3 align-items-center">
               {!state.isChefMode && !state.isRiderMode && (
                 <div className="d-flex gap-1 gap-md-2">

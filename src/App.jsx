@@ -196,15 +196,7 @@ function App() {
     </>
   ) : isRiderMode ? (
     <>
-      <NavLink to="/rider/dashboard#orders">
-        <FiBarChart2 /> Orders
-      </NavLink>
-      <NavLink to="/rider/dashboard#profile">
-        <FiUsers /> Profile
-      </NavLink>
-      <NavLink to="/rider/dashboard">
-        <FiCoffee /> Dashboard
-      </NavLink>
+   
     </>
   ) : (
     <>

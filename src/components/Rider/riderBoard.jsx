@@ -1,44 +1,288 @@
 import React, { useState, useEffect, useRef } from 'react';
+import io from 'socket.io-client';
+import { formatDistanceToNow } from 'date-fns';
 
-// Jikoni Express Color Palette
 const colors = {
-  primary: '#FF4532', // Jikoni Red
-  secondary: '#00C853', // Jikoni Green
-  darkText: '#1A202C', // Dark text for headings
-  lightBackground: '#F0F2F5', // Light background for the page
-  cardBackground: '#FFFFFF', // White for the form card
-  borderColor: '#D1D9E6', // Light border for inputs
-  errorText: '#EF4444', // Red for errors
-  placeholderText: '#A0AEC0', // Muted text for placeholders
-  buttonHover: '#E6392B', // Darker red on button hover
-  disabledButton: '#CBD5E1', // Gray for disabled buttons
+  primary: '#FF4532',
+  secondary: '#00C853',
+  darkText: '#1A202C',
+  lightBackground: '#F0F2F5',
+  cardBackground: '#FFFFFF',
+  borderColor: '#D1D9E6',
+  errorText: '#EF4444',
+  placeholderText: '#A0AEC0',
+  buttonHover: '#E6392B',
+  disabledButton: '#CBD5E1',
 };
 
-const Board = () => {
+const RiderDashboard = () => {
+
+   const [riderId, setRiderId] = useState(null);
+
+  useEffect(() => {
+    const storedRiderId = localStorage.getItem('riderId');
+    if (storedRiderId) {
+      setRiderId(storedRiderId);
+    }
+  }, []);
+
+  
   const [orders, setOrders] = useState([]);
   const [selectedOrder, setSelectedOrder] = useState(null);
-  const [earnings, setEarnings] = useState({
-    today: 245.5,
-    totalDeliveries: 17,
-    paymentStatus: 'Paid Weekly',
+  const [otpInput, setOtpInput] = useState('');
+  const [earnings, setEarnings] = useState({ 
+    balance: 0, 
+    totalDeliveries: 0,
+    weeklyEarnings: 0,
+    paymentStatus: 'Pending'
   });
+
+
   const [profile, setProfile] = useState({
-    name: 'John Rider',
+    id: riderId,
+    name: 'Loading...',
+    phone: '',
+    rating: 4.8,
+    vehicleType: 'Motorcycle',
     photo: '/images/delivery.png',
     available: true,
   });
+
   const [notifications, setNotifications] = useState([]);
-  const [showMap, setShowMap] = useState(false);
   const [callStatus, setCallStatus] = useState({ active: false, type: '' });
-  const [audioStream, setAudioStream] = useState(null);
   const audioRef = useRef(null);
+  const notificationSoundRef = useRef(null);
+  const socketRef = useRef(null);
+
+
+
+  // Fetch rider data on mount
+  useEffect(() => {
+    const fetchRiderData = async () => {
+      try {
+        // Fetch profile
+        const profileRes = await fetch(`http://localhost:8000/apiV1/smartcity-ke/rider/${riderId}`);
+        const profileData = await profileRes.json();
+        setProfile(prev => ({ ...prev, ...profileData }));
+        
+        // Fetch orders
+        const ordersRes = await fetch(`http://localhost:8000/apiV1/smartcity-ke/orders`);
+        console.log(ordersRes)
+        const ordersData = await ordersRes.json();
+        setOrders(ordersData.orders.map(formatOrder));
+        
+        // Fetch earnings
+        const earningsRes = await fetch(`/api/rider/${riderId}/earnings`);
+        const earningsData = await earningsRes.json();
+        setEarnings(earningsData);
+        
+      } catch (error) {
+        console.error('Failed to fetch data:', error);
+      }
+    };
+    
+    fetchRiderData();
+    
+    // Setup socket connection
+  socketRef.current = io('http://localhost:8000/apiV1/smartcity-ke', {
+  reconnection: true,
+  query: { riderId }
+});
+
+    socketRef.current.on('connect', () => {
+      console.log('Connected to socket server');
+    });
+    
+    socketRef.current.on('order:assigned', (data) => {
+      setNotifications(prev => [{
+        id: Date.now(),
+        type: 'order',
+        content: `New delivery: ${data.order.id}`,
+        sound: data.notificationSound,
+        order: formatOrder(data.order)
+      }, ...prev]);
+      
+      // Play notification sound
+      if (notificationSoundRef.current) {
+        notificationSoundRef.current.src = data.notificationSound;
+        notificationSoundRef.current.play().catch(e => console.error('Notification sound error:', e));
+      }
+      
+      setOrders(prev => [formatOrder(data.order), ...prev]);
+    });
+    
+    socketRef.current.on('order:updated', (data) => {
+      setOrders(prev => 
+        prev.map(order => 
+          order.id === data.order.id ? formatOrder(data.order) : order
+        )
+      );
+    });
+    
+    socketRef.current.on('order:delivered', (data) => {
+      if (data.riderId === riderId) {
+        setEarnings(prev => ({
+          ...prev,
+          balance: prev.balance + data.riderFee,
+          totalDeliveries: prev.totalDeliveries + 1,
+          totalEarnings: prev.totalEarnings + data.riderFee
+        }));
+      }
+    });
+    
+    return () => {
+      if (socketRef.current) {
+        socketRef.current.disconnect();
+      }
+    };
+  }, [riderId]);
+  const formatOrder = (order) => ({
+  id: order.id,
+  pickup: order.foodListing?.chef?.address || "Chef's address not available",
+  dropoff: order.deliveryAddress || "Customer address not available",
+  time: '25 min', // Can be replaced by actual ETA if available
+  distance: '4.2 km', // Can be replaced with calculated distance if needed
+  status:
+    order.status === 'preparing' ? 'New' :
+    order.status === 'assigned' ? 'Assigned' :
+    order.status === 'in-transit' ? 'In Transit' : 'Delivered',
+  items: order.foodListing?.title || "Food items",
+  customer: order.user?.PhoneNumber || "Customer phone",
+  customerName: order.user?.Name || "Customer",
+  otp: order.otpCode || "123456",
+  coordinates: {
+    pickup: [
+      order.foodListing?.chef?.latitude || -1.286389,
+      order.foodListing?.chef?.longitude || 36.817223
+    ],
+    dropoff: [
+      order.latitude || -1.292066,
+      order.longitude || 36.821946
+    ]
+  },
+  rawStatus: order.status,
+  createdAt: order.createdAt,
+  assignedAt: order.assignedAt
+});
+
+  // Accept order
+  const acceptOrder = async (id) => {
+    try {
+      const response = await fetch(`http://localhost:8000/apiV1/smartcity-ke/order/${id}/assign-rider`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ riderId })
+      });
+      
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error);
+      
+      setOrders(prev => prev.map(order => 
+        order.id === id ? { ...order, status: 'Assigned', rawStatus: 'assigned' } : order
+      ));
+    } catch (error) {
+      console.error('Failed to accept order:', error);
+      alert(error.message);
+    }
+  };
+
+  // Start delivery
+  const startDelivery = async (id) => {
+    try {
+      const response = await fetch(`http://localhost:8000/apiV1/smartcity-ke/order/${id}/status`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'in-transit' })
+      });
+      
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error);
+      
+      setOrders(prev => prev.map(order => 
+        order.id === id ? { ...order, status: 'In Transit', rawStatus: 'in-transit' } : order
+      ));
+      setSelectedOrder(null);
+    } catch (error) {
+      console.error('Failed to start delivery:', error);
+      alert(error.message);
+    }
+  };
+
+  // Complete delivery
+  const completeDelivery = async () => {
+    if (!selectedOrder) return;
+    
+    try {
+      const response = await fetch(`http://localhost:8000/apiV1/smartcity-ke/order/${selectedOrder.id}/complete`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ otp: otpInput })
+      });
+      
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error);
+      
+      // Update orders
+      setOrders(prev => prev.map(order => 
+        order.id === selectedOrder.id ? { ...order, status: 'Delivered', rawStatus: 'delivered' } : order
+      ));
+      
+      // Close modal and reset OTP
+      setSelectedOrder(null);
+      setOtpInput('');
+      
+      // Show success message
+      alert(`Delivery completed! You earned $${data.riderFee.toFixed(2)} in ${data.deliveryTime} minutes`);
+    } catch (error) {
+      console.error('Delivery completion failed:', error);
+      alert(error.message);
+    }
+  };
+const openNavigation = (order, app = 'google') => {
+  if (!order?.coordinates?.pickup || !order?.coordinates?.dropoff) {
+    console.error('Missing coordinates for navigation.');
+    alert('Navigation coordinates are not available.');
+    return;
+  }
+
+  const { pickup, dropoff } = order.coordinates;
+
+  const baseUrls = {
+    google: `https://www.google.com/maps/dir/?api=1&origin=${pickup[0]},${pickup[1]}&destination=${dropoff[0]},${dropoff[1]}&travelmode=driving`,
+    waze: `https://www.waze.com/ul?ll=${dropoff[0]},${dropoff[1]}&navigate=yes&zoom=17`
+  };
+
+  const url = baseUrls[app] || baseUrls.google;
+  window.open(url, '_blank');
+};
+
+
+  // Make phone call
+  const makeCall = (phoneNumber) => {
+    window.location.href = `tel:${phoneNumber}`;
+  };
+
+  // Toggle availability
+  const toggleAvailability = async () => {
+    const newStatus = !profile.available;
+    setProfile(prev => ({ ...prev, available: newStatus }));
+    
+    try {
+      await fetch(`/api/rider/${riderId}/availability`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ available: newStatus })
+      });
+    } catch (error) {
+      console.error('Failed to update availability:', error);
+    }
+  };
 
   // Simulate WebRTC call
-  const startAudioCall = async (type) => {
+  const startAudioCall = async (type, phoneNumber) => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      setAudioStream(stream);
-      setCallStatus({ active: true, type });
+      setCallStatus({ active: true, type, phoneNumber });
       
       // For demo purposes - simulate ringing
       setTimeout(() => {
@@ -47,7 +291,6 @@ const Board = () => {
           audioRef.current.play().catch(e => console.error('Play error:', e));
         }
       }, 2000);
-      
     } catch (error) {
       console.error('Error accessing microphone:', error);
       alert('Microphone access denied. Please enable microphone permissions.');
@@ -55,96 +298,16 @@ const Board = () => {
   };
 
   const endCall = () => {
-    if (audioStream) {
-      audioStream.getTracks().forEach(track => track.stop());
+    if (audioRef.current?.srcObject) {
+      audioRef.current.srcObject.getTracks().forEach(track => track.stop());
     }
     setCallStatus({ active: false, type: '' });
-    setAudioStream(null);
   };
 
-  useEffect(() => {
-    // Simulated data
-    setOrders([
-      {
-        id: 'ORD-001',
-        pickup: 'Jikoni Kitchen - Downtown',
-        dropoff: '123 Main St, Apt 4B',
-        time: '25 min',
-        distance: '4.2 km',
-        status: 'Assigned',
-        items: '2x Chicken Curry, 3x Naan Bread',
-        customer: '+254712345678',
-        otp: '4738',
-        coordinates: { pickup: [-1.286389, 36.817223], dropoff: [-1.292066, 36.821946] },
-      },
-      {
-        id: 'ORD-002',
-        pickup: 'Jikoni Express - Westside',
-        dropoff: '456 Market Rd',
-        time: '15 min',
-        distance: '2.1 km',
-        status: 'New',
-        items: '1x Veggie Platter, 2x Mango Lassi',
-        customer: '+254798765432',
-        otp: '5912',
-        coordinates: { pickup: [-1.270840, 36.798740], dropoff: [-1.268250, 36.803820] },
-      },
-    ]);
-
-    setNotifications([
-      { id: '1', type: 'order', content: 'New order available: ORD-002' },
-      { id: '2', type: 'payment', content: 'Weekly payment processed: $245.50' },
-      { id: '3', type: 'admin', content: 'Festival discount starts tomorrow' },
-    ]);
-
-    return () => {
-      if (audioStream) {
-        audioStream.getTracks().forEach(track => track.stop());
-      }
-    };
-  }, []);
-
-  const acceptOrder = (id) => {
-    setOrders((orders) =>
-      orders.map((order) =>
-        order.id === id ? { ...order, status: 'Assigned' } : order
-      )
-    );
-  };
-
-  const startDelivery = (id) => {
-    setOrders((orders) =>
-      orders.map((order) =>
-        order.id === id ? { ...order, status: 'In Transit' } : order
-      )
-    );
-    setSelectedOrder(null);
-  };
-
-  const completeDelivery = (id) => {
-    setOrders((orders) =>
-      orders.map((order) =>
-        order.id === id ? { ...order, status: 'Delivered' } : order
-      )
-    );
-    setEarnings((prev) => ({
-      ...prev,
-      today: prev.today + 8.5,
-      totalDeliveries: prev.totalDeliveries + 1,
-    }));
-    setSelectedOrder(null);
-  };
-
-  const openNavigation = (order, app = 'google') => {
-    if (!order.coordinates) return;
-    
-    const { pickup, dropoff } = order.coordinates;
-    const baseUrls = {
-      google: `https://www.google.com/maps/dir/?api=1&origin=${pickup[0]},${pickup[1]}&destination=${dropoff[0]},${dropoff[1]}&travelmode=driving`,
-      waze: `https://www.waze.com/ul?ll=${dropoff[0]},${dropoff[1]}&navigate=yes&zoom=17`
-    };
-    
-    window.open(baseUrls[app], '_blank');
+  // Calculate time since assignment
+  const getTimeSinceAssignment = (assignedAt) => {
+    if (!assignedAt) return 'Just now';
+    return formatDistanceToNow(new Date(assignedAt), { addSuffix: true });
   };
 
   return (
@@ -152,10 +315,13 @@ const Board = () => {
       backgroundColor: colors.lightBackground, 
       minHeight: '100vh',
       padding: '20px',
-      fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif"
+      fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
+      maxWidth: '500px',
+      margin: '0 auto'
     }}>
-      {/* Audio element for WebRTC call */}
+      {/* Audio elements */}
       <audio ref={audioRef} />
+      <audio ref={notificationSoundRef} />
       
       {/* Call Status Modal */}
       {callStatus.active && (
@@ -182,6 +348,9 @@ const Board = () => {
             <h2 style={{ color: colors.primary, marginBottom: '20px' }}>
               Calling {callStatus.type === 'chef' ? 'Chef' : 'Customer'}...
             </h2>
+            <div style={{ marginBottom: '15px', fontSize: '18px' }}>
+              {callStatus.phoneNumber}
+            </div>
             <div style={{ 
               width: '80px', 
               height: '80px', 
@@ -229,7 +398,7 @@ const Board = () => {
             margin: 0,
             fontSize: '24px'
           }}>
-            Delivery Dashboard
+            {profile.name}
           </h1>
           <p style={{ 
             color: colors.placeholderText,
@@ -268,9 +437,7 @@ const Board = () => {
                 <input
                   type="checkbox"
                   checked={profile.available}
-                  onChange={(e) =>
-                    setProfile({ ...profile, available: e.target.checked })
-                  }
+                  onChange={toggleAvailability}
                   style={{ opacity: 0, width: 0, height: 0 }}
                 />
                 <span style={{
@@ -301,17 +468,9 @@ const Board = () => {
                 {profile.available ? 'Available' : 'Offline'}
               </span>
             </div>
-            <button style={{
-              backgroundColor: 'transparent',
-              border: `1px solid ${colors.primary}`,
-              color: colors.primary,
-              padding: '5px 15px',
-              borderRadius: '20px',
-              fontSize: '12px',
-              cursor: 'pointer'
-            }}>
-              Log Out
-            </button>
+            <div style={{ fontSize: '14px', color: colors.placeholderText }}>
+              ⭐ {profile.rating || '4.8'}
+            </div>
           </div>
         </div>
       </div>
@@ -330,7 +489,7 @@ const Board = () => {
           marginBottom: '15px',
           fontSize: '18px'
         }}>
-          Today's Earnings: <span style={{ color: colors.primary }}>${earnings.today.toFixed(2)}</span>
+          Earnings: <span style={{ color: colors.primary }}>${earnings.balance.toFixed(2)}</span>
         </h2>
         
         <div style={{ 
@@ -360,13 +519,13 @@ const Board = () => {
               fontWeight: 'bold',
               color: colors.primary
             }}>
-              ${(earnings.today / earnings.totalDeliveries).toFixed(2)}
+              ${earnings.weeklyEarnings?.toFixed(2) || '0.00'}
             </div>
             <div style={{
               fontSize: '14px',
               color: colors.placeholderText
             }}>
-              Avg Order
+              This Week
             </div>
           </div>
           
@@ -413,118 +572,145 @@ const Board = () => {
           padding: '3px 10px',
           fontSize: '12px'
         }}>
-          {orders.filter(o => o.status !== 'Delivered').length} pending
+          {orders.filter(o => o.rawStatus !== 'delivered').length} pending
         </span>
       </div>
 
       {/* Orders List */}
       <div style={{ marginBottom: '80px' }}>
-        {orders.map((order) => (
-          <div key={order.id} style={{
+        {orders.length === 0 ? (
+          <div style={{
             backgroundColor: colors.cardBackground,
             borderRadius: '12px',
-            padding: '15px',
-            marginBottom: '15px',
-            boxShadow: '0 2px 10px rgba(0,0,0,0.05)'
+            padding: '40px 20px',
+            textAlign: 'center',
+            color: colors.placeholderText
           }}>
-            <div style={{ 
-              display: 'flex', 
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              marginBottom: '10px'
+            <div style={{ fontSize: '48px', marginBottom: '20px' }}>🍔</div>
+            <p>No active orders</p>
+            <p>You'll be notified when new orders arrive</p>
+          </div>
+        ) : (
+          orders.map((order) => (
+            <div key={order.id} style={{
+              backgroundColor: colors.cardBackground,
+              borderRadius: '12px',
+              padding: '15px',
+              marginBottom: '15px',
+              boxShadow: '0 2px 10px rgba(0,0,0,0.05)'
             }}>
-              <strong style={{ color: colors.darkText }}>#{order.id}</strong>
-              <span style={{
-                backgroundColor: 
-                  order.status === 'New' ? '#FFE0D9' : 
-                  order.status === 'Assigned' ? '#E0F7FA' : 
-                  order.status === 'In Transit' ? '#E8F5E9' : '#EEEEEE',
-                color: 
-                  order.status === 'New' ? colors.primary : 
-                  order.status === 'Assigned' ? '#00838F' : 
-                  order.status === 'In Transit' ? colors.secondary : colors.placeholderText,
-                padding: '3px 10px',
-                borderRadius: '12px',
-                fontSize: '12px',
-                fontWeight: 'bold'
+              <div style={{ 
+                display: 'flex', 
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: '10px'
               }}>
-                {order.status}
-              </span>
-            </div>
-            
-            <div style={{ marginBottom: '10px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', marginBottom: '5px' }}>
-                <div style={{ 
-                  width: '20px', 
-                  color: colors.primary,
-                  marginRight: '8px'
-                }}>📍</div>
-                <div>
-                  <div style={{ fontSize: '12px', color: colors.placeholderText }}>Pickup</div>
-                  <div style={{ fontSize: '14px' }}>{order.pickup}</div>
-                </div>
+                <strong style={{ color: colors.darkText }}>#{order.id}</strong>
+                <span style={{
+                  backgroundColor: 
+                    order.status === 'New' ? '#FFE0D9' : 
+                    order.status === 'Assigned' ? '#E0F7FA' : 
+                    order.status === 'In Transit' ? '#E8F5E9' : '#EEEEEE',
+                  color: 
+                    order.status === 'New' ? colors.primary : 
+                    order.status === 'Assigned' ? '#00838F' : 
+                    order.status === 'In Transit' ? colors.secondary : colors.placeholderText,
+                  padding: '3px 10px',
+                  borderRadius: '12px',
+                  fontSize: '12px',
+                  fontWeight: 'bold'
+                }}>
+                  {order.status}
+                </span>
               </div>
               
-              <div style={{ display: 'flex', alignItems: 'center' }}>
+              {order.rawStatus === 'assigned' && (
                 <div style={{ 
-                  width: '20px', 
-                  color: colors.secondary,
-                  marginRight: '8px'
-                }}>📦</div>
-                <div>
-                  <div style={{ fontSize: '12px', color: colors.placeholderText }}>Dropoff</div>
-                  <div style={{ fontSize: '14px' }}>{order.dropoff}</div>
-                </div>
-              </div>
-            </div>
-            
-            <div style={{ 
-              display: 'flex', 
-              justifyContent: 'space-between',
-              marginBottom: '15px',
-              fontSize: '14px',
-              color: colors.placeholderText
-            }}>
-              <span>⏱ {order.time}</span>
-              <span>📏 {order.distance}</span>
-            </div>
-            
-            <div style={{ display: 'flex', gap: '10px' }}>
-              <button 
-                onClick={() => setSelectedOrder(order)}
-                style={{
-                  flex: 1,
-                  backgroundColor: 'transparent',
-                  border: `1px solid ${colors.primary}`,
-                  color: colors.primary,
+                  backgroundColor: '#E0F7FA',
                   padding: '8px',
                   borderRadius: '8px',
-                  cursor: 'pointer'
-                }}
-              >
-                Details
-              </button>
+                  marginBottom: '10px',
+                  fontSize: '12px',
+                  color: '#00838F'
+                }}>
+                  ⏱ Assigned {getTimeSinceAssignment(order.assignedAt)}
+                </div>
+              )}
               
-              {order.status === 'New' && (
+              <div style={{ marginBottom: '10px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', marginBottom: '5px' }}>
+                  <div style={{ 
+                    width: '20px', 
+                    color: colors.primary,
+                    marginRight: '8px'
+                  }}>📍</div>
+                  <div>
+                    <div style={{ fontSize: '12px', color: colors.placeholderText }}>Pickup</div>
+                    <div style={{ fontSize: '14px' }}>{order.pickup}</div>
+                  </div>
+                </div>
+                
+                <div style={{ display: 'flex', alignItems: 'center' }}>
+                  <div style={{ 
+                    width: '20px', 
+                    color: colors.secondary,
+                    marginRight: '8px'
+                  }}>📦</div>
+                  <div>
+                    <div style={{ fontSize: '12px', color: colors.placeholderText }}>Dropoff</div>
+                    <div style={{ fontSize: '14px' }}>{order.dropoff}</div>
+                  </div>
+                </div>
+              </div>
+              
+              <div style={{ 
+                display: 'flex', 
+                justifyContent: 'space-between',
+                marginBottom: '15px',
+                fontSize: '14px',
+                color: colors.placeholderText
+              }}>
+                <span>⏱ {order.time}</span>
+                <span>📏 {order.distance}</span>
+              </div>
+              
+              <div style={{ display: 'flex', gap: '10px' }}>
                 <button 
-                  onClick={() => acceptOrder(order.id)}
+                  onClick={() => setSelectedOrder(order)}
                   style={{
                     flex: 1,
-                    backgroundColor: colors.primary,
-                    color: 'white',
-                    border: 'none',
+                    backgroundColor: 'transparent',
+                    border: `1px solid ${colors.primary}`,
+                    color: colors.primary,
                     padding: '8px',
                     borderRadius: '8px',
-                    cursor: 'pointer',
-                    fontWeight: 'bold'
+                    cursor: 'pointer'
                   }}
                 >
-                  Accept
+                  Details
                 </button>
-              )}
+                
+                {order.status === 'New' && (
+                  <button 
+                    onClick={() => acceptOrder(order.id)}
+                    style={{
+                      flex: 1,
+                      backgroundColor: colors.primary,
+                      color: 'white',
+                      border: 'none',
+                      padding: '8px',
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                      fontWeight: 'bold'
+                    }}
+                  >
+                    Accept
+                  </button>
+                )}
+              </div>
             </div>
-          </div>
-        ))}
+          ))
+        )}
       </div>
 
       {/* Order Details Modal */}
@@ -555,7 +741,7 @@ const Board = () => {
               display: 'flex', 
               justifyContent: 'space-between',
               alignItems: 'center',
-              marginBottom: '15px'
+              marginBottom: '5px'
             }}>
               <h2 style={{ 
                 color: colors.darkText, 
@@ -589,7 +775,8 @@ const Board = () => {
               <div style={{ 
                 backgroundColor: colors.lightBackground,
                 padding: '15px',
-                borderRadius: '10px'
+                borderRadius: '10px',
+                fontSize: '14px'
               }}>
                 {selectedOrder.items}
               </div>
@@ -605,66 +792,54 @@ const Board = () => {
               </h3>
               <div style={{ 
                 display: 'flex',
-                gap: '10px',
-                marginBottom: '15px'
+                flexDirection: 'column',
+                gap: '10px'
               }}>
-                <button 
-                  onClick={() => makeCall(selectedOrder.customer)}
-                  style={{
-                    flex: 1,
-                    backgroundColor: colors.primary,
-                    color: 'white',
-                    border: 'none',
-                    padding: '10px',
-                    borderRadius: '8px',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '8px'
-                  }}
-                >
-                  <span>📞</span> Call Customer
-                </button>
+                <div>
+                  <div style={{ fontSize: '12px', color: colors.placeholderText }}>Customer</div>
+                  <div style={{ fontSize: '16px', fontWeight: '500' }}>{selectedOrder.customerName || 'Customer'}</div>
+                </div>
                 
-                <button 
-                  onClick={() => startAudioCall('customer')}
-                  style={{
-                    flex: 1,
-                    backgroundColor: colors.secondary,
-                    color: 'white',
-                    border: 'none',
-                    padding: '10px',
-                    borderRadius: '8px',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '8px'
-                  }}
-                >
-                  <span>🎧</span> Audio Call
-                </button>
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  <button 
+                    onClick={() => makeCall(selectedOrder.customer)}
+                    style={{
+                      flex: 1,
+                      backgroundColor: colors.primary,
+                      color: 'white',
+                      border: 'none',
+                      padding: '10px',
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px'
+                    }}
+                  >
+                    <span>📞</span> Call
+                  </button>
+                  
+                  <button 
+                    onClick={() => startAudioCall('customer', selectedOrder.customer)}
+                    style={{
+                      flex: 1,
+                      backgroundColor: colors.secondary,
+                      color: 'white',
+                      border: 'none',
+                      padding: '10px',
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px'
+                    }}
+                  >
+                    <span>🎧</span> Audio
+                  </button>
+                </div>
               </div>
-              
-              <button 
-                onClick={() => startAudioCall('chef')}
-                style={{
-                  width: '100%',
-                  backgroundColor: '#3498db',
-                  color: 'white',
-                  border: 'none',
-                  padding: '10px',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '8px'
-                }}
-              >
-                <span>👨‍🍳</span> Call Chef
-              </button>
             </div>
             
             <div style={{ marginBottom: '20px' }}>
@@ -683,7 +858,8 @@ const Board = () => {
                 fontSize: '24px',
                 fontWeight: 'bold',
                 letterSpacing: '5px',
-                color: colors.primary
+                color: colors.primary,
+                marginBottom: '10px'
               }}>
                 {selectedOrder.otp}
               </div>
@@ -691,10 +867,37 @@ const Board = () => {
                 textAlign: 'center',
                 color: colors.placeholderText,
                 fontSize: '14px',
-                marginTop: '5px'
+                marginBottom: '15px'
               }}>
                 Provide this OTP to customer upon delivery
               </p>
+              
+              {selectedOrder.rawStatus === 'in-transit' && (
+                <div>
+                  <input
+                    type="text"
+                    value={otpInput}
+                    onChange={(e) => setOtpInput(e.target.value)}
+                    placeholder="Enter customer's OTP"
+                    style={{
+                      width: '100%',
+                      padding: '12px',
+                      borderRadius: '8px',
+                      border: `1px solid ${colors.borderColor}`,
+                      fontSize: '16px',
+                      textAlign: 'center',
+                      marginBottom: '10px'
+                    }}
+                  />
+                  <p style={{ 
+                    textAlign: 'center',
+                    color: colors.placeholderText,
+                    fontSize: '14px'
+                  }}>
+                    Verify OTP to complete delivery
+                  </p>
+                </div>
+              )}
             </div>
             
             <div style={{ marginBottom: '20px' }}>
@@ -751,7 +954,7 @@ const Board = () => {
             </div>
             
             <div style={{ display: 'flex', gap: '10px' }}>
-              {selectedOrder.status === 'Assigned' && (
+              {selectedOrder.rawStatus === 'assigned' && (
                 <button 
                   onClick={() => startDelivery(selectedOrder.id)}
                   style={{
@@ -769,12 +972,13 @@ const Board = () => {
                 </button>
               )}
               
-              {selectedOrder.status === 'In Transit' && (
+              {selectedOrder.rawStatus === 'in-transit' && (
                 <button 
-                  onClick={() => completeDelivery(selectedOrder.id)}
+                  onClick={completeDelivery}
+                  disabled={otpInput.length !== 6}
                   style={{
                     flex: 1,
-                    backgroundColor: colors.secondary,
+                    backgroundColor: otpInput.length === 6 ? colors.secondary : colors.disabledButton,
                     color: 'white',
                     border: 'none',
                     padding: '12px',
@@ -855,4 +1059,4 @@ const Board = () => {
   );
 };
 
-export default Board;
+export default RiderDashboard;
