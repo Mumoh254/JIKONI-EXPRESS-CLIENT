@@ -12,6 +12,8 @@
 }
 
 
+
+
 svg {
   background: linear-gradient(145deg, #ff7464, #ff4532);
   -webkit-background-clip: text;
@@ -298,17 +300,22 @@ svg {
 
 
 .carousel-indicators [data-bs-target] {
-  width: 10px   !important;
-  height: 10px  !important;
+  width: 12px   !important;
+  height: 12px  !important;
   border-radius: 50%  !important;
-  background-color: #333   !important;
-  opacity: 0.5 !important;
+
+
   margin: 0 4px   !important;
   z-index: 2000 !important;
 }
 
-.carousel-indicators .active {
-  opacity: 1;
-  background-color: #000;
+
+/*   carousel  indicators    */
+
+.carousel-indicators [data-bs-target] {
+  background-color: #06b10f !important; /* Your desired color */
 }
 
+.carousel-indicators .active {
+  background-color: #ff1900 !important; /* Active dot color */
+}

@@ -829,6 +829,18 @@ const onClose = () => setShowModal(false);
         font-size: 0.8rem;
         padding: 0.2rem 0.6rem;
       }
+
+
+
+  .carousel-indicators [data-bs-target] {
+    background-color: #06b10f;
+  }
+
+  .carousel-indicators .active {
+    background-color: #ff1900;
+  }
+
+
       
       .story-item {
         width: 80px;
