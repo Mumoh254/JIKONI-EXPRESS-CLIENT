@@ -489,7 +489,7 @@ const openNavigation = (order, app = 'google') => {
           marginBottom: '15px',
           fontSize: '18px'
         }}>
-          Earnings: <span style={{ color: colors.primary }}>${earnings.balance.toFixed(2)}</span>
+          Earnings: <span style={{ color: colors.primary }}> KSH {earnings.balance.toFixed(2)}</span>
         </h2>
         
         <div style={{ 
@@ -519,7 +519,7 @@ const openNavigation = (order, app = 'google') => {
               fontWeight: 'bold',
               color: colors.primary
             }}>
-              ${earnings.weeklyEarnings?.toFixed(2) || '0.00'}
+              KSH {earnings.weeklyEarnings?.toFixed(2) || '0.00'}
             </div>
             <div style={{
               fontSize: '14px',

@@ -1,123 +1,27 @@
-import styled from 'styled-components';
-import { FiDownloadCloud, FiMail, FiPhone, FiUser } from 'react-icons/fi';
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { getUserNameFromToken } from '../../handler/tokenDecorder';
-const Container = styled.div`
-  max-width: 800px;
-  margin: 2rem auto;
-  padding: 2rem;
-  background: #fff;
-  border-radius: 16px;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-`;
 
-const Header = styled.h1`
-  color: #FF4532;
-  font-size: 2.5rem;
-  text-align: center;
-  margin-bottom: 2rem;
-  font-family: 'Pacifico', cursive;
-  
-  span {
-    color: #2d3436;
-    display: block;
-    font-size: 1.2rem;
-    margin-top: 0.5rem;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  }
-`;
-
-const InstallButton = styled.button`
-  background: ${props => props.installed ? '#2ECC71' : '#FF4532'};
-  color: white;
-  border: none;
-  padding: 1rem 2rem;
-  border-radius: 12px;
-  font-size: 1.2rem;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  gap: 0.8rem;
-  margin: 0 auto 3rem;
-  transition: all 0.3s ease;
-  cursor: ${props => props.installed ? 'default' : 'pointer'};
-  
-  &:hover {
-    transform: ${props => props.installed ? 'none' : 'translateY(-2px)'};
-    box-shadow: ${props => props.installed ? 'none' : '0 4px 15px rgba(255,69,50,0.3)'};
-  }
-`;
-
-const ProfileSection = styled.div`
-  text-align: center;
-  padding: 2rem;
-  background: #f8fafc;
-  border-radius: 16px;
-  margin-bottom: 2rem;
-
-  img {
-    width: 120px;
-    height: 120px;
-    border-radius: 50%;
-    object-fit: cover;
-    border: 3px solid #FF4532;
-    margin-bottom: 1.5rem;
-  }
-
-  h2 {
-    color: #2d3436;
-    margin-bottom: 0.5rem;
-  }
-
-  p {
-    color: #666;
-    margin-bottom: 1rem;
-  }
-`;
-
-const ContactInfo = styled.div`
-  display: flex;
-  gap: 1rem;
-  justify-content: center;
-  margin-top: 1rem;
-
-  div {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    color: #666;
-    
-    svg {
-      color: #FF4532;
-    }
-  }
-`;
-
-const CompanySection = styled.div`
-  text-align: center;
-  padding: 2rem;
-  background: linear-gradient(45deg, #FF4532, #FF6B4A);
-  border-radius: 16px;
-  color: white;
-
-  h3 {
-    font-size: 1.5rem;
-    margin-bottom: 1rem;
-  }
-
-  p {
-    font-size: 1.1rem;
-    opacity: 0.9;
-  }
-`;
+// Jikoni Express Color Palette
+const colors = {
+  primary: '#FF4532',       // Jikoni Red
+  secondary: '#00C853',     // Jikoni Green
+  darkText: '#1A202C',      // Dark text for headings
+  lightBackground: '#F0F2F5', // Light background
+  cardBackground: '#FFFFFF', // White for cards
+  borderColor: '#D1D9E6',   // Light border
+  errorText: '#EF4444',     // Error red
+  placeholderText: '#A0AEC0', // Muted text
+  buttonHover: '#E6392B',   // Darker red on hover
+  disabledButton: '#CBD5E1', // Disabled button
+};
 
 const Download = () => {
- const [username, setUserName] = useState('');
+  const [username, setUserName] = useState('');
   const [isInstalled, setIsInstalled] = useState(false);
   const deferredPrompt = useRef(null);
   const [initialLoad, setInitialLoad] = useState(true);
 
-  // Auto-refresh logic
+  // Auto-refresh logic to force prompt
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (!params.has('refreshed')) {
@@ -128,7 +32,6 @@ const Download = () => {
     }
   }, []);
 
-
   useEffect(() => {
     if (!initialLoad) {
       const userData = getUserNameFromToken();
@@ -136,7 +39,6 @@ const Download = () => {
     }
   }, [initialLoad]);
 
- 
   useEffect(() => {
     if (initialLoad) return;
 
@@ -155,6 +57,13 @@ const Download = () => {
       console.log('📦 beforeinstallprompt event captured');
       deferredPrompt.current = e;
       setIsInstalled(false);
+      
+      // Immediately show prompt when page loads
+      setTimeout(() => {
+        if (deferredPrompt.current) {
+          handleInstall();
+        }
+      }, 1000);
     };
 
     checkInstalled();
@@ -167,7 +76,6 @@ const Download = () => {
 
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstall);
-      window.removeEventListener('appinstalled', () => {});
     };
   }, [initialLoad]);
 
@@ -175,9 +83,9 @@ const Download = () => {
     if (!deferredPrompt.current) {
       if (window.matchMedia('(display-mode: standalone)').matches) {
         setIsInstalled(true);
-        return alert('App is already installed!');
+        return;
       }
-      return alert('Install prompt not available - try refreshing');
+      return;
     }
 
     try {
@@ -197,7 +105,7 @@ const Download = () => {
   };
 
   const trackInstall = async () => {
-    const BASE_URL = "https://neuro-apps-api-express-js-production-redy.onrender.com/apiV1/smartcity-ke";
+    const BASE_URL = "https://your-api-endpoint.com/apiV1/jikoni-express";
 
     try {
       const response = await fetch(`${BASE_URL}/track-install`, {
@@ -213,48 +121,181 @@ const Download = () => {
     }
   };
 
-  if (initialLoad) return null; // Prevent flash of content before refresh
-
+  if (initialLoad) return null;
 
   return (
-    <Container>
-      <Header>
-        Welcome to Jikoni Express
-        <span>{username ? username : 'Valued User'}</span>
-      </Header>
+    <div style={styles.container}>
+      <div style={styles.card}>
+        <div style={styles.header}>
+          <h1 style={styles.title}>JIKONI EXPRESS</h1>
+          <p style={styles.subtitle}>Food Delivery Revolution</p>
+        </div>
 
-      <InstallButton 
-        onClick={handleInstall}
-        installed={isInstalled}
-      >
-        <FiDownloadCloud size={24} />
-        {isInstalled ? 'App Installed ✓' : 'Install Jikoni Express'}
-      </InstallButton>
-
-      <ProfileSection>
-        <img src="/images/dev.png" alt="Developer" />
-        <h2>Peter Mumo</h2>
-        <p>CEO & Founder, Welt Tallis</p>
-        <p>Lead Developer, Jikoni Express</p>
+        <div style={styles.content}>
+          <h2 style={styles.greeting}>Hello {username || 'User'}!</h2>
+          <p style={styles.instruction}>Install the app for the best experience:</p>
+          
+          <button
+            style={isInstalled ? styles.installedButton : styles.installButton}
+            onClick={handleInstall}
+            disabled={isInstalled}
+          >
+            {isInstalled ? '✓ App Installed' : 'Install App Now'}
+          </button>
+          
+          <div style={styles.features}>
+            <h3 style={styles.featuresTitle}>JIKONI EXPRESS FEATURES:</h3>
+            <ul style={styles.featureList}>
+              <li>Instant food delivery from local chefs</li>
+              <li>Real-time order tracking</li>
+              <li>Exclusive chef specials</li>
+              <li>Secure in-app payments</li>
+              <li>Naivas voucher rewards</li>
+            </ul>
+          </div>
+        </div>
         
-        <ContactInfo>
-          <div>
-            <FiMail />
-            <span>peteritumo2030@gmail.com</span>
+        <div style={styles.developerSection}>
+          <h3 style={styles.developerTitle}>DEVELOPED BY</h3>
+          <div style={styles.developerCard}>
+            <h4 style={styles.company}>WELT TALLIS</h4>
+            <p style={styles.tagline}>Where culinary innovation meets digital excellence</p>
+            <div style={styles.contactInfo}>
+              <p>📧 infoweltallis@gmail.com</p>
+              <p>📱 0740 045 355</p>
+            </div>
           </div>
-          <div>
-            <FiPhone />
-            <span>+254740045355</span>
-          </div>
-        </ContactInfo>
-      </ProfileSection>
-
-      <CompanySection>
-        <h3>Powered by Welt Tallis Group</h3>
-        <p>Innovating through technology for better urban living</p>
-      </CompanySection>
-    </Container>
+        </div>
+      </div>
+    </div>
   );
+};
+
+// Styling using Jikoni Express color palette
+const styles = {
+  container: {
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    minHeight: '100vh',
+    backgroundColor: colors.lightBackground,
+    padding: '20px',
+    fontFamily: "'Poppins', sans-serif",
+  },
+  card: {
+    backgroundColor: colors.cardBackground,
+    borderRadius: '16px',
+    boxShadow: '0 8px 25px rgba(0,0,0,0.05)',
+    maxWidth: '500px',
+    width: '100%',
+    overflow: 'hidden',
+  },
+  header: {
+    background: colors.primary,
+    color: 'white',
+    padding: '25px',
+    textAlign: 'center',
+  },
+  title: {
+    margin: '0',
+    fontWeight: '700',
+    letterSpacing: '0.5px',
+    fontSize: '28px',
+  },
+  subtitle: {
+    margin: '8px 0 0',
+    fontSize: '16px',
+    opacity: '0.9',
+  },
+  content: {
+    padding: '30px',
+    textAlign: 'center',
+  },
+  greeting: {
+    fontSize: '22px',
+    color: colors.darkText,
+    margin: '0 0 10px',
+  },
+  instruction: {
+    fontSize: '16px',
+    color: colors.darkText,
+    marginBottom: '25px',
+  },
+  installButton: {
+    backgroundColor: colors.primary,
+    color: 'white',
+    border: 'none',
+    padding: '14px 30px',
+    fontSize: '18px',
+    fontWeight: '600',
+    borderRadius: '12px',
+    cursor: 'pointer',
+    transition: 'background-color 0.3s',
+    margin: '10px 0',
+    width: '100%',
+    maxWidth: '300px',
+  },
+  installedButton: {
+    backgroundColor: colors.secondary,
+    color: 'white',
+    border: 'none',
+    padding: '14px 30px',
+    fontSize: '18px',
+    fontWeight: '600',
+    borderRadius: '12px',
+    margin: '10px 0',
+    width: '100%',
+    maxWidth: '300px',
+    cursor: 'not-allowed',
+  },
+  features: {
+    marginTop: '30px',
+    textAlign: 'left',
+    borderTop: `1px solid ${colors.borderColor}`,
+    paddingTop: '20px',
+  },
+  featuresTitle: {
+    color: colors.primary,
+    fontSize: '18px',
+    marginBottom: '15px',
+  },
+  featureList: {
+    paddingLeft: '20px',
+    color: colors.darkText,
+    lineHeight: '1.6',
+  },
+  developerSection: {
+    backgroundColor: colors.darkText,
+    color: 'white',
+    padding: '25px',
+    textAlign: 'center',
+  },
+  developerTitle: {
+    color: colors.secondary,
+    fontSize: '16px',
+    marginBottom: '15px',
+    fontWeight: '600',
+  },
+  developerCard: {
+ 
+    borderRadius: '12px',
+    padding: '20px',
+  },
+  company: {
+    color: colors.primary,
+    fontSize: '22px',
+    margin: '0 0 10px',
+    fontWeight: '700',
+  },
+  tagline: {
+    fontSize: '14px',
+    opacity: '0.9',
+    marginBottom: '15px',
+  },
+  contactInfo: {
+    fontSize: '14px',
+    lineHeight: '1.6',
+  }
 };
 
 export default Download;
