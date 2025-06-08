@@ -15,7 +15,7 @@ import { FiBox, FiClock, FiCheckCircle } from 'react-icons/fi';
 import OrderDetails from './orderDetails';
 import jwtDecode from 'jwt-decode';
 
-const BASE_URL = 'http://localhost:8000/api/v1/shopingsite';
+const BASE_URL = 'http://localhost:8000/apiV1/smartcity-ke';
 
 const OrderHistory = () => {
   const [orders, setOrders] = useState([]);

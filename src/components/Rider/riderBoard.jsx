@@ -61,12 +61,12 @@ const RiderDashboard = () => {
     const fetchRiderData = async () => {
       try {
         // Fetch profile
-        const profileRes = await fetch(`http://localhost:8000/apiV1/smartcity-ke/rider/${riderId}`);
+        const profileRes = await fetch(`https://neuro-apps-api-express-js-production-redy.onrender.com/apiV1/smartcity-ke/rider/${riderId}`);
         const profileData = await profileRes.json();
         setProfile(prev => ({ ...prev, ...profileData }));
         
         // Fetch orders
-        const ordersRes = await fetch(`http://localhost:8000/apiV1/smartcity-ke/orders`);
+        const ordersRes = await fetch(`https://neuro-apps-api-express-js-production-redy.onrender.com/apiV1/smartcity-ke/orders`);
         console.log(ordersRes)
         const ordersData = await ordersRes.json();
         setOrders(ordersData.orders.map(formatOrder));

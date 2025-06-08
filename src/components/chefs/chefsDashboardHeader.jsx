@@ -1,80 +1,126 @@
+// src/components/chefsDashboardHeader.js
+import React, { useState } from 'react';
+import { Button, Nav, Navbar, Offcanvas, Badge, Dropdown } from 'react-bootstrap';
+import { Bell, Gear, List, BarChart, Person, ArrowLeft } from 'react-bootstrap-icons';
+import { useNavigate } from 'react-router-dom';
+import NotificationsPanel from './orders/notificationPanel'; // Assuming this path is correct
 
-// ChefDashboardHeader.js
-import React from 'react';
-import { Button } from 'react-bootstrap';
-import { BarChartLine, Scooter, ArrowReturnLeft } from 'react-bootstrap-icons';
-
-export default function ChefDashboardHeader({ setState, exitChefMode }) {
-  const [windowWidth, setWindowWidth] = React.useState(window.innerWidth);
-  
-  React.useEffect(() => {
-    const handleResize = () => setWindowWidth(window.innerWidth);
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  const isMobile = windowWidth < 768;
+export default function ChefDashboardHeader({
+  setShowAnalytics,
+  setShowBikers,
+  setShowProfile,
+  notifications,
+  markNotificationAsRead
+}) {
+  const [showNotifications, setShowNotifications] = useState(false);
+  const navigate = useNavigate();
+  const unreadNotifications = (notifications || []).filter(n => !n.read).length;
 
   return (
-    <div className="d-flex flex-column flex-md-row justify-content-between align-items-center mb-4">
-      <div className="text-center text-md-start mb-3 mb-md-0">
-        <h1 className="fw-bold mb-2" style={{ color: '#2c3e50', fontSize: isMobile ? '1.8rem' : '2rem' }}>
-          Chef Dashboard
-        </h1>
-        <p className="text-muted mb-0" style={{ fontSize: isMobile ? '0.9rem' : '1rem' }}>
-          Manage your culinary creations and track performance
-        </p>
+    <Navbar
+      expand="lg"
+      className="mb-4 p-3 rounded shadow-sm chef-dashboard-navbar" // Add a class for overall styling
+    >
+      <div className="d-flex align-items-center">
+        <Button
+          variant="light"
+          className="me-3 chef-dashboard-back-button" // Add a class
+          onClick={() => navigate('/')}
+        >
+          <ArrowLeft className="me-1" /> Back to App
+        </Button>
+        <Navbar.Brand className="d-flex align-items-center">
+          <div
+            className="rounded-circle d-flex align-items-center justify-content-center chef-brand-icon-bg" // Add a class
+            style={{ width: '40px', height: '40px' }} // Keep size inline if fixed
+          >
+            <Person size={24} />
+          </div>
+          <span className="ms-2 fw-bold fs-5 chef-brand-text">
+            Chef Dashboard
+          </span>
+        </Navbar.Brand>
       </div>
-      
-      <div className={`d-flex ${isMobile ? 'flex-wrap justify-content-center' : 'gap-2'}`}>
-        <Button 
-          variant="info" 
-          className={`d-flex align-items-center rounded-pill px-3 py-2 mb-2 ${isMobile ? 'me-2' : ''}`}
-          onClick={() => setState(s => ({ ...s, showAnalytics: true }))}
-          style={{
-            background: 'linear-gradient(135deg, #3498db 0%, #2980b9 100%)',
-            border: 'none',
-            fontWeight: 600,
-            boxShadow: '0 4px 15px rgba(52, 152, 219, 0.3)',
-            fontSize: isMobile ? '0.9rem' : '1rem'
-          }}
-        >
-          <BarChartLine className="me-1 me-md-2" /> 
-          {isMobile ? 'Stats' : 'Analytics'}
-        </Button>
-        
-        <Button 
-          variant="warning" 
-          className={`d-flex align-items-center rounded-pill px-3 py-2 mb-2 ${isMobile ? 'me-2' : ''}`}
-          onClick={() => setState(s => ({ ...s, showBikers: true }))}
-          style={{
-            background: 'linear-gradient(135deg, #f39c12 0%, #d35400 100%)',
-            border: 'none',
-            fontWeight: 600,
-            boxShadow: '0 4px 15px rgba(243, 156, 18, 0.3)',
-            fontSize: isMobile ? '0.9rem' : '1rem'
-          }}
-        >
-          <Scooter className="me-1 me-md-2" /> 
-          {isMobile ? 'Riders' : 'Available Riders'}
-        </Button>
 
-        <Button 
-          variant="danger" 
-          className="d-flex align-items-center rounded-pill px-3 py-2 mb-2"
-          onClick={exitChefMode}
-          style={{
-            background: 'linear-gradient(135deg, #e74c3c 0%, #c0392b 100%)',
-            border: 'none',
-            fontWeight: 600,
-            boxShadow: '0 4px 15px rgba(231, 76, 60, 0.3)',
-            fontSize: isMobile ? '0.9rem' : '1rem'
-          }}
-        >
-          <ArrowReturnLeft className="me-1 me-md-2" /> 
-          {isMobile ? 'Exit' : 'Exit Chef Mode'}
-        </Button>
-      </div>
-    </div>
+      <Navbar.Toggle aria-controls="offcanvasNavbar" className="border-0 chef-navbar-toggle">
+        <List />
+      </Navbar.Toggle>
+
+      <Navbar.Offcanvas
+        id="offcanvasNavbar"
+        aria-labelledby="offcanvasNavbarLabel"
+        placement="end"
+        className="chef-offcanvas" // Add a class
+      >
+        <Offcanvas.Header closeButton className="chef-offcanvas-header">
+          <Offcanvas.Title id="offcanvasNavbarLabel" className="chef-offcanvas-title">
+            Chef Dashboard
+          </Offcanvas.Title>
+        </Offcanvas.Header>
+        <Offcanvas.Body>
+          <Nav className="justify-content-end flex-grow-1 pe-3">
+            <Nav.Item className="mb-2 mb-lg-0">
+              <Button
+                variant="outline-primary"
+                className="d-flex align-items-center position-relative w-100 chef-nav-button chef-notifications-button" // Add classes
+                onClick={() => setShowNotifications(true)}
+              >
+                <Bell className="me-1" />
+                Notifications
+                {unreadNotifications > 0 && (
+                  <Badge
+                    pill
+                    bg="danger"
+                    className="position-absolute top-0 start-100 translate-middle chef-notification-badge" // Add a class
+                  >
+                    {unreadNotifications}
+                  </Badge>
+                )}
+              </Button>
+            </Nav.Item>
+            <Nav.Item className="mb-2 mb-lg-0">
+              <Button
+                variant="outline-secondary"
+                className="d-flex align-items-center w-100 chef-nav-button chef-analytics-button" // Add classes
+                onClick={setShowAnalytics}
+              >
+                <BarChart className="me-1" /> Analytics
+              </Button>
+            </Nav.Item>
+            <Nav.Item className="mb-2 mb-lg-0">
+              <Button
+                variant="outline-secondary"
+                className="d-flex align-items-center w-100 chef-nav-button chef-riders-button" // Add classes
+                onClick={setShowBikers}
+              >
+                <Person className="me-1" /> Riders
+              </Button>
+            </Nav.Item>
+            <Dropdown as={Nav.Item}>
+              <Dropdown.Toggle
+                variant="outline-secondary"
+                className="d-flex align-items-center w-100 chef-nav-button chef-settings-dropdown-toggle" // Add classes
+              >
+                <Gear className="me-1" /> Settings
+              </Dropdown.Toggle>
+              <Dropdown.Menu className="chef-settings-dropdown-menu">
+                <Dropdown.Item onClick={setShowProfile} className="chef-dropdown-item">
+                  Chef Profile
+                </Dropdown.Item>
+                <Dropdown.Item className="chef-dropdown-item">Availability Settings</Dropdown.Item>
+                <Dropdown.Item className="chef-dropdown-item">Payment Settings</Dropdown.Item>
+              </Dropdown.Menu>
+            </Dropdown>
+          </Nav>
+        </Offcanvas.Body>
+      </Navbar.Offcanvas>
+
+      <NotificationsPanel
+        show={showNotifications}
+        onHide={() => setShowNotifications(false)}
+        notifications={notifications}
+        markNotificationAsRead={markNotificationAsRead}
+      />
+    </Navbar>
   );
 }

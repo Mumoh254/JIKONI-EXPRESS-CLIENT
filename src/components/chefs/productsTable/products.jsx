@@ -1,5 +1,5 @@
 import React from "react";
-import UseProducts from "../useproduct";
+import UseProducts from "../../chefs/foods/useProducts";
 import Swal from "sweetalert2";
 import { FaEye, FaEdit, FaTrash, FaSync, FaPlus } from "react-icons/fa";
 import { Table, Container, Button, Spinner, Alert, Form, Badge, InputGroup, Row, Col } from "react-bootstrap";
@@ -36,10 +36,10 @@ const AdminProductsTable = () => {
       html: `
         <div class="text-left" style="font-size: 1rem;">
           <p><b>Slug:</b> ${product.slug}</p>
-          <p><b>Category:</b> ${product.category}</p>
+
           <p><b>Price:</b> KSH ${product.price}</p>
-          <p><b>Stock:</b> ${product.quantity}</p>
-          <p><b>Brand:</b> ${product.brand}</p>
+      
+
           <p><b>Sizes:</b> ${Array.isArray(product.sizes) ? product.sizes.join(", ") : "N/A"}</p>
           <p><b>Description:</b> ${product.description}</p>
         </div>
@@ -349,9 +349,7 @@ const AdminProductsTable = () => {
               <th>#</th>
               <th>Product</th>
               <th>Price</th>
-              <th>Stock</th>
-              <th>Brand</th>
-              <th>Sizes</th>
+          
               <th>Status</th>
               <th>Actions</th>
             </tr>
@@ -389,20 +387,8 @@ const AdminProductsTable = () => {
                     </div>
                   </td>
                   <td style={{ fontWeight: 600, color: colors.primary }}>KSH {product.price}</td>
-                  <td>
-                    <Badge 
-                      bg={product.quantity > 10 ? 'success' : product.quantity > 0 ? 'warning' : 'danger'}
-                      style={{
-                        backgroundColor: 
-                          product.quantity > 10 ? colors.secondary : 
-                          product.quantity > 0 ? '#FFC107' : colors.errorText,
-                        fontWeight: 500
-                      }}
-                    >
-                      {product.quantity} in stock
-                    </Badge>
-                  </td>
-                  <td>{product.brand}</td>
+                 
+              
                   <td>
                     <div className="d-flex flex-wrap gap-1">
                       {Array.isArray(product.sizes) ? 
@@ -423,17 +409,7 @@ const AdminProductsTable = () => {
                       }
                     </div>
                   </td>
-                  <td>
-                    <Badge 
-                      bg={product.status === 'active' ? 'success' : 'secondary'}
-                      style={{
-                        backgroundColor: product.status === 'active' ? colors.secondary : colors.placeholderText,
-                        fontWeight: 500
-                      }}
-                    >
-                      {product.status || 'active'}
-                    </Badge>
-                  </td>
+                
                   <td>
                     <div className="d-flex gap-2">
                       <Button 

@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { HashRouter, Routes, Route, NavLink, useNavigate } from 'react-router-dom';
 import {
-  FiDownload, FiHeart, FiBarChart2, FiUsers, FiCoffee
-} from 'react-icons/fi';
+  FiDownload, FiHeart, FiBarChart2, FiUsers, FiCoffee, FiBell
+} from 'react-icons/fi'; // Import FiBell for notification icon
 import styled from 'styled-components';
 import { useAuth } from './Context/authContext';
 import { getUserNameFromToken } from './handler/tokenDecorder';
@@ -18,10 +18,13 @@ import ChefDashboard from './components/chefs/chefsdashboard';
 import { FaWineBottle } from "react-icons/fa";
 import { IoIosPersonAdd } from "react-icons/io";
 import { GiHotMeal } from "react-icons/gi";
-import  Liqour   from './Liqour/liqour'
+import Liqour from './Liqour/liqour';
 import LiqourProfile from './Liqour/liqourProfile';
-import  Board from './components/Rider/riderBoard'
+import Board from './components/Rider/riderBoard';
 
+// Import the SocketContext and NotificationsPanel
+import { SocketProvider, useSocket } from '../src/components/context/notificationContext'; // Adjust path if needed
+import NotificationsPanel from '../src/components/chefs/orders/notificationPanel'; // Adjust path if needed
 
 const AppContainer = styled.div`
   min-height: 100vh;
@@ -119,107 +122,150 @@ const BottomNav = styled.nav`
   }
 `;
 
+// New styled component for the notification bell with badge
+const NotificationBell = styled(NavLink)`
+  position: relative;
+
+  .notification-badge {
+    position: absolute;
+    top: 5px; /* Adjust as needed */
+    right: 5px; /* Adjust as needed */
+    background-color: #00C853; /* Jikoni Green */
+    color: white;
+    border-radius: 50%;
+    padding: 2px 6px;
+    font-size: 0.7em;
+    font-weight: bold;
+    line-height: 1;
+    transform: translate(50%, -50%);
+    z-index: 1001;
+  }
+`;
+
+
 function App() {
-
-
-  
   const navigate = useNavigate();
   const { user, logout } = useAuth();
 
   const [username, setUsername] = useState('');
   const [isChefMode, setIsChefMode] = useState(false);
   const [isRiderMode, setIsRiderMode] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false); // State for notification panel visibility
 
+  // Access notifications and markAsRead from SocketContext
+  // This will only be available if App is wrapped in SocketProvider
+  const { notifications, markNotificationAsRead } = useSocket();
 
   // Set username from token
   useEffect(() => {
     const userData = getUserNameFromToken();
     if (userData) {
       setUsername(userData.name);
+      // Check if user is a chef based on token data
+      if (userData.isChef) {
+        setIsChefMode(true);
+      }
     }
   }, []);
 
-  // Redirect if isChef is true
+  // Redirect if isChef or isRider is true (this should happen after auth check)
   useEffect(() => {
-  const isChef = localStorage.getItem('isChef');
-  const isRider = localStorage.getItem('isRider');
+    const isChefLocal = localStorage.getItem('isChef');
+    const isRiderLocal = localStorage.getItem('isRider');
 
-  if (isChef === 'true') {
-    setIsChefMode(true);
-    navigate('/chef/dashboard');
-  } else if (isRider === 'true') {
-    setIsRiderMode(true);
-    navigate('/rider/dashboard');
-  }
-}, [navigate]);
+    if (isChefLocal === 'true' && !isChefMode) { // Only navigate if not already in chef mode state
+      setIsChefMode(true);
+      navigate('/chef/dashboard');
+    } else if (isRiderLocal === 'true' && !isRiderMode) { // Only navigate if not already in rider mode state
+      setIsRiderMode(true);
+      navigate('/rider/dashboard');
+    }
+  }, [navigate, isChefMode, isRiderMode]); // Add isChefMode and isRiderMode to dependency array
 
   const handleLogout = () => {
     logout();
     navigate('/login');
   };
 
+  const unreadNotificationsCount = notifications.filter(n => !n.read).length;
+
   return (
-    <AppContainer>
-      <MainContent>
-        <Routes>
-          <Route path="/" element={<LandingPage />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/verify-otp" element={<VerifyOtp />} />
-          <Route path="/login" element={<Login />} />
+    // Wrap your entire App component content with SocketProvider
+    <SocketProvider>
+      <AppContainer>
+        <MainContent>
+          <Routes>
+            <Route path="/" element={<LandingPage />} />
             <Route path="/register" element={<Register />} />
-             <Route path="/jikoni-express/liqour-shots" element={<Liqour />} />
-          <Route path="/culture/foods" element={<FoodPlatform />} />
-          <Route path="/chef/:id" element={<ChefProfile />} />
+            <Route path="/verify-otp" element={<VerifyOtp />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/jikoni-express/liqour-shots" element={<Liqour />} />
+            <Route path="/culture/foods" element={<FoodPlatform />} />
+            <Route path="/chef/:id" element={<ChefProfile />} />
             <Route path="/liqour/:id" element={<LiqourProfile />} />
-          <Route path="/jikoni/express/download" element={<Download />} />
-          <Route path="/saved/foods" element={<SavedFoods />} />
-
+            <Route path="/jikoni/express/download" element={<Download />} />
+            <Route path="/saved/foods" element={<SavedFoods />} />
             <Route path="/rider/dashboard" element={<Board />} />
+            <Route path="/chef/dashboard" element={<ChefDashboard setIsChefMode={setIsChefMode} />} />
+          </Routes>
+        </MainContent>
 
-          
-          <Route path="/chef/dashboard" element={<ChefDashboard setIsChefMode={setIsChefMode} />} />
-        </Routes>
-      </MainContent>
+        <BottomNav>
+          {isChefMode ? (
+            <>
+              <NavLink to="/chef/dashboard#analytics">
+                <FiBarChart2 /> Analytics
+              </NavLink>
+              <NavLink to="/chef/dashboard#riders">
+                <FiUsers /> Riders
+              </NavLink>
+              <NavLink to="/chef/dashboard">
+                <FiCoffee /> Foods
+              </NavLink>
+              {/* Notification icon for chefs */}
+              <NotificationBell as="div" onClick={() => setShowNotifications(true)}> {/* Use as="div" to prevent actual navigation */}
+                <FiBell /> Notifications
+                {unreadNotificationsCount > 0 && (
+                  <span className="notification-badge">{unreadNotificationsCount}</span>
+                )}
+              </NotificationBell>
+            </>
+          ) : isRiderMode ? (
+            <>
+              {/* Rider specific navigation */}
+            </>
+          ) : (
+            <>
+              <NavLink to="/register">
+                <IoIosPersonAdd /> Register
+              </NavLink>
+              <NavLink to="/jikoni/express/download">
+                <FiDownload /> Get App
+              </NavLink>
+              <NavLink to="/saved/foods">
+                <FiHeart /> Saved
+              </NavLink>
+              <NavLink to="/jikoni-express/liqour-shots">
+                <FaWineBottle /> Liqour
+              </NavLink>
+              <NavLink to="/culture/foods">
+                <GiHotMeal /> Foods
+              </NavLink>
+            </>
+          )}
+        </BottomNav>
 
-    <BottomNav>
-  {isChefMode ? (
-    <>
-      <NavLink to="/chef/dashboard#analytics">
-        <FiBarChart2 /> Analytics
-      </NavLink>
-      <NavLink to="/chef/dashboard#riders">
-        <FiUsers /> Riders
-      </NavLink>
-      <NavLink to="/chef/dashboard">
-        <FiCoffee /> Foods
-      </NavLink>
-    </>
-  ) : isRiderMode ? (
-    <>
-   
-    </>
-  ) : (
-    <>
-      <NavLink to="/register">
-        <IoIosPersonAdd /> Register
-      </NavLink>
-      <NavLink to="/jikoni/express/download">
-        <FiDownload /> Get App
-      </NavLink>
-      <NavLink to="/saved/foods">
-        <FiHeart /> Saved
-      </NavLink>
-      <NavLink to="/jikoni-express/liqour-shots">
-        <FaWineBottle /> Liqour
-      </NavLink>
-      <NavLink to="/culture/foods">
-        <GiHotMeal /> Foods
-      </NavLink>
-    </>
-  )}
-</BottomNav>
-
-    </AppContainer>
+        {/* Notifications Panel rendered conditionally for chefs */}
+        {isChefMode && (
+          <NotificationsPanel
+            show={showNotifications}
+            onHide={() => setShowNotifications(false)}
+            notifications={notifications}
+            markNotificationAsRead={markNotificationAsRead}
+          />
+        )}
+      </AppContainer>
+    </SocketProvider>
   );
 }
 

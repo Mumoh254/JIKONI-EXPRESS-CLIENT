@@ -320,3 +320,511 @@ svg {
 .carousel-indicators .active {
   background-color: #E6392B !important; /* Active dot color */
 }
+
+
+
+/*   chef  dashnboard  */
+
+/* General Layout */
+.chef-dashboard-container {
+  padding: 2rem;
+  background-color: #F0F2F5; /* lightBackground */
+  min-height: 100vh;
+}
+
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.dashboard-title {
+  color: #1A202C; /* darkText */
+  font-weight: 700;
+  font-size: 2.2rem;
+}
+
+.dashboard-actions .filter-button {
+  border-color: #D1D9E6; /* borderColor */
+  color: #1A202C; /* darkText */
+  font-weight: 500;
+}
+
+.dashboard-actions .filter-button:hover {
+  background-color: #e2e6ea;
+}
+
+/* Loading State */
+.loading-state {
+  text-align: center;
+  padding: 5rem 0;
+}
+
+.loading-text {
+  margin-top: 1rem;
+  color: #1A202C; /* darkText */
+  font-size: 1.1rem;
+}
+
+/* Order Grid */
+.order-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 1.5rem;
+}
+
+/* Order Card */
+.order-card-item {
+  background-color: #FFFFFF; /* cardBackground */
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.order-card-item:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+}
+
+.order-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  background-color: #F0F2F5; /* lightBackground */
+  border-bottom: 1px solid #D1D9E6; /* borderColor */
+}
+
+.status-badge {
+  padding: 0.5em 0.8em;
+  border-radius: 20px;
+  font-weight: 600;
+  margin-right: 0.5rem;
+}
+
+.order-id {
+  font-weight: 700;
+  color: #1A202C; /* darkText */
+  font-size: 1.1em;
+}
+
+.order-card-item .card-body {
+  padding: 1.5rem;
+}
+
+.preorder-alert {
+  display: flex;
+  align-items: center;
+  font-size: 0.95rem;
+  padding: 0.8rem 1rem;
+  border-radius: 8px;
+  background-color: rgba(255, 193, 7, 0.1); /* light amber */
+  color: #CC9900; /* darker amber text */
+  border: 1px solid #FFC107;
+}
+
+/* Info Sections */
+.info-section, .item-section, .rider-section, .progress-section {
+  margin-bottom: 1.5rem;
+}
+
+.section-title {
+  color: #1A202C; /* darkText */
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.info-text {
+  font-weight: 600;
+  color: #1A202C; /* darkText */
+  margin-bottom: 0.2rem;
+}
+
+.total-price {
+  font-weight: 700;
+  color: #FF4532; /* primary */
+  font-size: 1.3rem;
+  margin-bottom: 0;
+}
+
+.item-list-item {
+  padding: 0.5rem 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: transparent !important; /* Override default list-group-item background */
+  border: none;
+  font-size: 0.95rem;
+  color: #333;
+}
+
+.rider-avatar {
+  width: 40px;
+  height: 40px;
+  background-color: #F0F2F5; /* lightBackground */
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 0.75rem;
+  flex-shrink: 0;
+}
+
+.order-progress-bar {
+  height: 10px;
+  border-radius: 5px;
+  margin-bottom: 0.5rem;
+}
+
+.progress-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  color: #6c757d; /* muted text */
+}
+
+/* Action Buttons */
+.action-buttons {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 1.5rem;
+  flex-wrap: wrap; /* Allow wrapping on smaller screens */
+  gap: 0.75rem; /* Space between rows/columns of buttons */
+}
+
+.action-button {
+  min-width: 120px;
+  font-weight: 600;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.action-button.btn-primary {
+  background-color: #FF4532; /* primary */
+  border-color: #FF4532;
+}
+.action-button.btn-primary:hover {
+  background-color: #E6392B; /* buttonHover */
+  border-color: #E6392B;
+}
+
+.action-button.btn-success {
+  background-color: #00C853; /* secondary */
+  border-color: #00C853;
+}
+.action-button.btn-success:hover {
+  background-color: #00A644;
+  border-color: #00A644;
+}
+
+.action-button.btn-danger {
+  background-color: #EF4444; /* errorText */
+  border-color: #EF4444;
+}
+.action-button.btn-danger:hover {
+  background-color: #D32F2F;
+  border-color: #D32F2F;
+}
+
+.action-button.btn-info {
+  background-color: #17a2b8; /* Bootstrap info, can be custom */
+  border-color: #17a2b8;
+}
+.action-button.btn-info:hover {
+  background-color: #138496;
+  border-color: #138496;
+}
+
+.action-button.btn-accent {
+  background-color: #FFC107; /* accent */
+  border-color: #FFC107;
+  color: #1A202C; /* Dark text for contrast on amber */
+}
+.action-button.btn-accent:hover {
+  background-color: #E0A800;
+  border-color: #E0A800;
+}
+
+
+.detail-button {
+  border-color: #D1D9E6; /* borderColor */
+  color: #1A202C; /* darkText */
+}
+
+.detail-button:hover {
+  background-color: #f0f2f5;
+}
+
+/* Empty State */
+.empty-state {
+  text-align: center;
+  padding: 5rem 0;
+}
+
+.empty-state-icon {
+  background-color: #F0F2F5; /* lightBackground */
+  border-radius: 50%;
+  display: inline-flex;
+  padding: 2.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.empty-state-title {
+  color: #1A202C; /* darkText */
+  font-weight: 600;
+}
+
+.empty-state-text {
+  color: #6c757d; /* muted text */
+}
+
+/* Modal Styling (Details) */
+.modal-header {
+  padding: 1.5rem;
+}
+
+.modal-title {
+  font-size: 1.75rem;
+}
+
+.modal-body {
+  padding: 1.5rem;
+}
+
+.modal .border.rounded {
+  border-color: #D1D9E6 !important; /* Ensure border is light */
+}
+
+.rider-modal-avatar {
+  width: 60px;
+  height: 60px;
+  background-color: #F0F2F5; /* lightBackground */
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 1.5rem;
+  flex-shrink: 0;
+}
+
+/* WebRTC Call Overlay */
+.call-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1050; /* Above modals */
+}
+
+.call-modal {
+  background-color: white;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+  text-align: center;
+  width: 90%;
+  max-width: 400px;
+}
+
+.call-header h4 {
+  color: #1A202C;
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
+.call-status-badge {
+  padding: 0.5em 1em;
+  border-radius: 20px;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+}
+
+.call-actions button {
+  font-size: 1.1rem;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+}
+
+.call-actions button.btn-danger {
+  background-color: #FF4532; /* primary */
+  border-color: #FF4532;
+}
+.call-actions button.btn-danger:hover {
+  background-color: #E6392B; /* buttonHover */
+  border-color: #E6392B;
+}
+
+.call-actions button.btn-secondary {
+    background-color: #6c757d;
+    border-color: #6c757d;
+}
+
+.call-actions button.btn-secondary:hover {
+    background-color: #5a6268;
+    border-color: #5a6268;
+}
+
+.call-actions button.btn-success {
+    background-color: #00C853; /* secondary */
+    border-color: #00C853;
+}
+.call-actions button.btn-success:hover {
+    background-color: #00A644;
+    border-color: #00A644;
+}
+
+
+
+
+:root {
+  --jikoni-primary: #FF4532;
+  --jikoni-secondary: #00C853;
+  --jikoni-dark-text: #1A202C;
+  --jikoni-light-background: #F0F2F5;
+  --jikoni-card-background: #FFFFFF;
+  --jikoni-border-color: #D1D9E6;
+  --jikoni-error-text: #EF4444;
+  --jikoni-placeholder-text: #A0AEC0;
+  --jikoni-button-hover: #E6392B;
+  --jikoni-disabled-button: #CBD5E1;
+}
+
+/* Overall Navbar Styling */
+.chef-dashboard-navbar {
+  background-color: var(--jikoni-card-background) !important;
+  border-bottom: 1px solid var(--jikoni-borderColor); /* Optional: add a subtle bottom border */
+}
+
+/* "Back to App" Button */
+.chef-dashboard-back-button {
+  background-color: var(--jikoni-light-background);
+  border-color: var(--jikoni-borderColor);
+  color: var(--jikoni-dark-text);
+  transition: all 0.2s ease-in-out;
+}
+
+.chef-dashboard-back-button:hover {
+  background-color: var(--jikoni-borderColor); /* Slightly darker on hover */
+  border-color: var(--jikoni-dark-text); /* Make border slightly darker */
+  color: var(--jikoni-dark-text);
+}
+
+/* Chef Brand Icon */
+.chef-brand-icon-bg {
+  background-color: var(--jikoni-primary);
+  color: var(--jikoni-card-background); /* Icon color */
+}
+
+/* Chef Brand Text */
+.chef-brand-text {
+  color: var(--jikoni-dark-text);
+}
+
+/* Navbar Toggle (Hamburger Icon) */
+.chef-navbar-toggle {
+  color: var(--jikoni-dark-text) !important; /* Ensures the icon color is dark */
+}
+
+/* Offcanvas (Sidebar) */
+.chef-offcanvas {
+  background-color: var(--jikoni-light-background);
+}
+
+.chef-offcanvas-header {
+  border-color: var(--jikoni-borderColor);
+}
+
+.chef-offcanvas-title {
+  color: var(--jikoni-dark-text);
+}
+
+/* --- Navigation Buttons (Notifications, Analytics, Riders, Settings Toggle) --- */
+
+.chef-nav-button {
+  border-width: 1px; /* Ensure border is visible */
+  font-weight: 500; /* Slightly bolder text */
+  margin-right: 0.5rem; /* Space between buttons on larger screens */
+  transition: all 0.2s ease-in-out; /* Smooth transitions */
+}
+
+@media (max-width: 991.98px) { /* Applies only on mobile/small screens for Offcanvas */
+  .chef-nav-button {
+    margin-right: 0; /* Remove horizontal margin on mobile */
+    margin-bottom: 0.5rem; /* Add vertical margin for stacking */
+  }
+}
+
+/* Notifications Button */
+.chef-notifications-button {
+  border-color: var(--jikoni-primary);
+  color: var(--jikoni-primary);
+  background-color: transparent; /* Ensure it's transparent initially */
+}
+
+.chef-notifications-button:hover,
+.chef-notifications-button:focus {
+  background-color: var(--jikoni-primary);
+  color: var(--jikoni-card-background); /* White text on hover */
+  border-color: var(--jikoni-primary); /* Keep border consistent */
+}
+
+/* Analytics & Riders Buttons */
+.chef-analytics-button,
+.chef-riders-button {
+  border-color: var(--jikoni-borderColor);
+  color: var(--jikoni-dark-text);
+  background-color: transparent;
+}
+
+.chef-analytics-button:hover,
+.chef-analytics-button:focus,
+.chef-riders-button:hover,
+.chef-riders-button:focus {
+  background-color: var(--jikoni-borderColor); /* Light background on hover */
+  border-color: var(--jikoni-dark-text);
+  color: var(--jikoni-dark-text);
+}
+
+/* Settings Dropdown Toggle */
+.chef-settings-dropdown-toggle {
+  border-color: var(--jikoni-borderColor);
+  color: var(--jikoni-dark-text);
+  background-color: transparent;
+}
+
+.chef-settings-dropdown-toggle:hover,
+.chef-settings-dropdown-toggle:focus {
+  background-color: var(--jikoni-borderColor);
+  border-color: var(--jikoni-dark-text);
+  color: var(--jikoni-dark-text);
+}
+
+/* Dropdown Menu */
+.chef-settings-dropdown-menu {
+  background-color: var(--jikoni-card-background);
+  border-color: var(--jikoni-borderColor);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Soft shadow */
+}
+
+.chef-dropdown-item {
+  color: var(--jikoni-dark-text);
+}
+
+.chef-dropdown-item:hover,
+.chef-dropdown-item:focus {
+  background-color: var(--jikoni-light-background); /* Light hover background */
+  color: var(--jikoni-dark-text); /* Keep text dark */
+}
+
+/* Notification Badge */
+.chef-notification-badge {
+  background-color: var(--jikoni-error-text) !important; /* Ensure it's the specific red */
+}
