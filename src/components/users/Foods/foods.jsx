@@ -1045,7 +1045,7 @@ const onClose = () => setShowModal(false);
   interval={3000} // Auto-play every 3 seconds
   indicators={food.photoUrls?.length > 1}
   controls={false}
-  pause={false} // Don't pause on hover
+  pause={false} 
 >
   {food.photoUrls?.map((img, i) => (
     <Carousel.Item key={i}>
@@ -1080,7 +1080,11 @@ const onClose = () => setShowModal(false);
                       </Badge>
                       <small className="text-muted d-flex align-items-center" style={{ fontSize: '0.9rem' }}>
                         <Clock className="me-1 text-primary" size={16} />
-                        {formatDistanceToNow(new Date(food.createdAt), { addSuffix: true })}
+                      <span style={{
+                        paddingLeft: "2px", 
+                        paddingRight:  '10px',
+                        color:  '#00C853'
+                      }} > Posted:  </span>  {formatDistanceToNow(new Date(food.createdAt), { addSuffix: true })}
                       </small>
                     </div>
 

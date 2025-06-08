@@ -313,9 +313,10 @@ svg {
 /*   carousel  indicators    */
 
 .carousel-indicators [data-bs-target] {
-  background-color: #06b10f !important; /* Your desired color */
+  background-color: #06b10f !important;
+  font-weight: 700 !important; 
 }
 
 .carousel-indicators .active {
-  background-color: #ff1900 !important; /* Active dot color */
+  background-color: #E6392B !important; /* Active dot color */
 }
