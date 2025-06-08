@@ -1029,24 +1029,26 @@ const onClose = () => setShowModal(false);
                   transition: 'all 0.3s ease'
                 }}>
                   <div className="position-relative" style={{ overflow: 'hidden' }}>
-                    <Carousel 
-                      interval={null} 
-                      indicators={food.photoUrls?.length > 1}
-                      controls={false}
-                    >
-                      {food.photoUrls?.map((img, i) => (
-                        <Carousel.Item key={i}>
-                          <div className="ratio ratio-4x3">
-                            <img
-                              src={img}
-                              alt={`${food.title} - Photo ${i+1}`}
-                              className="card-img-top object-fit-cover"
-                              style={{ transition: 'transform 0.5s ease' }}
-                            />
-                          </div>
-                        </Carousel.Item>
-                      ))}
-                    </Carousel>
+                  <Carousel 
+  interval={3000} // Auto-play every 3 seconds
+  indicators={food.photoUrls?.length > 1}
+  controls={false}
+  pause={false} // Don't pause on hover
+>
+  {food.photoUrls?.map((img, i) => (
+    <Carousel.Item key={i}>
+      <div className="ratio ratio-4x3">
+        <img
+          src={img}
+          alt={`${food.title} - Photo ${i + 1}`}
+          className="card-img-top object-fit-cover"
+          style={{ transition: 'transform 0.5s ease' }}
+        />
+      </div>
+    </Carousel.Item>
+  ))}
+</Carousel>
+
                     
                     <div className="position-absolute top-0 end-0 m-3">
                       <Badge className="price-tag fw-bold px-3 py-2">
