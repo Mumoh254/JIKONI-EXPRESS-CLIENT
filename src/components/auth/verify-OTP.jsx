@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useRef } from 'react'; // Added useRef for better OTP input management
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import Swal from 'sweetalert2';
-import { ClockLoader } from 'react-spinners'; // Assuming ClockLoader fits the Jikoni brand better than FaSpinner
-import styled, { keyframes } from 'styled-components'; // Import keyframes
+import { ClockLoader } from 'react-spinners';
+import styled, { keyframes } from 'styled-components';
 import { FaCheckCircle } from 'react-icons/fa'; // Import the check circle icon
 
 // --- Jikoni Express Color Palette ---
@@ -32,7 +32,12 @@ const slideIn = keyframes`
   to { opacity: 1; transform: translateY(0); }
 `;
 
-// --- Styled Components (Updated for Jikoni Express) ---
+const zoomIn = keyframes`
+  from { transform: scale(0.8); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+`;
+
+// --- Styled Components ---
 
 const PageWrapper = styled.div`
   min-height: 100vh;
@@ -45,7 +50,7 @@ const PageWrapper = styled.div`
 `;
 
 const OtpContainer = styled.div`
-  max-width: 450px; /* Consistent width with login/register */
+  max-width: 450px;
   width: 100%;
   padding: 2.5rem;
   background: ${colors.cardBackground};
@@ -53,7 +58,7 @@ const OtpContainer = styled.div`
   box-shadow: 0 8px 24px rgba(0,0,0,0.15);
   position: relative;
   overflow: hidden;
-  text-align: center; /* Center content within the container */
+  text-align: center;
 
   &::before {
     content: '';
@@ -61,7 +66,7 @@ const OtpContainer = styled.div`
     top: 0;
     left: 0;
     right: 0;
-    height: 6px; /* Thicker accent line */
+    height: 6px;
     background: linear-gradient(90deg, ${colors.primary} 0%, ${colors.gradientStart} 100%);
   }
 `;
@@ -70,7 +75,7 @@ const OtpHeader = styled.div`
   margin-bottom: 2.5rem;
 
   h2 {
-    font-size: 2.2rem; /* Larger heading */
+    font-size: 2.2rem;
     color: ${colors.darkText};
     margin: 0 0 0.5rem;
     font-weight: 700;
@@ -82,7 +87,7 @@ const OtpHeader = styled.div`
 
     span {
       font-weight: 600;
-      color: ${colors.secondary}; /* Jikoni Green for email emphasis */
+      color: ${colors.secondary};
     }
   }
 `;
@@ -90,16 +95,16 @@ const OtpHeader = styled.div`
 const OtpInputs = styled.div`
   display: flex;
   justify-content: center;
-  gap: 0.75rem; /* Slightly reduced gap for a tighter look */
+  gap: 0.75rem;
   margin: 2rem 0;
 `;
 
 const OtpDigit = styled.input`
-  width: 50px; /* Slightly smaller for aesthetic */
+  width: 50px;
   height: 50px;
   text-align: center;
-  font-size: 1.5rem; /* Larger font for digits */
-  font-weight: 700; /* Bolder digits */
+  font-size: 1.5rem;
+  font-weight: 700;
   border: 1px solid ${colors.borderColor};
   border-radius: 10px;
   transition: all 0.3s ease;
@@ -109,7 +114,7 @@ const OtpDigit = styled.input`
   &:focus {
     outline: none;
     border-color: ${colors.primary};
-    box-shadow: 0 0 0 3px rgba(255, 69, 50, 0.2); /* Red glow on focus */
+    box-shadow: 0 0 0 3px rgba(255, 69, 50, 0.2);
     background-color: ${colors.cardBackground};
   }
 
@@ -150,28 +155,28 @@ const VerifyButton = styled.button`
 `;
 
 const ResendLink = styled.button`
-  color: ${colors.secondary}; /* Jikoni Green for resend link */
+  color: ${colors.secondary};
   background: none;
   border: none;
   font-weight: 600;
   cursor: pointer;
   transition: color 0.2s ease, text-decoration 0.2s ease;
-  font-size: 0.95rem; /* Consistent font size */
+  font-size: 0.95rem;
 
   &:hover {
-    color: #00B247; /* Darker green on hover */
+    color: #00B247;
     text-decoration: underline;
   }
 
   &:disabled {
-    color: ${colors.placeholderText}; /* Muted when disabled */
+    color: ${colors.placeholderText};
     cursor: not-allowed;
     text-decoration: none;
   }
 `;
 
 const TimerText = styled.span`
-  color: ${colors.placeholderText}; /* Muted text color */
+  color: ${colors.placeholderText};
   font-size: 0.9rem;
   font-weight: 500;
 `;
@@ -185,7 +190,7 @@ const VerifiedContainer = styled.div`
   animation: ${slideIn} 0.5s ease-out;
 
   .check-icon {
-    font-size: 4rem; /* Large icon */
+    font-size: 4rem;
     color: ${colors.secondary};
     margin-bottom: 1.5rem;
   }
@@ -203,6 +208,53 @@ const VerifiedContainer = styled.div`
   }
 `;
 
+// New Styled Components for the Advertisement Modal
+const ModalOverlay = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+`;
+
+const AdvertModalContent = styled.div`
+  background: ${colors.cardBackground};
+  padding: 2.5rem;
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+  text-align: center;
+  max-width: 400px;
+  width: 90%;
+  animation: ${zoomIn} 0.4s ease-out;
+
+  h4 {
+    font-size: 1.8rem;
+    color: ${colors.primary};
+    margin-bottom: 1rem;
+    font-weight: 700;
+  }
+
+  p {
+    font-size: 1.1rem;
+    color: ${colors.darkText};
+    line-height: 1.6;
+    margin-bottom: 2rem;
+  }
+
+  .logo {
+    width: 80px; /* Adjust logo size */
+    height: 80px;
+    margin-bottom: 1.5rem;
+    border-radius: 50%; /* If your logo is circular */
+    object-fit: contain;
+  }
+`;
+
 const BASE_URL = "https://neuro-apps-api-express-js-production-redy.onrender.com/apiV1/smartcity-ke";
 
 const VerifyOtp = () => {
@@ -214,6 +266,8 @@ const VerifyOtp = () => {
   const [loading, setLoading] = useState(false);
   const [timeLeft, setTimeLeft] = useState(600); // 10 minutes
   const [verified, setVerified] = useState(false); // New state for verification status
+  const [advertMessage, setAdvertMessage] = useState(''); // New state for advert message
+  const [showAdvertModal, setShowAdvertModal] = useState(false); // State for advert modal visibility
   const otpInputRefs = useRef([]); // To manage focus for OTP inputs
 
   const showAlert = (type, message) => {
@@ -307,25 +361,41 @@ const VerifyOtp = () => {
       localStorage.setItem('userRole', response.data.role);
       localStorage.setItem('authVerified', 'true'); // Indicate successful verification
 
-      showAlert('success', 'Account verified successfully! Redirecting...');
       setVerified(true); // Set verified to true to show success message and icon
 
-      // Dispatch a custom event to notify other parts of the app about auth state change
-      window.dispatchEvent(new Event('authStateChanged'));
+      // Set a random advert message
+      const adverts = [
+        "Hungry? Explore our delicious meals just for you!",
+        "Don't miss out on today's specials! Find your next favorite dish.",
+        "Order now and get exclusive discounts on your first meal!",
+        "Fast, fresh, and flavorful. Your next meal is just a tap away!",
+        "Discover local chefs and hidden culinary gems!"
+      ];
+      const randomAdvert = adverts[Math.floor(Math.random() * adverts.length)];
+      setAdvertMessage(randomAdvert);
 
-      // Redirect based on role
+      showAlert('success', `Account verified!`); // Show only verified message in toast for now
+
+      // Show advert modal for 4 seconds
+      setShowAdvertModal(true);
       setTimeout(() => {
+        setShowAdvertModal(false); // Hide modal
+        // Dispatch a custom event to notify other parts of the app about auth state change
+        window.dispatchEvent(new Event('authStateChanged'));
+
+        // Redirect based on role
         const role = response.data.role.toLowerCase();
         if (role === 'admin') {
           window.location.href = '/admin-dashboard'; // Full page reload for dashboard
         } else if (role === 'corporate') {
           window.location.href = '/corporate-analytics'; // Full page reload for dashboard
         } else {
-          window.location.href = '/peoples/favourites'; // Full page reload for user dashboard
+          window.location.href = '/culture/foods'; // Redirect to /culture/foods for regular users
         }
-      }, 2000); // Give users time to see the success message
+      }, 4000); // 4 seconds for advert
     } catch (error) {
       showAlert('error', error.response?.data?.message || 'OTP verification failed. Please try again.');
+      setVerified(false); // Ensure verified state is reset on error
     } finally {
       setLoading(false);
     }
@@ -358,7 +428,7 @@ const VerifyOtp = () => {
           <VerifiedContainer>
             <FaCheckCircle className="check-icon" />
             <h3>Account Verified!</h3>
-            <p>You're all set. Redirecting you to your dashboard shortly.</p>
+            <p>You're all set. Redirecting you to your delicious meals shortly.</p>
           </VerifiedContainer>
         ) : (
           <>
@@ -410,6 +480,19 @@ const VerifyOtp = () => {
           </>
         )}
       </OtpContainer>
+
+      {/* Advertisement Modal */}
+      {showAdvertModal && (
+        <ModalOverlay>
+          <AdvertModalContent>
+            {/* You can replace this with your actual company logo */}
+            <img src="https://via.placeholder.com/80/FF4532/FFFFFF?text=Jikoni" alt="Company Logo" className="logo" />
+            <h4>Welcome to Jikoni Express!</h4>
+            <p>{advertMessage}</p>
+            <p>Get ready to explore a world of flavors!</p>
+          </AdvertModalContent>
+        </ModalOverlay>
+      )}
     </PageWrapper>
   );
 };
