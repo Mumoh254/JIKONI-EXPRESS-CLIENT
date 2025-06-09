@@ -1,19 +1,272 @@
-import { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
+import styled, { keyframes, css } from 'styled-components';
 import { getUserNameFromToken } from '../../handler/tokenDecorder';
 
-// Jikoni Express Color Palette
+// Import Icons
+import {
+  FaMobileAlt,      // General app download
+  FaApple,          // Apple App Store
+  FaGooglePlay,     // Google Play Store
+  FaCheckCircle,    // Installed status
+  FaRocket,         // Fast delivery
+  FaMapMarkerAlt,   // Real-time tracking
+  FaCrown,          // Exclusive specials
+  FaCreditCard,     // Secure payments
+  FaGift,           // Rewards
+  FaEnvelope,       // Email
+  FaPhoneAlt        // Phone
+} from 'react-icons/fa';
+
+// --- Jikoni Express Color Palette (Balanced & Sleek) ---
 const colors = {
-  primary: '#FF4532',       // Jikoni Red
-  secondary: '#00C853',     // Jikoni Green
-  darkText: '#1A202C',      // Dark text for headings
-  lightBackground: '#F0F2F5', // Light background
-  cardBackground: '#FFFFFF', // White for cards
-  borderColor: '#D1D9E6',   // Light border
-  errorText: '#EF4444',     // Error red
-  placeholderText: '#A0AEC0', // Muted text
-  buttonHover: '#E6392B',   // Darker red on hover
-  disabledButton: '#CBD5E1', // Disabled button
+  primary: '#FF4532',         // Jikoni Red - Bold Accent
+  secondary: '#00C853',       // Jikoni Green - Success/Contrast
+  tertiary: '#3498DB',        // Vibrant Blue - Another accent
+  quaternary: '#F39C12',      // Warm Yellow - Another accent
+  darkText: '#2C3E50',        // Deep Charcoal - Main text
+  lightText: '#7F8C8D',       // Muted Grey - Secondary text
+  backgroundLight: '#F8F9FA', // Off-White - General background
+  cardBackground: '#FFFFFF',  // Pure White - Card background
+  borderLight: '#ECEFF1',     // Very Light Grey - Subtle borders
+  shadow: 'rgba(0,0,0,0.08)', // Subtle Shadow
+  buttonHover: '#E6392B',     // Slightly darker red for hover
+  disabledButton: '#CFD8DC',  // Light grey for disabled state
 };
+
+// --- Animations ---
+const fadeIn = keyframes`
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+`;
+
+const slideUp = keyframes`
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+`;
+
+const pulseEffect = keyframes`
+  0% { transform: scale(1); box-shadow: 0 4px 10px ${colors.shadow}; }
+  50% { transform: scale(1.01); box-shadow: 0 6px 15px ${colors.shadow}; }
+  100% { transform: scale(1); box-shadow: 0 4px 10px ${colors.shadow}; }
+`;
+
+// --- Styled Components ---
+
+const DownloadContainer = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background-color: ${colors.backgroundLight};
+  padding: 20px;
+  font-family: 'Poppins', sans-serif;
+  animation: ${fadeIn} 0.6s ease-out;
+  overflow: hidden;
+`;
+
+const DownloadCard = styled.div`
+  background-color: ${colors.cardBackground};
+  border-radius: 12px; /* Sleeker, less rounded */
+  box-shadow: 0 8px 25px ${colors.shadow}; /* Clean, crisp shadow */
+  max-width: 420px; /* Significantly smaller card */
+  width: 100%;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid ${colors.borderLight}; /* Fine, subtle border */
+  animation: ${slideUp} 0.7s ease-out forwards; /* Card slides in */
+`;
+
+const HeaderSection = styled.div`
+  background-color: ${colors.primary}; /* Solid Red Header */
+  color: white;
+  padding: 25px 20px; /* Reduced padding */
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  border-bottom: 3px solid ${colors.secondary}; /* Green accent strip */
+`;
+
+const AppIcon = styled.div`
+  background-color: rgba(255,255,255,0.15); /* Very subtle transparency */
+  color: white;
+  width: 60px; /* Smaller icon */
+  height: 60px;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 2.5rem; /* Adjusted icon size */
+  margin: 0 auto 10px;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+`;
+
+const Title = styled.h1`
+  margin: 0;
+  font-weight: 800; /* Bold, but not overly aggressive */
+  letter-spacing: 0.5px;
+  font-size: 28px; /* Compact title size */
+  text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+`;
+
+const Subtitle = styled.p`
+  margin: 4px 0 0;
+  font-size: 14px; /* Compact subtitle */
+  opacity: 0.9;
+`;
+
+const ContentSection = styled.div`
+  padding: 25px; /* Compact padding */
+  text-align: center;
+  background-color: ${colors.cardBackground};
+`;
+
+const Greeting = styled.h2`
+  font-size: 20px; /* Compact greeting */
+  color: ${colors.darkText};
+  margin: 0 0 10px;
+  font-weight: 700;
+`;
+
+const Instruction = styled.p`
+  font-size: 14px; /* Compact instruction text */
+  color: ${colors.lightText};
+  margin-bottom: 25px;
+  line-height: 1.5;
+`;
+
+const InstallButton = styled.button`
+  background-color: ${props => props.disabled ? colors.disabledButton : colors.primary};
+  color: ${props => props.disabled ? colors.darkText : 'white'};
+  border: none;
+  padding: 12px 25px; /* Very compact padding */
+  font-size: 16px; /* Compact text size */
+  font-weight: 600;
+  border-radius: 8px; /* Sleek, less rounded */
+  cursor: ${props => props.disabled ? 'not-allowed' : 'pointer'};
+  transition: all 0.2s ease-in-out;
+  margin: 10px auto;
+  width: 100%;
+  max-width: 240px; /* Very compact button */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 4px 10px ${colors.shadow};
+
+  &:not(:disabled):hover {
+    background-color: ${colors.buttonHover};
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px ${colors.shadow};
+  }
+
+  ${props => !props.disabled && css`
+    animation: ${pulseEffect} 2s infinite ease-in-out;
+  `}
+`;
+
+const FeaturesSection = styled.div`
+  margin-top: 30px; /* Compact space */
+  text-align: left;
+  border-top: 1px solid ${colors.borderLight};
+  padding-top: 20px;
+`;
+
+const FeaturesTitle = styled.h3`
+  color: ${colors.darkText};
+  font-size: 18px;
+  margin-bottom: 15px;
+  font-weight: 700;
+  text-transform: uppercase;
+`;
+
+const FeatureList = styled.ul`
+  list-style: none;
+  padding-left: 0;
+  color: ${colors.lightText};
+  line-height: 1.6;
+`;
+
+const FeatureItem = styled.li`
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px; /* Compact space */
+  font-size: 14px; /* Very compact feature text */
+  font-weight: 500;
+  animation: ${fadeIn} 0.5s ease-out forwards; /* Simple fade in */
+
+  svg {
+    font-size: 18px; /* Compact icon size */
+    margin-right: 10px;
+    flex-shrink: 0;
+    /* Use a mix of colors for features */
+    &:nth-child(1) { color: ${colors.primary}; }      // Red
+    &:nth-child(2) { color: ${colors.secondary}; }    // Green
+    &:nth-child(3) { color: ${colors.tertiary}; }     // Blue
+    &:nth-child(4) { color: ${colors.quaternary}; }  // Yellow
+    &:nth-child(5) { color: ${colors.primary}; }      // Red (loop back)
+  }
+`;
+
+const DeveloperSection = styled.div`
+  background-color: ${colors.darkText};
+  color: white;
+  padding: 25px; /* Compact padding */
+  text-align: center;
+  border-top: 2px solid ${colors.secondary}; /* Green accent */
+`;
+
+const DeveloperTitle = styled.h3`
+  color: ${colors.secondary};
+  font-size: 16px;
+  margin-bottom: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+`;
+
+const DeveloperCard = styled.div`
+  background-color: rgba(255,255,255,0.05); /* Very subtle transparency */
+  border-radius: 8px;
+  padding: 15px; /* Compact padding */
+  border: 1px solid rgba(255,255,255,0.1);
+`;
+
+const CompanyName = styled.h4`
+  color: ${colors.primary};
+  font-size: 20px; /* Compact size */
+  margin: 0 0 8px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+`;
+
+const Tagline = styled.p`
+  font-size: 13px; /* Very compact size */
+  opacity: 0.9;
+  margin-bottom: 15px;
+  line-height: 1.5;
+`;
+
+const ContactInfo = styled.div`
+  font-size: 13px; /* Very compact size */
+  line-height: 1.6;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+
+  p {
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 500;
+    
+    svg {
+      color: ${colors.primary};
+      font-size: 16px;
+    }
+  }
+`;
 
 const Download = () => {
   const [username, setUserName] = useState('');
@@ -23,10 +276,13 @@ const Download = () => {
 
   // Auto-refresh logic to force prompt
   useEffect(() => {
+    const isDownloadPage = window.location.pathname.includes('/jikoni/express/download');
     const params = new URLSearchParams(window.location.search);
-    if (!params.has('refreshed')) {
+
+    if (isDownloadPage && !params.has('refreshed')) {
       params.set('refreshed', 'true');
-      window.location.search = params.toString();
+      window.history.replaceState({}, '', `?${params.toString()}`);
+      window.location.reload();
     } else {
       setInitialLoad(false);
     }
@@ -44,10 +300,10 @@ const Download = () => {
 
     const checkInstalled = () => {
       const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
-      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-      const isSafari = navigator.userAgent.includes('Safari') && !navigator.userAgent.includes('Chrome');
-      
-      if ((isIOS && isSafari && navigator.standalone) || isStandalone) {
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+      const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+
+      if (isStandalone || (isIOS && isSafari && navigator.standalone)) {
         setIsInstalled(true);
       }
     };
@@ -57,61 +313,64 @@ const Download = () => {
       console.log('📦 beforeinstallprompt event captured');
       deferredPrompt.current = e;
       setIsInstalled(false);
-      
-      // Immediately show prompt when page loads
+
       setTimeout(() => {
-        if (deferredPrompt.current) {
+        if (deferredPrompt.current && !isInstalled) {
           handleInstall();
         }
-      }, 1000);
+      }, 500);
     };
 
     checkInstalled();
-    
+
     window.addEventListener('beforeinstallprompt', handleBeforeInstall);
     window.addEventListener('appinstalled', () => {
       setIsInstalled(true);
       deferredPrompt.current = null;
+      console.log('✅ App installed successfully (appinstalled event)');
+      trackInstall();
     });
 
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstall);
     };
-  }, [initialLoad]);
+  }, [initialLoad, isInstalled]);
 
   const handleInstall = async () => {
+    if (isInstalled) {
+      console.log('App is already installed.');
+      return;
+    }
+
     if (!deferredPrompt.current) {
-      if (window.matchMedia('(display-mode: standalone)').matches) {
-        setIsInstalled(true);
-        return;
-      }
+      alert("To install, use your browser's 'Add to Home Screen' option.");
       return;
     }
 
     try {
       deferredPrompt.current.prompt();
       const { outcome } = await deferredPrompt.current.userChoice;
-      
+
       if (outcome === 'accepted') {
-        console.log('✅ App installed successfully');
-        setIsInstalled(true);
-        trackInstall();
+        console.log('✅ User accepted the install prompt');
+      } else {
+        console.log('❌ User dismissed the install prompt');
       }
     } catch (error) {
-      console.error('Installation error:', error);
+      console.error('Installation error during prompt:', error);
     } finally {
       deferredPrompt.current = null;
     }
   };
 
   const trackInstall = async () => {
-    const BASE_URL = "https://your-api-endpoint.com/apiV1/jikoni-express";
+    const BASE_URL = "https://your-api-endpoint.com/apiV1/jikoni-express"; // REMINDER: Update this API endpoint
 
     try {
       const response = await fetch(`${BASE_URL}/track-install`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ user: username }),
+        body: JSON.stringify({ user: username || 'Guest' }),
       });
 
       if (!response.ok) throw new Error('Tracking failed');
@@ -121,181 +380,74 @@ const Download = () => {
     }
   };
 
-  if (initialLoad) return null;
+  if (initialLoad) {
+    return null;
+  }
+
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
 
   return (
-    <div style={styles.container}>
-      <div style={styles.card}>
-        <div style={styles.header}>
-          <h1 style={styles.title}>JIKONI EXPRESS</h1>
-          <p style={styles.subtitle}>Food Delivery Revolution</p>
-        </div>
+    <DownloadContainer>
+      <DownloadCard>
+        <HeaderSection>
+          <AppIcon>
+            <FaMobileAlt />
+          </AppIcon>
+          <Title>JIKONI EXPRESS</Title>
+          <Subtitle>Your Local Culinary & Liquor Hub</Subtitle>
+        </HeaderSection>
 
-        <div style={styles.content}>
-          <h2 style={styles.greeting}>Hello {username || 'User'}!</h2>
-          <p style={styles.instruction}>Install the app for the best experience:</p>
-          
-          <button
-            style={isInstalled ? styles.installedButton : styles.installButton}
-            onClick={handleInstall}
-            disabled={isInstalled}
-          >
-            {isInstalled ? '✓ App Installed' : 'Install App Now'}
-          </button>
-          
-          <div style={styles.features}>
-            <h3 style={styles.featuresTitle}>JIKONI EXPRESS FEATURES:</h3>
-            <ul style={styles.featureList}>
-              <li>Instant food delivery from local chefs</li>
-              <li>Real-time order tracking</li>
-              <li>Exclusive chef specials</li>
-              <li>Secure in-app payments</li>
-              <li>Naivas voucher rewards</li>
-            </ul>
-          </div>
-        </div>
-        
-        <div style={styles.developerSection}>
-          <h3 style={styles.developerTitle}>DEVELOPED BY</h3>
-          <div style={styles.developerCard}>
-            <h4 style={styles.company}>WELT TALLIS</h4>
-            <p style={styles.tagline}>Where culinary innovation meets digital excellence</p>
-            <div style={styles.contactInfo}>
-              <p>📧 infoweltallis@gmail.com</p>
-              <p>📱 0740 045 355</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+        <ContentSection>
+          <Greeting>Hello {username || 'Jikoni Lover'}!</Greeting>
+          <Instruction>
+            Unlock the full experience by installing our app directly to your home screen.
+            It's fast, free, and gives you instant access!
+          </Instruction>
+
+          {isInstalled ? (
+            <InstallButton disabled>
+              <FaCheckCircle /> App Installed
+            </InstallButton>
+          ) : (
+            <>
+              {isIOS ? (
+                <InstallButton onClick={handleInstall}>
+                  <FaApple /> Install for iOS
+                </InstallButton>
+              ) : (
+                <InstallButton onClick={handleInstall}>
+                  <FaGooglePlay /> Install for Android
+                </InstallButton>
+              )}
+            </>
+          )}
+
+          <FeaturesSection>
+            <FeaturesTitle>App Highlights</FeaturesTitle>
+            <FeatureList>
+              <FeatureItem><FaRocket /> Instant food & liquor delivery</FeatureItem>
+              <FeatureItem><FaMapMarkerAlt /> Real-time order tracking</FeatureItem>
+              <FeatureItem><FaCrown /> Exclusive chef specials</FeatureItem>
+              <FeatureItem><FaCreditCard /> Secure in-app payments</FeatureItem>
+              <FeatureItem><FaGift /> Earn rewards with every order</FeatureItem>
+            </FeatureList>
+          </FeaturesSection>
+        </ContentSection>
+
+        <DeveloperSection>
+          <DeveloperTitle>Powered by</DeveloperTitle>
+          <DeveloperCard>
+            <CompanyName>WELT TALLIS</CompanyName>
+            <Tagline>Where culinary innovation meets digital excellence</Tagline>
+            <ContactInfo>
+              <p><FaEnvelope /> infoweltallis@gmail.com</p>
+              <p><FaPhoneAlt /> +254 740 045 355</p>
+            </ContactInfo>
+          </DeveloperCard>
+        </DeveloperSection>
+      </DownloadCard>
+    </DownloadContainer>
   );
-};
-
-// Styling using Jikoni Express color palette
-const styles = {
-  container: {
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-    minHeight: '100vh',
-    backgroundColor: colors.lightBackground,
-    padding: '20px',
-    fontFamily: "'Poppins', sans-serif",
-  },
-  card: {
-    backgroundColor: colors.cardBackground,
-    borderRadius: '16px',
-    boxShadow: '0 8px 25px rgba(0,0,0,0.05)',
-    maxWidth: '500px',
-    width: '100%',
-    overflow: 'hidden',
-  },
-  header: {
-    background: colors.primary,
-    color: 'white',
-    padding: '25px',
-    textAlign: 'center',
-  },
-  title: {
-    margin: '0',
-    fontWeight: '700',
-    letterSpacing: '0.5px',
-    fontSize: '28px',
-  },
-  subtitle: {
-    margin: '8px 0 0',
-    fontSize: '16px',
-    opacity: '0.9',
-  },
-  content: {
-    padding: '30px',
-    textAlign: 'center',
-  },
-  greeting: {
-    fontSize: '22px',
-    color: colors.darkText,
-    margin: '0 0 10px',
-  },
-  instruction: {
-    fontSize: '16px',
-    color: colors.darkText,
-    marginBottom: '25px',
-  },
-  installButton: {
-    backgroundColor: colors.primary,
-    color: 'white',
-    border: 'none',
-    padding: '14px 30px',
-    fontSize: '18px',
-    fontWeight: '600',
-    borderRadius: '12px',
-    cursor: 'pointer',
-    transition: 'background-color 0.3s',
-    margin: '10px 0',
-    width: '100%',
-    maxWidth: '300px',
-  },
-  installedButton: {
-    backgroundColor: colors.secondary,
-    color: 'white',
-    border: 'none',
-    padding: '14px 30px',
-    fontSize: '18px',
-    fontWeight: '600',
-    borderRadius: '12px',
-    margin: '10px 0',
-    width: '100%',
-    maxWidth: '300px',
-    cursor: 'not-allowed',
-  },
-  features: {
-    marginTop: '30px',
-    textAlign: 'left',
-    borderTop: `1px solid ${colors.borderColor}`,
-    paddingTop: '20px',
-  },
-  featuresTitle: {
-    color: colors.primary,
-    fontSize: '18px',
-    marginBottom: '15px',
-  },
-  featureList: {
-    paddingLeft: '20px',
-    color: colors.darkText,
-    lineHeight: '1.6',
-  },
-  developerSection: {
-    backgroundColor: colors.darkText,
-    color: 'white',
-    padding: '25px',
-    textAlign: 'center',
-  },
-  developerTitle: {
-    color: colors.secondary,
-    fontSize: '16px',
-    marginBottom: '15px',
-    fontWeight: '600',
-  },
-  developerCard: {
- 
-    borderRadius: '12px',
-    padding: '20px',
-  },
-  company: {
-    color: colors.primary,
-    fontSize: '22px',
-    margin: '0 0 10px',
-    fontWeight: '700',
-  },
-  tagline: {
-    fontSize: '14px',
-    opacity: '0.9',
-    marginBottom: '15px',
-  },
-  contactInfo: {
-    fontSize: '14px',
-    lineHeight: '1.6',
-  }
 };
 
 export default Download;

@@ -1,11 +1,14 @@
 // handler/goBack.js
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FiArrowLeft } from 'react-icons/fi';
 import styled from 'styled-components';
 
+// Styled components
 export const PageContainer = styled.div`
   position: relative;
   min-height: 100vh;
+  padding: 1rem;
 `;
 
 export const PageHeader = styled.div`
@@ -52,18 +55,36 @@ const FloatingBackButton = styled.button`
   }
 `;
 
-export const PageWithBack = ({ children, title }) => {
+// PageWithBack component
+export const PageWithBack = ({
+  children,
+  title,
+  showBackButton = true,
+  onBack = null,
+}) => {
   const navigate = useNavigate();
+
+  const handleBack = () => {
+    if (typeof onBack === 'function') {
+      onBack();
+    } else {
+      navigate(-1);
+    }
+  };
 
   return (
     <PageContainer>
       <PageHeader>
         <h2>{title}</h2>
       </PageHeader>
+
       {children}
-      <FloatingBackButton onClick={() => navigate(-1)} aria-label="Go back">
-        <FiArrowLeft size={18} />
-      </FloatingBackButton>
+
+      {showBackButton && (
+        <FloatingBackButton onClick={handleBack} aria-label="Go back">
+          <FiArrowLeft size={18} />
+        </FloatingBackButton>
+      )}
     </PageContainer>
   );
 };

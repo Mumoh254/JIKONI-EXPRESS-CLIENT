@@ -21,7 +21,8 @@ import { GiHotMeal } from "react-icons/gi";
 import Liqour from './Liqour/liqour';
 import LiqourProfile from './Liqour/liqourProfile';
 import Board from './components/Rider/riderBoard';
-
+import  Logout   from  './components/auth/logout'
+import   ForgotPassword    from './components/auth/forgotPassword'
 // Import the SocketContext and NotificationsPanel
 import { SocketProvider, useSocket } from '../src/components/context/notificationContext'; // Adjust path if needed
 import NotificationsPanel from '../src/components/chefs/orders/notificationPanel'; // Adjust path if needed
@@ -199,6 +200,11 @@ function App() {
             <Route path="/register" element={<Register />} />
             <Route path="/verify-otp" element={<VerifyOtp />} />
             <Route path="/login" element={<Login />} />
+             <Route path="/logout" element={<Logout />} />
+                <Route path="/forgot-password" element={<ForgotPassword />} />
+
+              
+            
             <Route path="/jikoni-express/liqour-shots" element={<Liqour />} />
             <Route path="/culture/foods" element={<FoodPlatform />} />
             <Route path="/chef/:id" element={<ChefProfile />} />

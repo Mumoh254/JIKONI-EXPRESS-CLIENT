@@ -667,7 +667,7 @@ const ChefOrders = () => {
                 if (Notification.permission === 'granted') {
                     new Notification('New Order Received!', {
                         body: `Order #${newOrder.id} from ${newOrder.customerName} has been placed.`,
-                        icon: '/jikoni-logo.png', // Ensure this path is correct
+                        icon: '/images/logo.png', // Ensure this path is correct
                         vibrate: [200, 100, 200],
                     });
                 }
