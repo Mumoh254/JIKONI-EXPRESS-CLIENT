@@ -75,7 +75,7 @@ const RiderDashboard = () => {
         setProfile(prev => ({ ...prev, ...profileData }));
 
         // Fetch orders
-        const ordersRes = await fetch(`http://localhost:8000/apiV1/smartcity-ke/orders`);
+        const ordersRes = await fetch(`https://neuro-apps-api-express-js-production-redy.onrender.com/orders`);
         const ordersData = await ordersRes.json();
         setOrders(ordersData.orders.map(formatOrder));
 
