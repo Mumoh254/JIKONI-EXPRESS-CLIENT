@@ -828,3 +828,124 @@ svg {
 .chef-notification-badge {
   background-color: var(--jikoni-error-text) !important; /* Ensure it's the specific red */
 }
+
+
+
+
+
+
+
+
+
+
+
+
+/* Assume these colors are defined as CSS variables or replaced with their direct values */
+/* For example, in your :root or a global style file:
+:root {
+  --jikoni-red: #FF4532;
+  --jikoni-green: #00C853;
+  --jikoni-dark-text: #1A202C;
+  --jikoni-light-background: #F0F2F5;
+  --jikoni-card-background: #FFFFFF;
+  --jikoni-border-color: #D1D9E6;
+  --jikoni-placeholder-text: #A0AEC0;
+}
+*/
+
+/* If using direct color values, replace the variable names below */
+
+.earnings-card-container {
+  background-color: var(--jikoni-card-background, #FFFFFF) !important; /* Fallback color */
+  border-radius: 16px  !important;
+  padding: 25px  !important ;
+  margin-bottom: 25px !important;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.08)  !important; /* Slightly enhanced shadow */
+  border: 1px solid var(--jikoni-border-color, #D1D9E6)  !important; /* Fallback color */
+  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out; /* Subtle hover effect */
+}
+
+.earnings-card-container:hover {
+  transform: translateY(-3px)  !important;
+  box-shadow: 0 12px 25px rgba(0,0,0,0.12)  !important;
+}
+
+.card-header {
+  color: var(--jikoni-dark-text, #1A202C); /* Fallback color */
+  margin-top: 0;
+  margin-bottom: 20px;
+  font-size: 24px; /* Slightly larger heading for impact */
+  font-weight: 700; /* Bolder */
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.balance-amount {
+  color: var(--jikoni-primary, #FF4532); /* Fallback color */
+  font-size: 32px; /* Prominent balance amount */
+  font-weight: 800; /* Extra bold */
+  letter-spacing: -0.5px; /* Slight letter spacing adjustment */
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 15px;
+}
+
+.stat-item {
+  text-align: center;
+  padding: 15px 10px; /* Increased padding for better spacing */
+  background-color: var(--jikoni-light-background, #F0F2F5); /* Fallback color */
+  border-radius: 12px; /* Slightly more rounded corners */
+  transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.stat-item:hover {
+  background-color: #e8eaed; /* Slightly darker on hover */
+  transform: translateY(-2px);
+}
+
+.stat-value {
+  font-size: 30px; /* Consistent large font for values */
+  font-weight: 700;
+  margin-bottom: 5px; /* Space between value and label */
+}
+
+/* Specific colors for stat values */
+.stat-value.primary-color {
+  color: var(--jikoni-primary, #FF4532);
+}
+
+.stat-value.secondary-color {
+  color: var(--jikoni-secondary, #00C853);
+}
+
+.stat-label {
+  font-size: 14px;
+  color: var(--jikoni-placeholder-text, #A0AEC0); /* Fallback color */
+  font-weight: 500;
+}
+
+.payment-status-badge {
+  font-size: 15px; /* Slightly adjusted font size */
+  font-weight: 600;
+  padding: 8px 15px; /* More horizontal padding */
+  border-radius: 25px;
+  display: inline-block;
+  min-width: 90px; /* Slightly wider */
+  text-transform: uppercase; /* Make text uppercase for status */
+  letter-spacing: 0.5px;
+}
+
+/* Specific styles for payment status colors */
+.payment-status-badge.paid {
+  color: var(--jikoni-secondary, #00C853);
+  background-color: #E6F5ED; /* Lighter green for paid status */
+}
+
+.payment-status-badge.pending {
+  color: var(--jikoni-primary, #FF4532);
+  background-color: #FFEBEE; /* Lighter red for pending status */
+}
