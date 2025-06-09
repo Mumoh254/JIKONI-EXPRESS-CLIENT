@@ -4,6 +4,7 @@ import axios from 'axios';
 import Swal from 'sweetalert2';
 import { ClockLoader } from 'react-spinners'; // Assuming ClockLoader fits the Jikoni brand better than FaSpinner
 import styled, { keyframes } from 'styled-components'; // Import keyframes
+import { FaCheckCircle } from 'react-icons/fa'; // Import the check circle icon
 
 // --- Jikoni Express Color Palette ---
 const colors = {
@@ -23,6 +24,11 @@ const colors = {
 // --- Animations ---
 const fadeIn = keyframes`
   from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+`;
+
+const slideIn = keyframes`
+  from { opacity: 0; transform: translateY(50px); }
   to { opacity: 1; transform: translateY(0); }
 `;
 
@@ -170,6 +176,33 @@ const TimerText = styled.span`
   font-weight: 500;
 `;
 
+const VerifiedContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 0;
+  animation: ${slideIn} 0.5s ease-out;
+
+  .check-icon {
+    font-size: 4rem; /* Large icon */
+    color: ${colors.secondary};
+    margin-bottom: 1.5rem;
+  }
+
+  h3 {
+    font-size: 1.8rem;
+    color: ${colors.darkText};
+    margin-bottom: 0.75rem;
+  }
+
+  p {
+    font-size: 1rem;
+    color: ${colors.placeholderText};
+    margin-bottom: 1.5rem;
+  }
+`;
+
 const BASE_URL = "https://neuro-apps-api-express-js-production-redy.onrender.com/apiV1/smartcity-ke";
 
 const VerifyOtp = () => {
@@ -180,6 +213,7 @@ const VerifyOtp = () => {
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [loading, setLoading] = useState(false);
   const [timeLeft, setTimeLeft] = useState(600); // 10 minutes
+  const [verified, setVerified] = useState(false); // New state for verification status
   const otpInputRefs = useRef([]); // To manage focus for OTP inputs
 
   const showAlert = (type, message) => {
@@ -274,6 +308,7 @@ const VerifyOtp = () => {
       localStorage.setItem('authVerified', 'true'); // Indicate successful verification
 
       showAlert('success', 'Account verified successfully! Redirecting...');
+      setVerified(true); // Set verified to true to show success message and icon
 
       // Dispatch a custom event to notify other parts of the app about auth state change
       window.dispatchEvent(new Event('authStateChanged'));
@@ -288,7 +323,7 @@ const VerifyOtp = () => {
         } else {
           window.location.href = '/peoples/favourites'; // Full page reload for user dashboard
         }
-      }, 100); // Small delay to allow SweetAlert to show
+      }, 2000); // Give users time to see the success message
     } catch (error) {
       showAlert('error', error.response?.data?.message || 'OTP verification failed. Please try again.');
     } finally {
@@ -319,51 +354,61 @@ const VerifyOtp = () => {
   return (
     <PageWrapper>
       <OtpContainer>
-        <OtpHeader>
-          <h2>Verify Your Jikoni Account</h2>
-          <p>
-            Enter the 6-digit verification code sent to{' '}
-            <span>{storedEmail || 'your email'}</span>
-          </p>
-        </OtpHeader>
+        {verified ? (
+          <VerifiedContainer>
+            <FaCheckCircle className="check-icon" />
+            <h3>Account Verified!</h3>
+            <p>You're all set. Redirecting you to your dashboard shortly.</p>
+          </VerifiedContainer>
+        ) : (
+          <>
+            <OtpHeader>
+              <h2>Verify Your Jikoni Account</h2>
+              <p>
+                Enter the 6-digit verification code sent to{' '}
+                <span>{storedEmail || 'your email'}</span>
+              </p>
+            </OtpHeader>
 
-        <OtpInputs onPaste={handlePaste}>
-          {otp.map((digit, index) => (
-            <OtpDigit
-              key={index}
-              id={`otp-${index}`}
-              type="text"
-              inputMode="numeric" // Hint for mobile keyboards
-              maxLength="1"
-              value={digit}
-              onChange={(e) => handleInputChange(index, e.target.value)}
-              onKeyDown={(e) => handleKeyDown(index, e)}
-              ref={(el) => (otpInputRefs.current[index] = el)} // Store ref for focus management
-              autoComplete="one-time-code" // Hint for browser autofill (SMS OTP)
-            />
-          ))}
-        </OtpInputs>
+            <OtpInputs onPaste={handlePaste}>
+              {otp.map((digit, index) => (
+                <OtpDigit
+                  key={index}
+                  id={`otp-${index}`}
+                  type="text"
+                  inputMode="numeric" // Hint for mobile keyboards
+                  maxLength="1"
+                  value={digit}
+                  onChange={(e) => handleInputChange(index, e.target.value)}
+                  onKeyDown={(e) => handleKeyDown(index, e)}
+                  ref={(el) => (otpInputRefs.current[index] = el)} // Store ref for focus management
+                  autoComplete="one-time-code" // Hint for browser autofill (SMS OTP)
+                />
+              ))}
+            </OtpInputs>
 
-        <VerifyButton onClick={handleVerify} disabled={loading}>
-          {loading ? (
-            <ClockLoader size={20} color="#fff" />
-          ) : (
-            'Verify Account' // More branded text
-          )}
-        </VerifyButton>
-
-        <div style={{ textAlign: 'center', marginTop: '1.5rem' }}>
-          <TimerText>Code expires in: {formatTime(timeLeft)}</TimerText>
-          <div style={{ marginTop: '0.75rem' }}>
-            <ResendLink onClick={handleResendOtp} disabled={timeLeft > 0 || loading}>
-              {timeLeft > 0 ? (
-                `Resend OTP (in ${formatTime(timeLeft)})`
+            <VerifyButton onClick={handleVerify} disabled={loading}>
+              {loading ? (
+                <ClockLoader size={20} color="#fff" />
               ) : (
-                'Resend OTP'
+                'Verify Account' // More branded text
               )}
-            </ResendLink>
-          </div>
-        </div>
+            </VerifyButton>
+
+            <div style={{ textAlign: 'center', marginTop: '1.5rem' }}>
+              <TimerText>Code expires in: {formatTime(timeLeft)}</TimerText>
+              <div style={{ marginTop: '0.75rem' }}>
+                <ResendLink onClick={handleResendOtp} disabled={timeLeft > 0 || loading}>
+                  {timeLeft > 0 ? (
+                    `Resend OTP (in ${formatTime(timeLeft)})`
+                  ) : (
+                    'Resend OTP'
+                  )}
+                </ResendLink>
+              </div>
+            </div>
+          </>
+        )}
       </OtpContainer>
     </PageWrapper>
   );
