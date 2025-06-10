@@ -1,5 +1,5 @@
 // OrderDetails.js
-import React from 'react';
+
 import { 
   Container, 
   Button, 
@@ -22,6 +22,7 @@ import {
   FiShoppingBag,
   FiKey
 } from 'react-icons/fi';
+import React, { useState } from 'react';
 
 const BASE_URL = 'http://localhost:8000/apiV1/smartcity-ke';
 

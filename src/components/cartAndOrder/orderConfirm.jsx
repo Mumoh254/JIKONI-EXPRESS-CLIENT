@@ -4,15 +4,15 @@ import {
   ListGroup, Badge, Spinner
 } from 'react-bootstrap';
 import {
-  FiMapPin, FiClock, FiUser, FiArrowLeftCircle, FiCheckCircle, FiShoppingCart, FiCreditCard, FiDollarSign, FiAlertTriangle
-} from 'react-icons/fi'; // Using react-icons for modern appeal
-import styled, { keyframes } from 'styled-components'; // Import styled-components and keyframes
+  FiMapPin, FiClock, FiUser, FiArrowLeftCircle, FiCheckCircle, FiShoppingCart, FiCreditCard, FiDollarSign, FiAlertTriangle, FiCalendar, FiLock
+} from 'react-icons/fi'; // Added FiCalendar and FiLock for card fields
+import styled, { keyframes, css } from 'styled-components'; // Import styled-components and keyframes
 import { TbTruckDelivery } from "react-icons/tb";
 
 // --- Jikoni Express Color Palette ---
 const colors = {
   primary: '#FF4532', // Jikoni Red
-  secondary: '#00C853', // Jikoni Green
+  secondary: '#00C853', // Jikoni Green (Used for accents)
   darkText: '#1A202C', // Dark text for headings
   lightBackground: '#F0F2F5', // Light background for inputs/page
   cardBackground: '#FFFFFF', // White for the modal background
@@ -22,7 +22,11 @@ const colors = {
   buttonHover: '#E6392B', // Darker red on button hover
   disabledButton: '#CBD5E1', // Gray for disabled buttons
   gradientStart: '#FF6F59', // Lighter red for gradient
-  successGreen: '#28A745', // For positive feedback
+  successGreen: '#28A745', // For positive feedback (can use secondary instead)
+  // New: Specific light green for input labels
+  lightGreenAccent: '#E6F4EA', // A softer, more pastel green
+  greenText: '#007A3B', // A slightly darker, richer green for text
+  greenBorder: '#00C853', // Jikoni Green for borders
 };
 
 // --- Animations ---
@@ -224,7 +228,34 @@ const StyledFormControl = styled(Form.Control)`
     box-shadow: 0 0 0 3px rgba(255, 69, 50, 0.2);
     background-color: ${colors.cardBackground};
   }
+
+  // Green border and shadow for valid inputs
+  ${props => props.$isValidated && css`
+    border-color: ${colors.greenBorder} !important;
+    box-shadow: 0 0 0 3px ${colors.secondary}30 !important;
+  `}
 `;
+
+// Accent for form labels that have green light
+const FormLabelAccent = styled(Form.Label)`
+  font-weight: 600;
+  color: ${colors.darkText};
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem; // Add a bit more space below label
+
+  ${props => props.$addGreenLight && css`
+    background-color: ${colors.lightGreenAccent};
+    padding: 0.4rem 0.8rem;
+    border-radius: 6px;
+    color: ${colors.greenText};
+    font-size: 0.9rem;
+    border: 1px solid ${colors.greenBorder};
+    box-shadow: 0 2px 5px rgba(0, 200, 83, 0.1);
+  `}
+`;
+
 
 const ConfirmButton = styled(Button)`
   background: ${colors.primary};
@@ -289,22 +320,63 @@ const CardFooter = styled(Card.Footer)`
   border-bottom-right-radius: 16px;
 `;
 
+const CardGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 1rem;
+`;
+
 const DELIVERY_BASE_FEE = 50; // Base delivery fee in KSh
 const DELIVERY_PER_KM = 15;   // Per kilometer charge
-const HANDLING_FEE = 100;    // New: Handling fee in KSh
+const HANDLING_FEE = 100;     // Handling fee in KSh
 
 const OrderConfirmation = ({ cart, location, onConfirm, onBack, chefLocation }) => {
-  const [locationError, setLocationError] = useState(''); // Not directly used in this styled version but kept for logic
+  const [locationError, setLocationError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState('mpesa');
   const [phoneNumber, setPhoneNumber] = useState(''); // Used for M-Pesa
+
+  // New states for card details
+  const [cardNumber, setCardNumber] = useState('');
+  const [cardName, setCardName] = useState('');
+  const [expiryDate, setExpiryDate] = useState('');
+  const [cvc, setCvc] = useState('');
   const [deliveryFee, setDeliveryFee] = useState(DELIVERY_BASE_FEE);
 
+
+  // Validation states for card fields
+  const [isCardNumberValid, setIsCardNumberValid] = useState(false);
+  const [isCardNameValid, setIsCardNameValid] = useState(false);
+  const [isExpiryDateValid, setIsExpiryDateValid] = useState(false);
+  const [isCvcValid, setIsCvcValid] = useState(false);
+
   const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-  // Modified: Include HANDLING_FEE in the total calculation
   const total = subtotal + deliveryFee + HANDLING_FEE;
 
-  // Calculate distance using Haversine formula (Keep existing robust logic)
+  // Validation functions (simple for demonstration)
+  const validateCardNumber = (num) => /^\d{16}$/.test(num); // Basic 16 digits
+  const validateCardName = (name) => name.trim().length > 2;
+  const validateExpiryDate = (date) => /^(0[1-9]|1[0-2])\/?([0-9]{2})$/.test(date) && new Date(2000 + parseInt(date.split('/')[1]), parseInt(date.split('/')[0]) - 1) >= new Date(); // MM/YY and not expired
+  const validateCvc = (code) => /^\d{3,4}$/.test(code); // 3 or 4 digits
+
+  useEffect(() => {
+    setIsCardNumberValid(validateCardNumber(cardNumber));
+  }, [cardNumber]);
+
+  useEffect(() => {
+    setIsCardNameValid(validateCardName(cardName));
+  }, [cardName]);
+
+  useEffect(() => {
+    setIsExpiryDateValid(validateExpiryDate(expiryDate));
+  }, [expiryDate]);
+
+  useEffect(() => {
+    setIsCvcValid(validateCvc(cvc));
+  }, [cvc]);
+
+
+  // Calculate distance using Haversine formula
   const calculateDistance = (lat1, lon1, lat2, lon2) => {
     const R = 6371; // Earth radius in km
     const dLat = deg2rad(lat2 - lat1);
@@ -322,7 +394,7 @@ const OrderConfirmation = ({ cart, location, onConfirm, onBack, chefLocation }) 
     return deg * (Math.PI / 180);
   };
 
-  // Calculate delivery fee based on distance (Keep existing robust logic)
+  // Calculate delivery fee based on distance
   useEffect(() => {
     if (location && chefLocation) {
       const distance = calculateDistance(
@@ -346,15 +418,12 @@ const OrderConfirmation = ({ cart, location, onConfirm, onBack, chefLocation }) 
   const handleConfirmOrder = () => {
     setIsLoading(true);
 
-    // In a real application, you'd send this data to your backend API
-    // The data would include:
-    // - cart items
-    // - user's delivery location (lat, lng, address)
-    // - chef's location (if needed by backend, though often derived)
-    // - payment method
-    // - phone number (for M-Pesa)
-    // - calculated total and delivery fee
-    // - New: Handling fee
+    // Frontend validation for card details
+    if (paymentMethod === 'card' && (!isCardNumberValid || !isCardNameValid || !isExpiryDateValid || !isCvcValid)) {
+      alert('Please fill in all card details correctly.');
+      setIsLoading(false);
+      return;
+    }
 
     console.log("Confirming order with data:", {
       cart,
@@ -362,18 +431,34 @@ const OrderConfirmation = ({ cart, location, onConfirm, onBack, chefLocation }) 
       chefLocation,
       paymentMethod,
       phoneNumber: paymentMethod === 'mpesa' ? phoneNumber : undefined,
+      cardNumber: paymentMethod === 'card' ? `**** **** **** ${cardNumber.slice(-4)}` : undefined, // Log last 4 digits only
+      cardName: paymentMethod === 'card' ? cardName : undefined,
+      expiryDate: paymentMethod === 'card' ? expiryDate : undefined,
+      cvc: paymentMethod === 'card' ? '***' : undefined, // Never log full CVC
       subtotal,
       deliveryFee,
-      handlingFee: HANDLING_FEE, // New: Include handling fee in console log
+      handlingFee: HANDLING_FEE,
       total
     });
 
     // Simulate API call
     setTimeout(() => {
       setIsLoading(false);
-      onConfirm(); // This would typically trigger a success message or redirect
+      onConfirm();
     }, 1500);
   };
+
+  const isFormValid = () => {
+    if (!location) return false; // Location must be available
+
+    if (paymentMethod === 'mpesa') {
+      return phoneNumber.length > 0;
+    } else if (paymentMethod === 'card') {
+      return isCardNumberValid && isCardNameValid && isExpiryDateValid && isCvcValid;
+    }
+    return false; // Default for other payment methods if any
+  };
+
 
   return (
     <StyledContainer>
@@ -456,13 +541,12 @@ const OrderConfirmation = ({ cart, location, onConfirm, onBack, chefLocation }) 
                 </SummaryItem>
 
                 <SummaryItem>
-                  <span>Delivery Fee <TbTruckDelivery size={16} color={colors.secondary}/></span>
+                  <span>Delivery Fee <TbTruckDelivery size={16} color={colors.secondary} /></span>
                   <span>KSh {deliveryFee.toFixed(2)}</span>
                 </SummaryItem>
 
-                {/* New: Display Handling Fee */}
                 <SummaryItem>
-                  <span>Handling Fee <FiDollarSign size={16} color={colors.secondary}/></span>
+                  <span>Handling Fee <FiDollarSign size={16} color={colors.secondary} /></span>
                   <span>KSh {HANDLING_FEE.toFixed(2)}</span>
                 </SummaryItem>
 
@@ -489,15 +573,101 @@ const OrderConfirmation = ({ cart, location, onConfirm, onBack, chefLocation }) 
 
               {paymentMethod === 'mpesa' && (
                 <Form.Group className="mb-3">
-                  <Form.Label className="fw-bold">M-Pesa Phone Number</Form.Label>
+                  <FormLabelAccent>M-Pesa Phone Number</FormLabelAccent>
                   <StyledFormControl
                     type="tel"
                     placeholder="e.g., 07XX XXX XXX"
                     value={phoneNumber}
                     onChange={(e) => setPhoneNumber(e.target.value)}
-                    required // Make required for M-Pesa
+                    required
                   />
                 </Form.Group>
+              )}
+
+              {/* Card Payment Fields with Green Touch */}
+              {paymentMethod === 'card' && (
+                <>
+                  <Form.Group className="mb-3">
+                    <FormLabelAccent $addGreenLight={isCardNumberValid}>
+                      Card Number
+                    </FormLabelAccent>
+                    <StyledFormControl
+                      type="text"
+                      placeholder="e.g., 1234 5678 9012 3456"
+                      value={cardNumber}
+                      onChange={(e) => setCardNumber(e.target.value.replace(/\s/g, ''))} // Remove spaces for validation
+                      maxLength={16}
+                      isInvalid={!isCardNumberValid && cardNumber.length > 0}
+                      isValid={isCardNumberValid}
+                      $isValidated={isCardNumberValid} // Apply green styling when valid
+                      required
+                    />
+                    <Form.Control.Feedback type="invalid">
+                      Please enter a valid 16-digit card number.
+                    </Form.Control.Feedback>
+                  </Form.Group>
+
+                  <Form.Group className="mb-3">
+                    <FormLabelAccent $addGreenLight={isCardNameValid}>
+                      Cardholder Name
+                    </FormLabelAccent>
+                    <StyledFormControl
+                      type="text"
+                      placeholder="e.g., Jane Doe"
+                      value={cardName}
+                      onChange={(e) => setCardName(e.target.value)}
+                      isInvalid={!isCardNameValid && cardName.length > 0}
+                      isValid={isCardNameValid}
+                      $isValidated={isCardNameValid} // Apply green styling when valid
+                      required
+                    />
+                    <Form.Control.Feedback type="invalid">
+                      Please enter the cardholder's name.
+                    </Form.Control.Feedback>
+                  </Form.Group>
+
+                  <CardGrid className="mb-3">
+                    <Form.Group as={Col}>
+                      <FormLabelAccent $addGreenLight={isExpiryDateValid}>
+                        <FiCalendar size={16} /> Expiry Date (MM/YY)
+                      </FormLabelAccent>
+                      <StyledFormControl
+                        type="text"
+                        placeholder="MM/YY"
+                        value={expiryDate}
+                        onChange={(e) => setExpiryDate(e.target.value)}
+                        maxLength={5} // MM/YY (5 characters including '/')
+                        isInvalid={!isExpiryDateValid && expiryDate.length > 0}
+                        isValid={isExpiryDateValid}
+                        $isValidated={isExpiryDateValid} // Apply green styling when valid
+                        required
+                      />
+                      <Form.Control.Feedback type="invalid">
+                        Enter a valid MM/YY format (e.g., 12/26) and not expired.
+                      </Form.Control.Feedback>
+                    </Form.Group>
+
+                    <Form.Group as={Col}>
+                      <FormLabelAccent $addGreenLight={isCvcValid}>
+                        <FiLock size={16} /> CVC
+                      </FormLabelAccent>
+                      <StyledFormControl
+                        type="text"
+                        placeholder="e.g., 123"
+                        value={cvc}
+                        onChange={(e) => setCvc(e.target.value)}
+                        maxLength={4}
+                        isInvalid={!isCvcValid && cvc.length > 0}
+                        isValid={isCvcValid}
+                        $isValidated={isCvcValid} // Apply green styling when valid
+                        required
+                      />
+                      <Form.Control.Feedback type="invalid">
+                        Enter a valid 3 or 4-digit CVC.
+                      </Form.Control.Feedback>
+                    </Form.Group>
+                  </CardGrid>
+                </>
               )}
             </CardBody>
 
@@ -505,7 +675,7 @@ const OrderConfirmation = ({ cart, location, onConfirm, onBack, chefLocation }) 
               <div className="d-grid gap-3">
                 <ConfirmButton
                   onClick={handleConfirmOrder}
-                  disabled={isLoading || !location || (paymentMethod === 'mpesa' && !phoneNumber)}
+                  disabled={isLoading || !location || !isFormValid()} // Updated disabled logic
                 >
                   {isLoading ? (
                     <>
@@ -523,7 +693,12 @@ const OrderConfirmation = ({ cart, location, onConfirm, onBack, chefLocation }) 
                   onClick={onBack}
                   disabled={isLoading}
                 >
+
                   <FiArrowLeftCircle size={20} /> Back to Cart
+
+
+
+                  
                 </BackButton>
               </div>
             </CardFooter>

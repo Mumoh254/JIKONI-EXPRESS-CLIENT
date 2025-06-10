@@ -1,14 +1,16 @@
-import React from "react";
-import UseProducts from "./useProducts";
+import React, { useState } from "react";
+import UseProducts from "./useProducts"; // Ensure this path is correct
 import Swal from "sweetalert2";
 import { FaEye, FaEdit, FaTrash, FaSync, FaPlus } from "react-icons/fa";
 import { Table, Container, Button, Spinner, Alert, Form, Badge, InputGroup, Row, Col } from "react-bootstrap";
-import slugify from "slugify";
+import FoodPostForm from "./foodPostForm"; // Import the specific FoodPostForm (for CREATE)
+import EditFoodModal from "./EditFoodModal"; // Import the specific EditFoodModal (for EDIT)
+import styled from "styled-components";
 
 // Jikoni Express Color Palette
 const colors = {
-  primary: '#FF4532', // Jikoni Red
-  secondary: '#00C853', // Jikoni Green
+  primary: '#FF4532', // Jikoni Red (for table)
+  secondary: '#00C853', // Jikoni Green (for table)
   darkText: '#1A202C', // Dark text for headings
   lightBackground: '#F0F2F5', // Light background for the page
   cardBackground: '#FFFFFF', // White for the form card
@@ -17,14 +19,67 @@ const colors = {
   placeholderText: '#A0AEC0', // Muted text for placeholders
   buttonHover: '#E6392B', // Darker red on button hover
   disabledButton: '#CBD5E1', // Gray for disabled buttons
+  gradientStart: '#FF6F59', // Lighter red for gradient (not used in this snippet)
+  successGreen: '#28A745', // For positive feedback
 };
+
+// --- Styled Components for Table and Buttons ---
+const StyledButton = styled(Button)`
+  &.btn-primary {
+    background-color: ${colors.primary};
+    border-color: ${colors.primary};
+    &:hover {
+      background-color: ${colors.buttonHover};
+      border-color: ${colors.buttonHover};
+    }
+  }
+  &.btn-success {
+    background-color: ${colors.secondary};
+    border-color: ${colors.secondary};
+    &:hover {
+      background-color: ${colors.successGreen}; /* A slightly darker green on hover */
+      border-color: ${colors.successGreen};
+    }
+  }
+  &.btn-outline-primary {
+    color: ${colors.primary};
+    border-color: ${colors.primary};
+    &:hover {
+      background-color: ${colors.primary};
+      color: white;
+    }
+  }
+  &.btn-outline-success {
+    color: ${colors.secondary};
+    border-color: ${colors.secondary};
+    &:hover {
+      background-color: ${colors.secondary};
+      color: white;
+    }
+  }
+  &.btn-outline-danger {
+    color: ${colors.errorText};
+    border-color: ${colors.errorText};
+    &:hover {
+      background-color: ${colors.errorText};
+      color: white;
+    }
+  }
+`;
 
 const FoodItemsTable = () => {
   const { products, loading, error, fetchProducts } = UseProducts();
-  const [searchTerm, setSearchTerm] = React.useState("");
+  const [searchTerm, setSearchTerm] = useState("");
   
+  // State for the CREATE FoodPostForm modal
+  const [showFoodPostModal, setShowFoodPostModal] = useState(false);
+
+  // State for the EDIT EditFoodModal
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingFood, setEditingFood] = useState(null); // Holds the food item to be edited
+
   // Filter products based on search term
-  const filteredProducts = products.filter(product => 
+  const filteredProducts = products.filter(product =>
     product.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     product.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
     product.brand.toLowerCase().includes(searchTerm.toLowerCase())
@@ -34,23 +89,28 @@ const FoodItemsTable = () => {
     Swal.fire({
       title: `<strong style="color: ${colors.primary}">${product.title}</strong>`,
       html: `
-        <div class="text-left" style="font-size: 1rem;">
-          <p><b>Slug:</b> ${product.slug}</p>
-          <p><b>Category:</b> ${product.category}</p>
-          <p><b>Price:</b> KSH ${product.price}</p>
-          <p><b>Stock:</b> ${product.quantity}</p>
-          <p><b>Brand:</b> ${product.brand}</p>
-          <p><b>Sizes:</b> ${Array.isArray(product.sizes) ? product.sizes.join(", ") : "N/A"}</p>
-          <p><b>Description:</b> ${product.description}</p>
+        <div class="text-left" style="font-size: 1rem; color: ${colors.darkText};">
+          <p style="margin-bottom: 0.5rem;"><b>Slug:</b> ${product.slug}</p>
+          <p style="margin-bottom: 0.5rem;"><b>Category:</b> ${product.category}</p>
+          <p style="margin-bottom: 0.5rem;"><b>Price:</b> KSH ${product.price}</p>
+          <p style="margin-bottom: 0.5rem;"><b>Stock:</b> ${product.quantity}</p>
+          <p style="margin-bottom: 0.5rem;"><b>Brand:</b> ${product.brand}</p>
+          <p style="margin-bottom: 0.5rem;"><b>Sizes:</b> ${Array.isArray(product.sizes) ? product.sizes.join(", ") : "N/A"}</p>
+          <p style="margin-bottom: 0.5rem;"><b>Description:</b> ${product.description}</p>
+          ${product.imageUrl ? `<p style="margin-bottom: 0.5rem;"><b>Image:</b> <br/><img src="${product.imageUrl}" alt="${product.title}" style="max-width: 100%; height: auto; border-radius: 8px; margin-top: 10px;"/></p>` : ''}
         </div>
       `,
       showCloseButton: true,
       showConfirmButton: false,
-      background: colors.lightBackground,
+      background: colors.cardBackground,
+      color: colors.darkText,
       width: "600px",
       customClass: {
-        popup: 'custom-swal-popup'
-      }
+        popup: 'custom-swal-popup',
+        title: 'custom-swal-title',
+        htmlContainer: 'custom-swal-html-container'
+      },
+      buttonsStyling: false,
     });
   };
 
@@ -63,7 +123,11 @@ const FoodItemsTable = () => {
       confirmButtonColor: colors.errorText,
       cancelButtonColor: colors.placeholderText,
       confirmButtonText: 'Yes, delete it!',
-      background: colors.lightBackground
+      background: colors.cardBackground,
+      color: colors.darkText,
+      customClass: {
+        popup: 'custom-swal-popup'
+      }
     }).then(async (result) => {
       if (result.isConfirmed) {
         try {
@@ -75,13 +139,16 @@ const FoodItemsTable = () => {
           });
 
           if (!response.ok) throw new Error('Failed to delete product');
-          
+
           Swal.fire({
             title: 'Deleted!',
             text: 'Product has been deleted.',
             icon: 'success',
-            background: colors.lightBackground,
-            confirmButtonColor: colors.primary
+            background: colors.cardBackground,
+            confirmButtonColor: colors.primary,
+            customClass: {
+              popup: 'custom-swal-popup'
+            }
           });
           fetchProducts();
         } catch (error) {
@@ -89,158 +156,44 @@ const FoodItemsTable = () => {
             title: 'Error!',
             text: error.message,
             icon: 'error',
-            background: colors.lightBackground,
-            confirmButtonColor: colors.primary
+            background: colors.cardBackground,
+            confirmButtonColor: colors.primary,
+            customClass: {
+              popup: 'custom-swal-popup'
+            }
           });
         }
       }
     });
   };
 
-  const handleUpdate = (product) => {
-    Swal.fire({
-      title: `<span style="color: ${colors.primary}">Edit ${product.title}</span>`,
-      html: `
-        <div style="text-align: left; margin-bottom: 15px;">
-          <label style="display: block; margin-bottom: 5px; font-weight: 500; color: ${colors.darkText}">Product Name</label>
-          <input id="name" class="swal2-input" placeholder="Product Name" value="${product.title}" style="border-color: ${colors.borderColor};">
-        </div>
-        <div style="text-align: left; margin-bottom: 15px;">
-          <label style="display: block; margin-bottom: 5px; font-weight: 500; color: ${colors.darkText}">Price</label>
-          <input id="price" type="number" class="swal2-input" placeholder="Price" value="${product.price}" style="border-color: ${colors.borderColor};">
-        </div>
-        <div style="text-align: left; margin-bottom: 15px;">
-          <label style="display: block; margin-bottom: 5px; font-weight: 500; color: ${colors.darkText}">Stock Quantity</label>
-          <input id="quantity" type="number" class="swal2-input" placeholder="Stock Quantity" value="${product.quantity}" style="border-color: ${colors.borderColor};">
-        </div>
-        <div style="text-align: left; margin-bottom: 15px;">
-          <label style="display: block; margin-bottom: 5px; font-weight: 500; color: ${colors.darkText}">Sizes (comma separated)</label>
-          <input id="sizes" class="swal2-input" placeholder="Sizes (comma separated)" value="${Array.isArray(product.sizes) ? product.sizes.join(", ") : ""}" style="border-color: ${colors.borderColor};">
-        </div>
-      `,
-      focusConfirm: false,
-      showCancelButton: true,
-      confirmButtonText: 'Update',
-      cancelButtonText: 'Cancel',
-      confirmButtonColor: colors.primary,
-      background: colors.lightBackground,
-      preConfirm: async () => {
-        try {
-          const updateData = {
-            title: Swal.getPopup().querySelector('#name').value,
-            price: parseFloat(Swal.getPopup().querySelector('#price').value),
-            quantity: parseInt(Swal.getPopup().querySelector('#quantity').value),
-            sizes: Swal.getPopup().querySelector('#sizes').value
-              .split(',')
-              .map(size => size.trim()),
-            slug: slugify(Swal.getPopup().querySelector('#name').value, { lower: true })
-          };
-
-          const response = await fetch(`http://localhost:8000/api/v1/shopingsite/update/${product._id}`, {
-            method: 'PUT',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${localStorage.getItem("adminToken")}`
-            },
-            body: JSON.stringify(updateData)
-          });
-
-          if (!response.ok) throw new Error('Failed to update product');
-          
-          Swal.fire({
-            title: 'Updated!',
-            text: 'Product has been updated.',
-            icon: 'success',
-            background: colors.lightBackground,
-            confirmButtonColor: colors.primary
-          });
-          fetchProducts();
-        } catch (error) {
-          Swal.fire({
-            title: 'Error!',
-            text: error.message,
-            icon: 'error',
-            background: colors.lightBackground,
-            confirmButtonColor: colors.primary
-          });
-        }
-      }
-    });
+  // --- Handlers for FoodPostForm (CREATE) ---
+  const handleOpenFoodPostModal = () => {
+    setShowFoodPostModal(true);
   };
 
-  const handleCreate = () => {
-    Swal.fire({
-      title: `<span style="color: ${colors.primary}">Create New Product</span>`,
-      html: `
-        <div style="text-align: left; margin-bottom: 15px;">
-          <label style="display: block; margin-bottom: 5px; font-weight: 500; color: ${colors.darkText}">Product Name</label>
-          <input id="name" class="swal2-input" placeholder="Product Name" style="border-color: ${colors.borderColor};">
-        </div>
-        <div style="text-align: left; margin-bottom: 15px;">
-          <label style="display: block; margin-bottom: 5px; font-weight: 500; color: ${colors.darkText}">Price</label>
-          <input id="price" type="number" class="swal2-input" placeholder="Price" style="border-color: ${colors.borderColor};">
-        </div>
-        <div style="text-align: left; margin-bottom: 15px;">
-          <label style="display: block; margin-bottom: 5px; font-weight: 500; color: ${colors.darkText}">Stock Quantity</label>
-          <input id="quantity" type="number" class="swal2-input" placeholder="Stock Quantity" style="border-color: ${colors.borderColor};">
-        </div>
-        <div style="text-align: left; margin-bottom: 15px;">
-          <label style="display: block; margin-bottom: 5px; font-weight: 500; color: ${colors.darkText}">Sizes (comma separated)</label>
-          <input id="sizes" class="swal2-input" placeholder="Sizes (comma separated)" style="border-color: ${colors.borderColor};">
-        </div>
-      `,
-      focusConfirm: false,
-      showCancelButton: true,
-      confirmButtonText: 'Create',
-      cancelButtonText: 'Cancel',
-      confirmButtonColor: colors.primary,
-      background: colors.lightBackground,
-      preConfirm: async () => {
-        try {
-          const newProduct = {
-            title: Swal.getPopup().querySelector('#name').value,
-            price: parseFloat(Swal.getPopup().querySelector('#price').value),
-            quantity: parseInt(Swal.getPopup().querySelector('#quantity').value),
-            sizes: Swal.getPopup().querySelector('#sizes').value
-              .split(',')
-              .map(size => size.trim()),
-            slug: slugify(Swal.getPopup().querySelector('#name').value, { lower: true }),
-            // Default values for other fields
-            category: "New Category",
-            brand: "New Brand",
-            description: "New product description"
-          };
+  const handleCloseFoodPostModal = () => {
+    setShowFoodPostModal(false);
+    fetchProducts(); // Refresh products after creation
+  };
 
-          const response = await fetch(`http://localhost:8000/api/v1/shopingsite/create`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${localStorage.getItem("adminToken")}`
-            },
-            body: JSON.stringify(newProduct)
-          });
+  // --- Handlers for EditFoodModal (EDIT) ---
+  const handleOpenEditModal = (foodItem) => {
+    setEditingFood(foodItem); // Set the food item to be edited
+    setShowEditModal(true);
+  };
 
-          if (!response.ok) throw new Error('Failed to create product');
-          
-          Swal.fire({
-            title: 'Created!',
-            text: 'Product has been created.',
-            icon: 'success',
-            background: colors.lightBackground,
-            confirmButtonColor: colors.primary
-          });
-          fetchProducts();
-        } catch (error) {
-          Swal.fire({
-            title: 'Error!',
-            text: error.message,
-            icon: 'error',
-            background: colors.lightBackground,
-            confirmButtonColor: colors.primary
-          });
-        }
-      }
-    });
+  const handleCloseEditModal = () => {
+    setShowEditModal(false);
+    setEditingFood(null); // Clear the editing food when closing
+    fetchProducts(); // Refresh products after update
+  };
+
+  const handleFoodUpdated = (updatedFood) => {
+    // This function will be called by EditFoodModal when an update is successful
+    // You can update local state if needed, or just let fetchProducts handle it.
+    console.log('Food updated:', updatedFood);
+    fetchProducts(); // Ensure the table is refreshed
   };
 
   if (loading) return (
@@ -266,35 +219,32 @@ const FoodItemsTable = () => {
             Manage all products in your inventory
           </p>
         </div>
-        
+
         <div className="d-flex gap-2 mt-3 mt-md-0">
-          <Button 
-            variant="primary" 
+          <StyledButton
+            variant="primary"
             onClick={fetchProducts}
             style={{
-              backgroundColor: colors.primary,
-              borderColor: colors.primary,
               display: 'flex',
               alignItems: 'center',
               fontWeight: 600
             }}
           >
             <FaSync className="me-2" /> Refresh
-          </Button>
-          
-          <Button 
-            variant="success" 
-            onClick={handleCreate}
+          </StyledButton>
+
+          {/* This button opens the CREATE FoodPostForm modal */}
+          <StyledButton
+            variant="success"
+            onClick={handleOpenFoodPostModal}
             style={{
-              backgroundColor: colors.secondary,
-              borderColor: colors.secondary,
               display: 'flex',
               alignItems: 'center',
               fontWeight: 600
             }}
           >
             <FaPlus className="me-2" /> Add Product
-          </Button>
+          </StyledButton>
         </div>
       </div>
 
@@ -306,16 +256,16 @@ const FoodItemsTable = () => {
               placeholder="Search products..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              style={{ 
+              style={{
                 borderColor: colors.borderColor,
                 boxShadow: 'none',
                 height: '45px'
               }}
             />
-            <Button 
+            <Button
               variant="outline-secondary"
               onClick={() => setSearchTerm('')}
-              style={{ 
+              style={{
                 borderColor: colors.borderColor,
                 color: colors.placeholderText
               }}
@@ -334,14 +284,14 @@ const FoodItemsTable = () => {
         </Col>
       </Row>
 
-      <div style={{ 
-        backgroundColor: colors.cardBackground, 
+      <div style={{
+        backgroundColor: colors.cardBackground,
         borderRadius: '10px',
         overflow: 'hidden',
         boxShadow: '0 4px 6px rgba(0, 0, 0, 0.05)'
       }}>
         <Table hover responsive className="mb-0">
-          <thead style={{ 
+          <thead style={{
             backgroundColor: colors.primary,
             color: 'white'
           }}>
@@ -363,17 +313,13 @@ const FoodItemsTable = () => {
                   <div style={{ fontSize: '1.2rem', color: colors.placeholderText }}>
                     No products found
                   </div>
-                  <Button 
-                    variant="outline-primary" 
+                  <StyledButton
+                    variant="outline-primary"
                     className="mt-3"
                     onClick={() => setSearchTerm('')}
-                    style={{ 
-                      borderColor: colors.primary,
-                      color: colors.primary
-                    }}
                   >
                     Clear search
-                  </Button>
+                  </StyledButton>
                 </td>
               </tr>
             ) : (
@@ -390,12 +336,12 @@ const FoodItemsTable = () => {
                   </td>
                   <td style={{ fontWeight: 600, color: colors.primary }}>KSH {product.price}</td>
                   <td>
-                    <Badge 
+                    <Badge
                       bg={product.quantity > 10 ? 'success' : product.quantity > 0 ? 'warning' : 'danger'}
                       style={{
-                        backgroundColor: 
-                          product.quantity > 10 ? colors.secondary : 
-                          product.quantity > 0 ? '#FFC107' : colors.errorText,
+                        backgroundColor:
+                          product.quantity > 10 ? colors.secondary :
+                            product.quantity > 0 ? '#FFC107' : colors.errorText,
                         fontWeight: 500
                       }}
                     >
@@ -405,12 +351,12 @@ const FoodItemsTable = () => {
                   <td>{product.brand}</td>
                   <td>
                     <div className="d-flex flex-wrap gap-1">
-                      {Array.isArray(product.sizes) ? 
+                      {Array.isArray(product.sizes) ?
                         product.sizes.map((size, i) => (
-                          <span 
-                            key={i} 
+                          <span
+                            key={i}
                             className="badge rounded-pill"
-                            style={{ 
+                            style={{
                               backgroundColor: colors.lightBackground,
                               color: colors.darkText,
                               padding: '5px 10px'
@@ -418,13 +364,13 @@ const FoodItemsTable = () => {
                           >
                             {size}
                           </span>
-                        )) : 
+                        )) :
                         <span style={{ color: colors.placeholderText }}>N/A</span>
                       }
                     </div>
                   </td>
                   <td>
-                    <Badge 
+                    <Badge
                       bg={product.status === 'active' ? 'success' : 'secondary'}
                       style={{
                         backgroundColor: product.status === 'active' ? colors.secondary : colors.placeholderText,
@@ -436,13 +382,11 @@ const FoodItemsTable = () => {
                   </td>
                   <td>
                     <div className="d-flex gap-2">
-                      <Button 
-                        variant="outline-primary" 
-                        size="sm" 
+                      <StyledButton
+                        variant="outline-primary"
+                        size="sm"
                         onClick={() => handleView(product)}
                         style={{
-                          borderColor: colors.primary,
-                          color: colors.primary,
                           width: '35px',
                           height: '35px',
                           display: 'flex',
@@ -452,14 +396,14 @@ const FoodItemsTable = () => {
                         }}
                       >
                         <FaEye />
-                      </Button>
-                      <Button 
-                        variant="outline-success" 
-                        size="sm" 
-                        onClick={() => handleUpdate(product)}
+                      </StyledButton>
+                      
+                      {/* This button opens the EDIT EditFoodModal */}
+                      <StyledButton
+                        variant="outline-success"
+                        size="sm"
+                        onClick={() => handleOpenEditModal(product)} // Pass the specific product to edit
                         style={{
-                          borderColor: colors.secondary,
-                          color: colors.secondary,
                           width: '35px',
                           height: '35px',
                           display: 'flex',
@@ -469,14 +413,12 @@ const FoodItemsTable = () => {
                         }}
                       >
                         <FaEdit />
-                      </Button>
-                      <Button 
-                        variant="outline-danger" 
-                        size="sm" 
+                      </StyledButton>
+                      <StyledButton
+                        variant="outline-danger"
+                        size="sm"
                         onClick={() => handleDelete(product._id)}
                         style={{
-                          borderColor: colors.errorText,
-                          color: colors.errorText,
                           width: '35px',
                           height: '35px',
                           display: 'flex',
@@ -486,7 +428,7 @@ const FoodItemsTable = () => {
                         }}
                       >
                         <FaTrash />
-                      </Button>
+                      </StyledButton>
                     </div>
                   </td>
                 </tr>
@@ -495,9 +437,25 @@ const FoodItemsTable = () => {
           </tbody>
         </Table>
       </div>
+
+      {/* RENDER THE FOODPOSTFORM COMPONENT FOR CREATION */}
+      <FoodPostForm
+        show={showFoodPostModal} // Controls visibility for the CREATE modal
+        onHide={handleCloseFoodPostModal} // Function to close the CREATE modal
+        setFoods={fetchProducts} // Passed to update the list after creation
+      />
+
+      {/* RENDER THE EDITFOODMODAL COMPONENT FOR EDITING */}
+      {editingFood && ( // Only render EditFoodModal if there's a food to edit
+        <EditFoodModal
+          show={showEditModal} // Controls visibility for the EDIT modal
+          food={editingFood} // Pass the specific food object to be edited
+          onHide={handleCloseEditModal} // Function to close the EDIT modal
+          onUpdate={handleFoodUpdated} // Callback for when food is successfully updated
+        />
+      )}
     </Container>
   );
 };
-
 
 export default FoodItemsTable;

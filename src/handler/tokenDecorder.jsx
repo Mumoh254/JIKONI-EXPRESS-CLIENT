@@ -13,7 +13,6 @@ export const getUserIdFromToken = () => {
     return null;
   }
 };
-
 /**
  * Get full user info (id, name, role) from JWT
  */

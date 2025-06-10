@@ -615,7 +615,7 @@ const ChefOrders = () => {
         }
         setLoading(true);
         try {
-            const response = await fetch(`https://neuro-apps-api-express-js-production-redy.onrender.com/apiV1/smartcity-ke/chef/orders/${chefId}`);
+            const response = await fetch(`http://localhost:8000/apiV1/smartcity-ke/chef/orders/${chefId}`);
             if (!response.ok) {
                 throw new Error("Failed to fetch orders");
             }

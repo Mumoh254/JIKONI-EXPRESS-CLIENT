@@ -24,9 +24,9 @@ import Board from './components/Rider/riderBoard';
 import  Logout   from  './components/auth/logout'
 import   ForgotPassword    from './components/auth/forgotPassword'
 // Import the SocketContext and NotificationsPanel
-import { SocketProvider, useSocket } from '../src/components/context/notificationContext'; // Adjust path if needed
-import NotificationsPanel from '../src/components/chefs/orders/notificationPanel'; // Adjust path if needed
 
+import NotificationsPanel from '../src/components/chefs/orders/notificationPanel'; // Adjust path if needed
+import   UserOrderDetails   from './components/cartAndOrder/userOrderDetails'
 const AppContainer = styled.div`
   min-height: 100vh;
   position: relative;
@@ -192,7 +192,7 @@ function App() {
 
   return (
     // Wrap your entire App component content with SocketProvider
-    <SocketProvider>
+   
       <AppContainer>
         <MainContent>
           <Routes>
@@ -211,6 +211,8 @@ function App() {
             <Route path="/liqour/:id" element={<LiqourProfile />} />
             <Route path="/jikoni/express/download" element={<Download />} />
             <Route path="/saved/foods" element={<SavedFoods />} />
+  <Route path="/user/order-details/:orderId" element={<UserOrderDetails  />} />
+              <Route path="/user/order-details" element={<UserOrderDetails />} />
             <Route path="/rider/dashboard" element={<Board />} />
             <Route path="/chef/dashboard" element={<ChefDashboard setIsChefMode={setIsChefMode} />} />
           </Routes>
@@ -271,7 +273,7 @@ function App() {
           />
         )}
       </AppContainer>
-    </SocketProvider>
+
   );
 }
 
