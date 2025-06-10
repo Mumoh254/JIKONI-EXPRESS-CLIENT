@@ -153,9 +153,6 @@ function App() {
   const [isRiderMode, setIsRiderMode] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false); // State for notification panel visibility
 
-  // Access notifications and markAsRead from SocketContext
-  // This will only be available if App is wrapped in SocketProvider
-  const { notifications, markNotificationAsRead } = useSocket();
 
   // Set username from token
   useEffect(() => {
@@ -188,8 +185,7 @@ function App() {
     navigate('/login');
   };
 
-  const unreadNotificationsCount = notifications.filter(n => !n.read).length;
-
+ 
   return (
     // Wrap your entire App component content with SocketProvider
    
@@ -230,13 +226,7 @@ function App() {
               <NavLink to="/chef/dashboard">
                 <FiCoffee /> Foods
               </NavLink>
-              {/* Notification icon for chefs */}
-              <NotificationBell as="div" onClick={() => setShowNotifications(true)}> {/* Use as="div" to prevent actual navigation */}
-                <FiBell /> Notifications
-                {unreadNotificationsCount > 0 && (
-                  <span className="notification-badge">{unreadNotificationsCount}</span>
-                )}
-              </NotificationBell>
+            
             </>
           ) : isRiderMode ? (
             <>
@@ -263,15 +253,7 @@ function App() {
           )}
         </BottomNav>
 
-        {/* Notifications Panel rendered conditionally for chefs */}
-        {isChefMode && (
-          <NotificationsPanel
-            show={showNotifications}
-            onHide={() => setShowNotifications(false)}
-            notifications={notifications}
-            markNotificationAsRead={markNotificationAsRead}
-          />
-        )}
+      
       </AppContainer>
 
   );
