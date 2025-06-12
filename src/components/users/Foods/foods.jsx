@@ -612,12 +612,14 @@ const onClose = () => setShowModal(false);
         >
           <div className="story-image-wrapper position-relative">
             <div className="story-gradient-border">
-              <img
-                src={food.photoUrls?.[0] || '/placeholder-food.jpg'}
-                alt={food.title}
-                className="story-img"
-              />
-            </div>
+  <img
+    src={food.photoUrls?.[0] || '/placeholder-food.jpg'} // fallback if image missing
+    alt={food.title} // good for accessibility & SEO
+    className="story-img" // styling class
+    loading="lazy" // native lazy loading
+  />
+</div>
+
             <div className="story-details  ">
               <span className="chef-name  ">{food.chef.user.Name}</span>
          <Badge pill className="location-badge overflow-hidden p-0">

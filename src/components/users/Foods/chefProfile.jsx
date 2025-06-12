@@ -7,8 +7,8 @@ import { GiKenya } from "react-icons/gi";
 import { BsCart } from 'react-icons/bs';
 import { FaUser } from 'react-icons/fa'; // Font Awesome User icon
 import { BsScooter } from "react-icons/bs";
-
-
+import {CartSidebar, PreOrderModal} from  '../../../components/cartAndOrder/cart'
+import  OrderConfirmation   from '../../../components/cartAndOrder/orderConfirm'
 import {
   updateCart,
   handlePreOrder,
@@ -95,6 +95,115 @@ const initiateMpesaPayment = async () => {
       });
 
 
+
+
+      
+        const updateCart = (item, quantityChange) => {
+        
+          setState(prev => {
+            const existingItem = prev.cart.find(i => i.id === item.id);
+            let newCart = [...prev.cart];
+            
+            if (existingItem) {
+              const newQuantity = existingItem.quantity + quantityChange;
+              if (newQuantity <= 0) {
+                newCart = newCart.filter(i => i.id !== item.id);
+              } else {
+                newCart = newCart.map(i => 
+                  i.id === item.id ? { ...i, quantity: newQuantity } : i
+                );
+              }
+            } else if (quantityChange > 0) {
+              newCart.push({ 
+                ...item,
+                quantity: 1,
+                price: Number(item.price)
+              });
+            }
+            
+            return { ...prev, cart: newCart };
+          });
+        };
+      const onClose = () => setShowModal(false);
+        const handlePreOrder = (food) => {
+          setSelectedFood(food);
+          setShowPreOrderModal(true);
+          setPreOrderForm({
+            date: '',
+            time: '',
+            instructions: '',
+            servings: 1
+          });
+          onClose()
+        };
+       
+        const handleSubmit = () => {
+          const preOrderItem = {
+            ...selectedFood,
+            isPreOrder: true,
+            preOrderDate: preOrderForm.date,
+            preOrderTime: preOrderForm.time,
+            instructions: preOrderForm.instructions,
+            quantity: preOrderForm.servings
+          };
+          
+          updateCart(preOrderItem, preOrderForm.servings);
+          setShowPreOrderModal(false);
+        };
+      
+        const handleCheckout = () => {
+          // Get user's current location
+          if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+              (position) => {
+                const { latitude, longitude } = position.coords;
+                // Reverse geocode to get address (mock)
+                const mockAddress = "123 Main St, Nairobi, Kenya";
+                setState(prev => ({
+                  ...prev,
+                  showCart: false,
+                  showOrderConfirmation: true,
+                  userLocation: {
+                    lat: latitude,
+                    lng: longitude,
+                    address: mockAddress
+                  }
+                }));
+              },
+              (error) => {
+                setState(prev => ({
+                  ...prev,
+                  showOrderConfirmation: true,
+                  locationError: "Failed to get your location: " + error.message
+                }));
+              }
+            );
+          } else {
+            setState(prev => ({
+              ...prev,
+              showOrderConfirmation: true,
+              locationError: "Geolocation is not supported by your browser"
+            }));
+          }
+        };
+      
+        const handleConfirmOrder = () => {
+          Swal.fire({
+            title: 'Order Confirmed!',
+            text: 'Your order has been placed successfully',
+            icon: 'success',
+            confirmButtonText: 'Continue Shopping'
+          }).then(() => {
+            // Clear cart and go back to food platform
+            setState(prev => ({
+              ...prev,
+              cart: [],
+              showOrderConfirmation: false
+            }));
+          });
+        };
+      
+
   // Color scheme
   const colors = {
     primary: '#2ecc71',
@@ -123,38 +232,6 @@ const modalColors = {
 };
 
   
-
-  // Add this cart management logic
-const updateCart = (item, quantityChange) => {
-
-  setState(prev => {
-    const existingItem = prev.cart.find(i => i.id === item.id);
-    let newCart = [...prev.cart];
-    
-    if (existingItem) {
-      // Update quantity
-      const newQuantity = existingItem.quantity + quantityChange;
-      if (newQuantity <= 0) {
-        // Remove item if quantity reaches 0
-        newCart = newCart.filter(i => i.id !== item.id);
-      } else {
-        // Update quantity
-        newCart = newCart.map(i => 
-          i.id === item.id ? { ...i, quantity: newQuantity } : i
-        );
-      }
-    } else if (quantityChange > 0) {
-      // Add new item to cart
-      newCart.push({ 
-        ...item,
-        quantity: 1,
-        price: Number(item.price)
-      });
-    }
-    
-    return { ...prev, cart: newCart };
-  });
-};
 
 // Add these calculation functions
 const calculateSubtotal = () => 

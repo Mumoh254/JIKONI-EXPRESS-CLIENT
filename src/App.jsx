@@ -27,6 +27,9 @@ import   ForgotPassword    from './components/auth/forgotPassword'
 
 import NotificationsPanel from '../src/components/chefs/orders/notificationPanel'; // Adjust path if needed
 import   UserOrderDetails   from './components/cartAndOrder/userOrderDetails'
+import AudioCall from './components/calls/audioCalls';
+
+
 const AppContainer = styled.div`
   min-height: 100vh;
   position: relative;
@@ -197,6 +200,9 @@ function App() {
             <Route path="/verify-otp" element={<VerifyOtp />} />
             <Route path="/login" element={<Login />} />
              <Route path="/logout" element={<Logout />} />
+
+  <Route path="/audio/calls" element={<AudioCall />} />
+            
                 <Route path="/forgot-password" element={<ForgotPassword />} />
 
               
@@ -207,7 +213,7 @@ function App() {
             <Route path="/liqour/:id" element={<LiqourProfile />} />
             <Route path="/jikoni/express/download" element={<Download />} />
             <Route path="/saved/foods" element={<SavedFoods />} />
-  <Route path="/user/order-details/:orderId" element={<UserOrderDetails  />} />
+              <Route path="/user/order-details/:orderId" element={<UserOrderDetails  />} />
               <Route path="/user/order-details" element={<UserOrderDetails />} />
             <Route path="/rider/dashboard" element={<Board />} />
             <Route path="/chef/dashboard" element={<ChefDashboard setIsChefMode={setIsChefMode} />} />

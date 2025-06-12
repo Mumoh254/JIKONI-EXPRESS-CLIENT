@@ -9,6 +9,9 @@ import {
 } from 'react-bootstrap-icons';
 
 
+import  {CartSidebar}  from '../components/cartAndOrder/cart';
+import OrderConfirmation from '../components/cartAndOrder/orderConfirm'
+
 
 import {
   updateCart,
@@ -306,110 +309,107 @@ const LiquorProductsGrid = () => {
 
 
 
-  
-    const updateCart = (item, quantityChange) => {
-
-      setState(prev => {
-        const existingItem = prev.cart.find(i => i.id === item.id);
-        let newCart = [...prev.cart];
-        
-        if (existingItem) {
-          const newQuantity = existingItem.quantity + quantityChange;
-          if (newQuantity <= 0) {
-            newCart = newCart.filter(i => i.id !== item.id);
-          } else {
-            newCart = newCart.map(i => 
-              i.id === item.id ? { ...i, quantity: newQuantity } : i
-            );
-          }
-        } else if (quantityChange > 0) {
-          newCart.push({ 
-            ...item,
-            quantity: 1,
-            price: Number(item.price)
-          });
-        }
-        
-        return { ...prev, cart: newCart };
-      });
-    };
-  
-    const handlePreOrder = (food) => {
-      setSelectedFood(food);
-      setShowPreOrderModal(true);
-      setPreOrderForm({
-        date: '',
-        time: '',
-        instructions: '',
-        servings: 1
-      });
-    };
-  
-    const handleSubmitPreOrder = () => {
-      const preOrderItem = {
-        ...selectedFood,
-        isPreOrder: true,
-        preOrderDate: preOrderForm.date,
-        preOrderTime: preOrderForm.time,
-        instructions: preOrderForm.instructions,
-        quantity: preOrderForm.servings
-      };
+  const updateCart = (item, quantityChange) => {
+ 
+    setState(prev => {
+      const existingItem = prev.cart.find(i => i.id === item.id);
+      let newCart = [...prev.cart];
       
-      updateCart(preOrderItem, preOrderForm.servings);
-      setShowPreOrderModal(false);
-    };
-  
-    const handleCheckout = () => {
-      // Get user's current location
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-          (position) => {
-            const { latitude, longitude } = position.coords;
-            // Reverse geocode to get address (mock)
-            const mockAddress = "123 Main St, Nairobi, Kenya";
-            setState(prev => ({
-              ...prev,
-              showCart: false,
-              showOrderConfirmation: true,
-              userLocation: {
-                lat: latitude,
-                lng: longitude,
-                address: mockAddress
-              }
-            }));
-          },
-          (error) => {
-            setState(prev => ({
-              ...prev,
-              showOrderConfirmation: true,
-              locationError: "Failed to get your location: " + error.message
-            }));
-          }
-        );
-      } else {
-        setState(prev => ({
-          ...prev,
-          showOrderConfirmation: true,
-          locationError: "Geolocation is not supported by your browser"
-        }));
+      if (existingItem) {
+        const newQuantity = existingItem.quantity + quantityChange;
+        if (newQuantity <= 0) {
+          newCart = newCart.filter(i => i.id !== item.id);
+        } else {
+          newCart = newCart.map(i => 
+            i.id === item.id ? { ...i, quantity: newQuantity } : i
+          );
+        }
+      } else if (quantityChange > 0) {
+        newCart.push({ 
+          ...item,
+          quantity: 1,
+          price: Number(item.price)
+        });
       }
+      
+      return { ...prev, cart: newCart };
+    });
+  };
+
+  const handlePreOrder = (product) => {
+    setSelectedProduct(product);
+    setShowPreOrderModal(true);
+    setPreOrderForm({
+      date: '',
+      time: '',
+      instructions: '',
+      quantity: 1
+    });
+  };
+
+  const handleSubmitPreOrder = () => {
+    const preOrderItem = {
+      ...selectedProduct,
+      isPreOrder: true,
+      preOrderDate: preOrderForm.date,
+      preOrderTime: preOrderForm.time,
+      instructions: preOrderForm.instructions,
+      quantity: preOrderForm.quantity
     };
-  
-    const handleConfirmOrder = () => {
-      Swal.fire({
-        title: 'Order Confirmed!',
-        text: 'Your order has been placed successfully',
-        icon: 'success',
-        confirmButtonText: 'Continue Shopping'
-      }).then(() => {
-        // Clear cart and go back to food platform
-        setState(prev => ({
-          ...prev,
-          cart: [],
-          showOrderConfirmation: false
-        }));
-      });
-    };
+    
+    updateCart(preOrderItem, preOrderForm.quantity);
+    setShowPreOrderModal(false);
+  };
+
+  const handleCheckout = () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          const mockAddress = "123 Main St, Nairobi, Kenya";
+          setState(prev => ({
+            ...prev,
+            showCart: false,
+            showOrderConfirmation: true,
+            userLocation: {
+              lat: latitude,
+              lng: longitude,
+              address: mockAddress
+            }
+          }));
+        },
+        (error) => {
+          setState(prev => ({
+            ...prev,
+            showOrderConfirmation: true,
+            locationError: "Failed to get your location: " + error.message
+          }));
+        }
+      );
+    } else {
+      setState(prev => ({
+        ...prev,
+        showOrderConfirmation: true,
+        locationError: "Geolocation is not supported by your browser"
+      }));
+    }
+  };
+
+  const handleConfirmOrder = () => {
+    Swal.fire({
+      title: 'Order Confirmed!',
+      text: 'Your order has been placed successfully',
+      icon: 'success',
+      confirmButtonText: 'Continue Shopping'
+    }).then(() => {
+      setState(prev => ({
+        ...prev,
+        cart: [],
+        showOrderConfirmation: false
+      }));
+    });
+  };
+
   
   
   const AgeVerificationBadge = () => (

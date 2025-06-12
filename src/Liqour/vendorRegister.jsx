@@ -3,12 +3,12 @@ import {
   Modal, Form, Button, Spinner, Alert
 } from 'react-bootstrap';
 import {
-  FiBriefcase, FiMapPin, FiGlobe, FiUser, 
-  FiClock, FiSend, FiTag, FiHash, 
-  FiPhone, FiMail, FiCheckSquare, 
+  FiBriefcase, FiMapPin, FiGlobe, FiUser,
+  FiClock, FiSend, FiTag, FiHash,
+  FiPhone, FiMail, FiCheckSquare,
   FiAward, FiBox, FiNavigation
 } from 'react-icons/fi';
-import styled, { keyframes } from 'styled-components';
+import styled, { keyframes, css } from 'styled-components'; // Import css for conditional styling
 
 // --- Jikoni Express Color Palette ---
 const colors = {
@@ -126,6 +126,13 @@ const InputField = styled(Form.Control)`
     padding-bottom: 1rem;
     line-height: 1.5;
   }
+
+  // Style for readOnly inputs
+  &:read-only {
+    background-color: ${colors.lightBackground};
+    cursor: not-allowed;
+    border-color: ${colors.borderColor};
+  }
 `;
 
 const LocationButton = styled(Button)`
@@ -142,16 +149,24 @@ const LocationButton = styled(Button)`
   display: flex;
   align-items: center;
   gap: 5px;
-  
+
   &:hover {
     background: ${colors.buttonHover};
     transform: translateY(-50%) scale(1.05);
   }
-  
+
   &:active {
     transform: translateY(-50%) scale(0.95);
   }
+
+  ${props => props.$isLocated && css`
+    background-color: ${colors.secondary}; // Change color when location is set
+    &:hover {
+      background: ${colors.successGreen};
+    }
+  `}
 `;
+
 
 const SubmitButton = styled(Button)`
   width: 100%;
@@ -200,11 +215,11 @@ const LocationAlert = styled(Alert)`
   border-radius: 8px;
   padding: 15px;
   margin-top: 15px;
-  
+
   strong {
     color: ${colors.primary};
   }
-  
+
   svg {
     color: ${colors.primary};
     margin-right: 10px;
@@ -216,24 +231,27 @@ const VendorRegistrationModal = ({ show, onClose, onSubmit }) => {
   const [locationLoading, setLocationLoading] = useState(false);
   const [locationError, setLocationError] = useState(null);
   const [coordinates, setCoordinates] = useState({
-    latitude: -1.286389,
-    longitude: 36.817223
+    latitude: -1.286389, // Default Nairobi latitude
+    longitude: 36.817223 // Default Nairobi longitude
   });
-  const defaultCity = "Nairobi";
+  const defaultCity = "Nairobi"; // Default city
+
   useEffect(() => {
     if (show) {
+      // Attempt to get user location when the modal first shows
       getUserLocation();
     }
   }, [show]);
 
   const getUserLocation = () => {
     if (!navigator.geolocation) {
-      setLocationError("Geolocation is not supported by your browser.");
+      setLocationError("Geolocation is not supported by your browser. Please enter coordinates manually or use a different browser.");
       return;
     }
 
     setLocationLoading(true);
     setLocationError('');  // Clear previous errors
+
     navigator.geolocation.getCurrentPosition(
       (position) => {
         setCoordinates({
@@ -241,16 +259,33 @@ const VendorRegistrationModal = ({ show, onClose, onSubmit }) => {
           longitude: position.coords.longitude,
         });
         setLocationLoading(false);
+        setLocationError(null); // Clear error on successful retrieval
       },
       (error) => {
-        setLocationError("Unable to retrieve your location. Using default Nairobi coordinates.");
+        let errorMessage = "Unable to retrieve your location. ";
+        switch(error.code) {
+          case error.PERMISSION_DENIED:
+            errorMessage += "Please allow location access to use this feature.";
+            break;
+          case error.POSITION_UNAVAILABLE:
+            errorMessage += "Location information is unavailable.";
+            break;
+          case error.TIMEOUT:
+            errorMessage += "The request to get user location timed out.";
+            break;
+          default:
+            errorMessage += "An unknown error occurred.";
+            break;
+        }
+        errorMessage += " Default Nairobi coordinates are used as a fallback.";
+        setLocationError(errorMessage);
         setLocationLoading(false);
         setCoordinates({ latitude: -1.2921, longitude: 36.8219 }); // fallback to Nairobi
       },
       {
-        timeout: 10000, // optional timeout for location request
-        maximumAge: 60000,
-        enableHighAccuracy: true
+        timeout: 10000, // optional timeout for location request (10 seconds)
+        maximumAge: 60000, // use cached position if less than 1 minute old
+        enableHighAccuracy: true // request the best possible results
       }
     );
   };
@@ -259,7 +294,7 @@ const VendorRegistrationModal = ({ show, onClose, onSubmit }) => {
     e.preventDefault();
     setSubmitting(true);
     const formData = new FormData(e.target);
-    
+
     const data = {
       businessName: formData.get('businessName'),
       licenceNumber: formData.get('licenceNumber'),
@@ -270,13 +305,15 @@ const VendorRegistrationModal = ({ show, onClose, onSubmit }) => {
       operatingHours: formData.get('operatingHours'),
       physicalAddress: formData.get('physicalAddress'),
       city: formData.get('city'),
-      latitude: coordinates.latitude,
-      longitude: coordinates.longitude
+      latitude: coordinates.latitude, // Use state value for coordinates
+      longitude: coordinates.longitude // Use state value for coordinates
     };
 
-    await onSubmit(data);
+    await onSubmit(data); // This prop will typically make the API call
     setSubmitting(false);
   };
+
+  const isLocationSet = coordinates.latitude !== -1.286389 || coordinates.longitude !== 36.817223; // Check if default has changed
 
   return (
     <Modal show={show} onHide={onClose} centered size="lg">
@@ -346,22 +383,23 @@ const VendorRegistrationModal = ({ show, onClose, onSubmit }) => {
               <FormGroup>
                 <Form.Label>City</Form.Label>
                 <IconWrapper><FiGlobe /></IconWrapper>
-                <InputField name="city" defaultValue={defaultCity} required disabled />
+                <InputField name="city" defaultValue={defaultCity} required readOnly /> {/* Set to readOnly */}
               </FormGroup>
 
               <FormGroup>
                 <Form.Label>Latitude</Form.Label>
                 <IconWrapper><FiNavigation /></IconWrapper>
-                <InputField 
-                  name="latitude" 
-                  type="number" 
-                  step="any" 
-                  value={coordinates.latitude} 
-                  onChange={(e) => setCoordinates({...coordinates, latitude: parseFloat(e.target.value)})}
-                  required 
+                <InputField
+                  name="latitude"
+                  type="number"
+                  step="any"
+                  value={coordinates.latitude}
+                  readOnly // Prevent manual input
+                  required
                 />
-                <LocationButton 
-                  variant="primary" 
+                <LocationButton
+                  $isLocated={isLocationSet} // Pass prop for conditional styling
+                  variant="primary"
                   onClick={getUserLocation}
                   disabled={locationLoading}
                 >
@@ -369,7 +407,7 @@ const VendorRegistrationModal = ({ show, onClose, onSubmit }) => {
                     <Spinner animation="border" size="sm" />
                   ) : (
                     <>
-                      <FiNavigation /> Locate
+                      <FiNavigation /> {isLocationSet ? 'Recalculate' : 'Locate My Business'}
                     </>
                   )}
                 </LocationButton>
@@ -378,13 +416,13 @@ const VendorRegistrationModal = ({ show, onClose, onSubmit }) => {
               <FormGroup>
                 <Form.Label>Longitude</Form.Label>
                 <IconWrapper><FiNavigation /></IconWrapper>
-                <InputField 
-                  name="longitude" 
-                  type="number" 
-                  step="any" 
-                  value={coordinates.longitude} 
-                  onChange={(e) => setCoordinates({...coordinates, longitude: parseFloat(e.target.value)})}
-                  required 
+                <InputField
+                  name="longitude"
+                  type="number"
+                  step="any"
+                  value={coordinates.longitude}
+                  readOnly // Prevent manual input
+                  required
                 />
               </FormGroup>
             </div>
@@ -394,8 +432,8 @@ const VendorRegistrationModal = ({ show, onClose, onSubmit }) => {
             <div className="d-flex align-items-center">
               <FiNavigation size={24} />
               <div>
-                <strong>Location Notice:</strong> Your coordinates will be used by Jikoni Express riders to 
-                navigate to your business for order pickups. Please ensure they are accurate.
+                <strong>Location Notice:</strong> Your coordinates will be used by Jikoni Express riders to
+                navigate to your business for order pickups. Please ensure they are accurate by using the "Locate My Business" button.
               </div>
             </div>
           </LocationAlert>
