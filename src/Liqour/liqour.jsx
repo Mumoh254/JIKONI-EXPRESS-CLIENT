@@ -27,7 +27,9 @@ import { jwtDecode } from "jwt-decode";
 import moment from 'moment-timezone';
 import  {CartSidebar}  from '../components/cartAndOrder/cart';
 import OrderConfirmation from '../components/cartAndOrder/orderConfirm'
-
+import { RiMotorbikeFill } from 'react-icons/ri';
+import { FaCartPlus } from "react-icons/fa";
+import { SiCodechef } from "react-icons/si";
 
 const theme = {
   primary: '#1a237e',
@@ -36,6 +38,24 @@ const theme = {
   light: '#f5f5f5',
   dark: '#121212'
 };
+
+
+
+
+// Jikoni Express Color Palette
+const colors = {
+  primary: '#FF4532', // Jikoni Red
+  secondary: '#00C853', // Jikoni Green
+  darkText: '#1A202C', // Dark text for headings
+  lightBackground: '#F0F2F5', // Light background for the page
+  cardBackground: '#FFFFFF', // White for the form card
+  borderColor: '#D1D9E6', // Light border for inputs
+  errorText: '#EF4444', // Red for errors
+  placeholderText: '#A0AEC0', // Muted text for placeholders
+  buttonHover: '#E6392B', // Darker red on button hover
+  disabledButton: '#CBD5E1', // Gray for disabled buttons
+};
+
 
 const StyledCard = styled(Card)`
   transition: transform 0.2s;
@@ -460,66 +480,69 @@ const Liqour = () => {
 
   return (
     <Container fluid className="px-0" style={{ backgroundColor: theme.light }}>
-  <header className="header bg-white shadow-sm sticky-top">
-  <div className="container">
-    <div className="d-flex justify-content-between align-items-center py-2 py-md-2">
-      <div className="d-flex align-items-center gap-2 gap-md-3">
-        <GiKenya className="text-primary header-icon" />
-        <h1 className="m-0 brand-title">
-          <span className="text-primary">Jikoni</span>
-          <span className="text-danger px-1">Liqour</span>
-        </h1>
-      </div>
-      <div className="d-flex gap-2 gap-md-3 align-items-center">
-        {!state.isVendorMode && (
-          <div className="d-flex gap-1 gap-md-2">
-            <Button
-              variant="outline-primary"
-              className="rounded-pill px-3 px-md-4 py-1 d-flex align-items-center"
-              onClick={() => setState(s => ({ ...s, showVendorReg: true }))}
-            >
-              <Person className="me-1 me-md-2" />
-              <span className="d-none d-md-inline">Vendor</span>
-            </Button>
-          </div>
-        )}
-        {state.isVendorMode && (
-          <Button
-            variant="danger"
-            className="rounded-pill px-3 px-md-4 py-1"
-            onClick={() => {
-              localStorage.removeItem('vendorId');
-              setState(s => ({ ...s, isVendorMode: false }));
-            }}
-          >
-            <span className="d-none d-md-inline">Exit Vendor Mode</span>
-            <span className="d-md-none">Exit</span>
-          </Button>
-        )}
-        <Button
-          variant="warning"
-          className="rounded-pill px-3 me-2 mt-1 px-md-2 py-1 position-relative"
-          onClick={() => setState(s => ({ ...s, showCart: true }))}
-          style={{ minWidth: 'auto' }}
-        >
-          <Cart className="me-2 me-md-2" />
-          <span className="d-none d-md-inline">Cart</span>
-          <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-            {state.cart.reduce((sum, i) => sum + i.quantity, 0)}
-            <span className="visually-hidden">items in cart</span>
-          </span>
-        </Button>
-      </div>
-    </div>
+    {/* Header */}
+    <header className="header bg-white shadow-sm sticky-top">
+   <div className="container">
+     <div className="d-flex justify-content-between align-items-center py-2 py-md-3">
+       <div className="d-flex align-items-center gap-2 gap-md-3">
+         <GiKenya className="text-primary header-icon gradient-icon" />
+<h1 className="m-0 brand-title display-6 fw-bold">
+  <span className="jikoni-red">Jikoni</span>
+  <span className="jikoni-green px-1">Express</span>
+</h1>
 
-    {/* Render Vendor Registration Modal */}
-    {state.showVendorReg && (
-      <VendorRegistrationModal
-        onClose={() => setState(s => ({ ...s, showVendorReg: false }))}
-      />
-    )}
-  </div>
-</header>
+
+       </div>
+ 
+       <div className="d-flex gap-2 gap-md-3 align-items-center">
+       
+ 
+     {!state.isChefMode && !state.isRiderMode && (
+   <div className="d-flex gap-1 gap-md-2">
+     <Button 
+       variant="primary"
+       className="px-3 px-md-4 py-1 d-flex align-items-center"
+       style={{ backgroundColor: colors.primary, border: 'none' }}
+       onClick={() => setState(s => ({ ...s, showChefReg: true }))}
+     >
+       <SiCodechef className="me-2" />
+       <span className="d-none d-md-inline">Chef</span>
+     </Button>
+ 
+     <Button 
+       variant="success"
+       className="px-3 px-md-4 py-1 d-flex align-items-center"
+       style={{ backgroundColor: colors.secondary, border: 'none' }}
+       onClick={() => setState(s => ({ ...s, showRiderReg: true }))}
+     >
+       <RiMotorbikeFill className="me-2" />
+       <span className="d-none d-md-inline">Rider</span>
+     </Button>
+   </div>
+ )}
+ <Button
+   className="px-3 me-2 mt-1 px-md-2 py-1 position-relative d-flex align-items-center text-white border-0"
+   style={{ backgroundColor: '#FFC107' }} // warning yellow
+   onClick={() => setState(s => ({ ...s, showCart: true }))}
+ >
+   <FaCartPlus className="me-2" />
+   <span className="d-none d-md-inline">Cart</span>
+ 
+   {/* Green badge for cart count */}
+   <span
+     className="position-absolute top-0 start-100 translate-middle badge rounded-pill text-white"
+     style={{ backgroundColor: '#00C853' }} // Jikoni Green
+   >
+     {state.cart.reduce((sum, i) => sum + i.quantity, 0)}
+     <span className="visually-hidden">items in cart</span>
+   </span>
+ </Button>
+ 
+       </div>
+     </div>
+   </div>
+ </header>
+ 
 
 <div className="py-4 container-xl">
   {/* Stories Section */}

@@ -20,7 +20,6 @@ handleCheckout,
 
 
 
-
 const ChefProfile = ({ addToCart }) => {
 
   const  BASE_URL   =   "https://neuro-apps-api-express-js-production-redy.onrender.com/apiV1/smartcity-ke"
@@ -76,8 +75,8 @@ const initiateMpesaPayment = async () => {
         orders: [],
         riders: [],
         cart: [],
-         showCart: false,
-        cart: [],  // 
+     
+
         
         loadingOrders: true,
         loading: true,

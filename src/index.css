@@ -952,4 +952,53 @@ svg {
 
 
 
+/*   header  styelss  custom  */
 
+.header {
+
+  z-index: 1050;
+}
+
+.brand-title {
+  font-size: 1.5rem !important;
+  font-weight: 700;
+}
+
+.header-icon {
+  font-size: 2rem;
+}
+
+.header button {
+  transition: all 0.3s ease !important;
+}
+
+.header button:hover {
+  opacity: 0.9;
+  transform: scale(1.02);
+}
+
+
+/*   headr  kenyan icon  */
+.gradient-icon {
+  background: linear-gradient(90deg, #FF4532 0%, var(--jikoni-green, #00A859) 100%) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  font-size: 2rem;
+}
+
+
+
+
+
+.jikoni-red {
+  color: #FF4532;
+}
+
+.jikoni-green {
+  color: #00C853;
+}
+
+.brand-title {
+  font-family: 'Poppins', sans-serif;
+  letter-spacing: 0.4px;
+}

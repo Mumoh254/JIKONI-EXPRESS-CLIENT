@@ -18,14 +18,18 @@ import { Heart, HeartFill } from 'react-bootstrap-icons';
 import { FaEye } from "react-icons/fa";
 import styled from 'styled-components';
 import { formatDistanceToNow } from 'date-fns';
-import { GiKenya } from "react-icons/gi";
+
 import RiderRegistration from '../../modals/riderRegistration';
 import popSound from '../../../../public/audio/cliks.mp3';
 import { jwtDecode } from "jwt-decode";
 import moment from 'moment-timezone';
 import  { CartSidebar   ,  PreOrderModal } from '../../cartAndOrder/cart';
 import  OrderConfirmation from '../../cartAndOrder/orderConfirm'
+import { GiKenya } from 'react-icons/gi';
 
+import { RiMotorbikeFill } from 'react-icons/ri';
+import { FaCartPlus } from "react-icons/fa";
+import { SiCodechef } from "react-icons/si";
 const theme = {
   primary: '#2563eb',
   secondary: '#c3e703',
@@ -495,68 +499,67 @@ const onClose = () => setShowModal(false);
   return (
     <Container fluid className="px-0" style={{ backgroundColor: theme.light }}>
       {/* Header */}
-      <header className="header bg-white shadow-sm sticky-top">
-        <div className="container">
-          <div className="d-flex justify-content-between align-items-center py-2 py-md-2">
-            <div className="d-flex align-items-center gap-2 gap-md-3">
-              <GiKenya className="text-primary header-icon" />
-              <h1 className="m-0 brand-title">
-                <span className="text-primary">Jikoni</span>
-                <span className="text-danger px-1">Express</span>
-              </h1>
-            </div>
-            
-            <div className="d-flex gap-2 gap-md-3 align-items-center">
-              {!state.isChefMode && !state.isRiderMode && (
-                <div className="d-flex gap-1 gap-md-2">
-                  <Button 
-                    variant="outline-primary"
-                    className="rounded-pill px-3 px-md-4 py-1 d-flex align-items-center"
-                    onClick={() => setState(s => ({ ...s, showChefReg: true }))}
-                  >
-                    <Person className="me-1 me-md-2" />
-                    <span className="d-none d-md-inline">Chef</span>
-                  </Button>
-                  <Button 
-                    variant="outline-success"
-                    className="rounded-pill px-3 px-md-4 py-1 d-flex align-items-center"
-                    onClick={() => setState(s => ({ ...s, showRiderReg: true }))}
-                  >
-                    <Scooter className="me-1 me-md-2" />
-                    <span className="d-none d-md-inline">Rider</span>
-                  </Button>
-                </div>
-              )}
-              {state.isChefMode && (
-                <Button 
-                  variant="danger"
-                  className="rounded-pill px-3  px-md-4 py-1"
-                  onClick={() => {
-                    localStorage.removeItem('chefId');
-                    setState(s => ({ ...s, isChefMode: false }));
-                  }}
-                >
-                  <span className="d-none d-md-inline">Exit Chef Mode</span>
-                  <span className="d-md-none">Exit</span>
-                </Button>
-              )}
-              <Button 
-                variant="warning"
-                className="rounded-pill px-3 me-2 mt-1  px-md-2 py-1 position-relative"
-                onClick={() => setState(s => ({ ...s, showCart: true }))} 
-                style={{ minWidth: 'auto' }}
-              >
-                <Cart className="me-2  me-md-2" />
-                <span className="d-none d-md-inline">Cart</span>
-                <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                  {state.cart.reduce((sum, i) => sum + i.quantity, 0)}
-                  <span className="visually-hidden">items in cart</span>
-                </span>
-              </Button>
-            </div>
-          </div>
-        </div>
-      </header>
+   <header className="header bg-white shadow-sm sticky-top">
+  <div className="container">
+    <div className="d-flex justify-content-between align-items-center py-2 py-md-3">
+      <div className="d-flex align-items-center gap-2 gap-md-3">
+        <GiKenya className="text-primary header-icon gradient-icon" />
+    <h1 className="m-0 brand-title display-6 fw-bold">
+  <span className="jikoni-red">Jikoni</span>
+  <span className="jikoni-green px-1">Express</span>
+</h1>
+
+      </div>
+
+      <div className="d-flex gap-2 gap-md-3 align-items-center">
+      
+
+    {!state.isChefMode && !state.isRiderMode && (
+  <div className="d-flex gap-1 gap-md-2">
+    <Button 
+      variant="primary"
+      className="px-3 px-md-4 py-1 d-flex align-items-center"
+      style={{ backgroundColor: colors.primary, border: 'none' }}
+      onClick={() => setState(s => ({ ...s, showChefReg: true }))}
+    >
+      <SiCodechef className="me-2" />
+      <span className="d-none d-md-inline">Chef</span>
+    </Button>
+
+    <Button 
+      variant="success"
+      className="px-3 px-md-4 py-1 d-flex align-items-center"
+      style={{ backgroundColor: colors.secondary, border: 'none' }}
+      onClick={() => setState(s => ({ ...s, showRiderReg: true }))}
+    >
+      <RiMotorbikeFill className="me-2" />
+      <span className="d-none d-md-inline">Rider</span>
+    </Button>
+  </div>
+)}
+<Button
+  className="px-3 me-2 mt-1 px-md-2 py-1 position-relative d-flex align-items-center text-white border-0"
+  style={{ backgroundColor: '#FFC107' }} // warning yellow
+  onClick={() => setState(s => ({ ...s, showCart: true }))}
+>
+  <FaCartPlus className="me-2" />
+  <span className="d-none d-md-inline">Cart</span>
+
+  {/* Green badge for cart count */}
+  <span
+    className="position-absolute top-0 start-100 translate-middle badge rounded-pill text-white"
+    style={{ backgroundColor: '#00C853' }} // Jikoni Green
+  >
+    {state.cart.reduce((sum, i) => sum + i.quantity, 0)}
+    <span className="visually-hidden">items in cart</span>
+  </span>
+</Button>
+
+      </div>
+    </div>
+  </div>
+</header>
+
 
       <div className="py-4 container-xl">
         {/* Stories Section */}
