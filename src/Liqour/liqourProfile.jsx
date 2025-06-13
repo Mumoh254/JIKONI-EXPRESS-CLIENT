@@ -35,8 +35,8 @@ const LiqourProfile = ({ addToCart }) => {
         foods: [],
         orders: [],
         riders: [],
-        cart: [],
-         showCart: false,
+      
+       
         cart: [],  // 
         
         loadingOrders: true,
