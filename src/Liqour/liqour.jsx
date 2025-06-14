@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect }  from 'react';
 import {
   Container, Row, Col, Card, Button, Spinner, Alert, Badge,
   Modal, Form, Offcanvas, Stack, ListGroup, Tabs, Tab, ButtonGroup, Carousel, ProgressBar
@@ -22,14 +22,14 @@ import { GiKenya } from "react-icons/gi";
 import DeliveryRegistration from '../Liqour/delivery';
 import popSound from '../handler/playSound';
 
-    import  LiquorProductsGrid     from  '../Liqour/liqourProdutsGrid'
-import { jwtDecode } from "jwt-decode"; 
+import LiquorProductsGrid from '../Liqour/liqourProdutsGrid';
+import { jwtDecode } from "jwt-decode";
 import moment from 'moment-timezone';
-import  {CartSidebar}  from '../components/cartAndOrder/cart';
-import OrderConfirmation from '../components/cartAndOrder/orderConfirm'
+import { CartSidebar } from '../components/cartAndOrder/cart';
+import OrderConfirmation from '../components/cartAndOrder/orderConfirm';
 import { RiMotorbikeFill } from 'react-icons/ri';
 import { FaCartPlus } from "react-icons/fa";
-import { SiCodechef } from "react-icons/si";
+import { SiCodechef } from "react-icons/si"; // Corrected closing quote
 
 const theme = {
   primary: '#1a237e',
@@ -38,8 +38,6 @@ const theme = {
   light: '#f5f5f5',
   dark: '#121212'
 };
-
-
 
 
 // Jikoni Express Color Palette
@@ -131,7 +129,7 @@ const parseTime = (timeStr, today) => {
     time = moment.tz(`${today} ${timeStr}`, 'YYYY-MM-DD h:mma', 'Africa/Nairobi');
   }
   return time;
-}
+};
 
 const isVendorOpen = (openingHours) => {
   if (!openingHours) return false;
@@ -190,9 +188,9 @@ const Liqour = () => {
     orders: [],
     cart: [],
     showCart: false,
+    showVendorReg: false, // Corrected to showVendorReg for consistency
     loading: true,
     error: null,
-    showVendorReg: false,
     showDeliveryReg: false,
     showProductPost: false,
     showAnalytics: false,
@@ -205,7 +203,7 @@ const Liqour = () => {
     userLocation: null,
     locationError: null
   });
-  
+
   const navigate = useNavigate();
   const BASE_URL = "https://neuro-apps-api-express-js-production-redy.onrender.com/apiV1/smartcity-ke";
   const [userId, setUserId] = useState(null);
@@ -239,18 +237,23 @@ const Liqour = () => {
     const id = getUserIdFromToken();
     setUserId(id);
 
-    Notification.requestPermission().then((perm) => {
-      if (perm === "granted") {
-        new Notification("Notifications Enabled");
-      }
-    });
-    
+    // Request Notification permission
+    if ("Notification" in window) {
+      Notification.requestPermission().then((perm) => {
+        if (perm === "granted") {
+          console.log("Notifications enabled for Jikoni Express.");
+        } else {
+          console.warn("Notification permission denied or dismissed.");
+        }
+      });
+    }
+
     // Fetch products
     const fetchData = async () => {
       try {
         const response = await fetch(`${BASE_URL}/get/foods`);
         const data = await response.json();
-        
+
         const areas = [...new Set(data.map(product => product.area))];
         const categories = [...new Set(data.map(product => product.category))];
 
@@ -266,7 +269,7 @@ const Liqour = () => {
       }
     };
     fetchData();
-    
+
     // Mock order history
     const mockOrderHistory = [
       {
@@ -292,7 +295,7 @@ const Liqour = () => {
       }
     ];
     setOrderHistory(mockOrderHistory);
-  }, []);
+  }, []); // Empty dependency array means this runs once on mount
 
   const filteredProducts = state.products.filter(product => {
     const matchesArea = state.filters.area === 'all' || product.area === state.filters.area;
@@ -301,7 +304,15 @@ const Liqour = () => {
   });
 
   const handleLike = async (productId) => {
-    if (!userId) return;
+    if (!userId) {
+      Swal.fire({
+        icon: 'info',
+        title: 'Login Required',
+        text: 'Please log in to like products.',
+        confirmButtonText: 'OK'
+      });
+      return;
+    }
     try {
       const response = await fetch(`${BASE_URL}/product/${productId}/like`, {
         method: 'PUT',
@@ -310,7 +321,10 @@ const Liqour = () => {
       });
       const data = await response.json();
       if (response.ok) {
-        // Update UI
+        // Update UI logic for like count/status if needed
+        console.log('Product liked/unliked:', data);
+      } else {
+        console.error('Failed to like product:', data.message);
       }
     } catch (error) {
       console.error("Error liking product:", error);
@@ -322,24 +336,24 @@ const Liqour = () => {
     setState(prev => {
       const existingItem = prev.cart.find(i => i.id === item.id);
       let newCart = [...prev.cart];
-      
+
       if (existingItem) {
         const newQuantity = existingItem.quantity + quantityChange;
         if (newQuantity <= 0) {
           newCart = newCart.filter(i => i.id !== item.id);
         } else {
-          newCart = newCart.map(i => 
+          newCart = newCart.map(i =>
             i.id === item.id ? { ...i, quantity: newQuantity } : i
           );
         }
       } else if (quantityChange > 0) {
-        newCart.push({ 
+        newCart.push({
           ...item,
           quantity: 1,
           price: Number(item.price)
         });
       }
-      
+
       return { ...prev, cart: newCart };
     });
   };
@@ -364,7 +378,7 @@ const Liqour = () => {
       instructions: preOrderForm.instructions,
       quantity: preOrderForm.quantity
     };
-    
+
     updateCart(preOrderItem, preOrderForm.quantity);
     setShowPreOrderModal(false);
   };
@@ -374,7 +388,7 @@ const Liqour = () => {
       navigator.geolocation.getCurrentPosition(
         (position) => {
           const { latitude, longitude } = position.coords;
-          const mockAddress = "123 Main St, Nairobi, Kenya";
+          const mockAddress = "123 Main St, Nairobi, Kenya"; // You might get this via reverse geocoding
           setState(prev => ({
             ...prev,
             showCart: false,
@@ -431,9 +445,17 @@ const Liqour = () => {
         localStorage.setItem('vendorId', data.vendor.id);
         localStorage.setItem('isVendor', 'true');
         setState(s => ({ ...s, isVendorMode: true, showVendorReg: false }));
+        // Use navigate from react-router-dom to redirect
+        navigate('/vendor/dashboard'); // Force redirect to vendor dashboard
+        Swal.fire('Success', 'Vendor registered successfully!', 'success');
+      } else {
+        Swal.fire('Error', data.message || 'Vendor registration failed.', 'error');
       }
+      return data; // Return data for the modal to handle success/failure
     } catch (err) {
       console.error('Vendor registration error:', err);
+      Swal.fire('Error', 'An unexpected error occurred during registration.', 'error');
+      return { message: 'An unexpected error occurred during registration.' }; // Return error structure
     }
   };
 
@@ -461,9 +483,13 @@ const Liqour = () => {
         localStorage.setItem('deliveryId', data.delivery.id);
         localStorage.setItem('isDelivery', 'true');
         setState(s => ({ ...s, showDeliveryReg: false, isDeliveryMode: true }));
+        Swal.fire('Success', 'Delivery partner registered successfully!', 'success');
+      } else {
+        Swal.fire('Error', data.message || 'Delivery registration failed.', 'error');
       }
     } catch (err) {
       console.error('Registration error:', err);
+      Swal.fire('Error', 'An unexpected error occurred during registration.', 'error');
     }
   };
 
@@ -480,121 +506,115 @@ const Liqour = () => {
 
   return (
     <Container fluid className="px-0" style={{ backgroundColor: theme.light }}>
-    {/* Header */}
-    <header className="header bg-white shadow-sm sticky-top">
-   <div className="container">
-     <div className="d-flex justify-content-between align-items-center py-2 py-md-3">
-       <div className="d-flex align-items-center gap-2 gap-md-3">
-         <GiKenya className="text-primary header-icon gradient-icon" />
-<h1 className="m-0 brand-title display-6 fw-bold">
-  <span className="jikoni-red">Jikoni</span>
-  <span className="jikoni-green px-1">Express</span>
-</h1>
+      <header className="header bg-white shadow-sm sticky-top">
+        <div className="container">
+          <div className="d-flex justify-content-between align-items-center py-2 py-md-3">
+
+            {/* Logo */}
+            <div className="d-flex align-items-center gap-2 gap-md-3">
+              <GiKenya className="text-primary header-icon gradient-icon" />
+              <h1 className="m-0 brand-title display-6 fw-bold">
+                <span className="jikoni-red">Jikoni</span>
+                <span className="jikoni-green px-1">Express</span>
+              </h1>
+            </div>
+
+            {/* Right-side buttons */}
+            <div className="d-flex gap-2 gap-md-3 align-items-center">
 
 
-       </div>
- 
-       <div className="d-flex gap-2 gap-md-3 align-items-center">
-       
- 
-     {!state.isChefMode && !state.isRiderMode && (
-   <div className="d-flex gap-1 gap-md-2">
-     <Button 
-       variant="primary"
-       className="px-3 px-md-4 py-1 d-flex align-items-center"
-       style={{ backgroundColor: colors.primary, border: 'none' }}
-       onClick={() => setState(s => ({ ...s, showChefReg: true }))}
-     >
-       <SiCodechef className="me-2" />
-       <span className="d-none d-md-inline">Chef</span>
-     </Button>
- 
-     <Button 
-       variant="success"
-       className="px-3 px-md-4 py-1 d-flex align-items-center"
-       style={{ backgroundColor: colors.secondary, border: 'none' }}
-       onClick={() => setState(s => ({ ...s, showRiderReg: true }))}
-     >
-       <RiMotorbikeFill className="me-2" />
-       <span className="d-none d-md-inline">Rider</span>
-     </Button>
-   </div>
- )}
- <Button
-   className="px-3 me-2 mt-1 px-md-2 py-1 position-relative d-flex align-items-center text-white border-0"
-   style={{ backgroundColor: '#FFC107' }} // warning yellow
-   onClick={() => setState(s => ({ ...s, showCart: true }))}
- >
-   <FaCartPlus className="me-2" />
-   <span className="d-none d-md-inline">Cart</span>
- 
-   {/* Green badge for cart count */}
-   <span
-     className="position-absolute top-0 start-100 translate-middle badge rounded-pill text-white"
-     style={{ backgroundColor: '#00C853' }} // Jikoni Green
-   >
-     {state.cart.reduce((sum, i) => sum + i.quantity, 0)}
-     <span className="visually-hidden">items in cart</span>
-   </span>
- </Button>
- 
-       </div>
-     </div>
-   </div>
- </header>
- 
+              {/* Vendor Button */}
+              <Button
+                variant="primary"
+                className="px-3 px-md-4 py-1 d-flex align-items-center"
+                style={{ backgroundColor: colors.primary, border: 'none' }}
+                onClick={() => setState(s => ({ ...s, showVendorReg: true }))} 
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                  viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                  strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                  className="lucide lucide-wine-icon lucide-wine">
+                  <path d="M8 22h8" />
+                  <path d="M7 10h10" />
+                  <path d="M12 15v7" />
+                  <path d="M12 15a5 5 0 0 0 5-5c0-2-.5-4-2-8H9c-1.5 4-2 6-2 8a5 5 0 0 0 5 5Z" />
+                </svg>
+                <span className="d-none d-md-inline ms-2">Vendor</span>
+              </Button>
 
-<div className="py-4 container-xl">
-  {/* Stories Section */}
-  <div className="liquor-stories-container">
-    <div className="stories-header">
-      <h2 className="section-title">Premium Spirits Collection</h2>
-      <p className="section-subtitle">Discover exclusive liquors from top Kenyan distributors</p>
-    </div>
-    
-    <div className="stories-scroll-container">
-      <div className="stories-scroll">
-        {/* Add Story Button */}
-      
+              {/* Cart */}
+              <Button
+                className="px-3 me-2 mt-1 px-md-2 py-1 position-relative d-flex align-items-center text-white border-0"
+                style={{ backgroundColor: '#FFC107' }} // Warning Yellow
+                onClick={() => setState(s => ({ ...s, showCart: true }))}
+              >
+                <FaCartPlus className="me-2" />
+                <span className="d-none d-md-inline">Cart</span>
+                <span
+                  className="position-absolute top-0 start-100 translate-middle badge rounded-pill text-white"
+                  style={{ backgroundColor: '#00C853' }} // Jikoni Green
+                >
+                  {state.cart.reduce((sum, i) => sum + i.quantity, 0)}
+                  <span className="visually-hidden">items in cart</span>
+                </span>
+              </Button>
 
-        {filteredProducts.map(product => (
-          <div 
-            key={product.id}
-            className="story-item"
-            onClick={() => navigate(`/vendor/${product.vendorId}`)}
-          >
-            <div className="story-image-wrapper">
-              <div className="story-gradient-border">
-                <div className="product-image-container">
-                  <img
-                    src={product.photoUrls?.[0] || '/placeholder-liquor.jpg'}
-                    alt={product.title}
-                    className="story-img"
-                  />
-                </div>
-                {product.discount > 0 && (
-                  <div className="discount-badge">
-                    {product.discount}% OFF
-                  </div>
-                )}
-              </div>
-              <div className="story-details">
-                <span className="vendor-name">{product.brand || product.title}</span>
-                <div className="vendor-info">
-                  <span className="distributor-name">{product.vendor?.user?.Name || 'Premium Distributor'}</span>
-                  <div className="location-info">
-                    <GeoAlt size={14} className="location-icon" />
-                    <span className="location-text">{product.area || 'Nairobi'}</span>
-                  </div>
-                </div>
-              </div>
             </div>
           </div>
-        ))}
-      </div>
+        </div>
+      </header>
 
-    
-  
+
+      <div className="py-4 container-xl">
+        {/* Stories Section */}
+        <div className="liquor-stories-container">
+          <div className="stories-header">
+            <h2 className="section-title">Premium Spirits Collection</h2>
+            <p className="section-subtitle">Discover exclusive liquors from top Kenyan distributors</p>
+          </div>
+
+          <div className="stories-scroll-container">
+            <div className="stories-scroll">
+              {/* Add Story Button */}
+
+
+              {filteredProducts.map(product => (
+                <div
+                  key={product.id}
+                  className="story-item"
+                  onClick={() => navigate(`/vendor/${product.vendorId}`)}
+                >
+                  <div className="story-image-wrapper">
+                    <div className="story-gradient-border">
+                      <div className="product-image-container">
+                        <img
+                          src={product.photoUrls?.[0] || '/placeholder-liquor.jpg'}
+                          alt={product.title}
+                          className="story-img"
+                        />
+                      </div>
+                      {product.discount > 0 && (
+                        <div className="discount-badge">
+                          {product.discount}% OFF
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <div className="story-details">
+                    <span className="vendor-name">{product.brand || product.title}</span>
+                    <div className="vendor-info">
+                      <span className="distributor-name">{product.vendor?.user?.Name || 'Premium Distributor'}</span>
+                      <div className="location-info">
+                        <GeoAlt size={14} className="location-icon" />
+                        <span className="location-text">{product.area || 'Nairobi'}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+
           </div>
         </div>
 
@@ -604,18 +624,18 @@ const Liqour = () => {
             <Modal.Header closeButton className="border-0 pb-0 bg-white">
               <Modal.Title className="fw-bold text-dark">Pre-Order Your Spirits</Modal.Title>
             </Modal.Header>
-            
+
             <Modal.Body className="bg-white py-4">
               {selectedProduct && (
                 <div className="d-flex align-items-center mb-4">
-                  <div className="me-3" style={{ 
-                    width: '80px', 
-                    height: '80px', 
+                  <div className="me-3" style={{
+                    width: '80px',
+                    height: '80px',
                     overflow: 'hidden',
-                    borderRadius: '12px' 
+                    borderRadius: '12px'
                   }}>
-                    <img 
-                      src={selectedProduct.photoUrls[0]} 
+                    <img
+                      src={selectedProduct.photoUrls[0]}
                       alt={selectedProduct.title}
                       className="w-100 h-100 object-fit-cover"
                     />
@@ -646,11 +666,11 @@ const Liqour = () => {
                         <span className="input-group-text bg-white border-0">
                           <Calendar size={18} className="text-muted" />
                         </span>
-                        <Form.Control 
-                          type="date" 
+                        <Form.Control
+                          type="date"
                           aria-label="Delivery Date"
                           value={preOrderForm.date}
-                          onChange={(e) => setPreOrderForm({...preOrderForm, date: e.target.value})}
+                          onChange={(e) => setPreOrderForm({ ...preOrderForm, date: e.target.value })}
                           min={new Date().toISOString().split('T')[0]}
                           className="border-0 py-2 px-3"
                           style={{ outline: 'none', boxShadow: 'none' }}
@@ -667,11 +687,11 @@ const Liqour = () => {
                         <span className="input-group-text bg-white border-0">
                           <Clock size={18} className="text-muted" />
                         </span>
-                        <Form.Control 
-                          type="time" 
+                        <Form.Control
+                          type="time"
                           aria-label="Delivery Time"
                           value={preOrderForm.time}
-                          onChange={(e) => setPreOrderForm({...preOrderForm, time: e.target.value})}
+                          onChange={(e) => setPreOrderForm({ ...preOrderForm, time: e.target.value })}
                           className="border-0 py-2 px-3"
                           style={{ outline: 'none', boxShadow: 'none' }}
                         />
@@ -683,17 +703,17 @@ const Liqour = () => {
                   <Col md={6}>
                     <Form.Group controlId="quantity">
                       <Form.Label className="fw-medium mb-2">Quantity</Form.Label>
-                      <Form.Select 
+                      <Form.Select
                         aria-label="Number of Bottles"
                         value={preOrderForm.quantity}
-                        onChange={(e) => setPreOrderForm({...preOrderForm, quantity: parseInt(e.target.value)})}
+                        onChange={(e) => setPreOrderForm({ ...preOrderForm, quantity: parseInt(e.target.value) })}
                         className="py-2 px-3 border rounded-3"
-                        style={{ 
+                        style={{
                           height: 'calc(2.5rem + 10px)',
                           boxShadow: 'none'
                         }}
                       >
-                        {[1,2,3,4,5,6,7,8].map(num => (
+                        {[1, 2, 3, 4, 5, 6, 7, 8].map(num => (
                           <option key={num} value={num}>{num} bottle{num > 1 ? 's' : ''}</option>
                         ))}
                       </Form.Select>
@@ -714,12 +734,12 @@ const Liqour = () => {
                   <Col xs={12}>
                     <Form.Group controlId="specialInstructions">
                       <Form.Label className="fw-medium mb-2">Special Instructions</Form.Label>
-                      <Form.Control 
-                        as="textarea" 
-                        rows={3} 
+                      <Form.Control
+                        as="textarea"
+                        rows={3}
                         placeholder="Any special requests or delivery notes..."
                         value={preOrderForm.instructions}
-                        onChange={(e) => setPreOrderForm({...preOrderForm, instructions: e.target.value})}
+                        onChange={(e) => setPreOrderForm({ ...preOrderForm, instructions: e.target.value })}
                         className="border rounded-3 p-3"
                         style={{ boxShadow: 'none' }}
                       />
@@ -731,14 +751,14 @@ const Liqour = () => {
             </Modal.Body>
 
             <Modal.Footer className="bg-white border-0 pt-0">
-              <Button 
-                variant="outline-secondary" 
+              <Button
+                variant="outline-secondary"
                 className="fw-medium px-4 py-2"
                 onClick={() => setShowPreOrderModal(false)}
               >
                 Cancel
               </Button>
-              <Button 
+              <Button
                 className="px-4 py-2 fw-bold text-white"
                 style={{
                   background: '#ff6f00',
@@ -754,13 +774,13 @@ const Liqour = () => {
 
           {/* Liquor Products Grid */}
           <Row className="g-1 ">
-      <LiquorProductsGrid  />
+            <LiquorProductsGrid />
           </Row>
         </div>
       </div>
 
       {/* Registration Modals */}
-      <VendorRegistrationModal 
+      <VendorRegistrationModal
         show={state.showVendorReg}
         onClose={() => setState(s => ({ ...s, showVendorReg: false }))}
         onSubmit={registerVendor}

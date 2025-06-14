@@ -1,15 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect  ,  useRef  } from 'react';
 import {
-  Modal, Form, Button, Spinner, Alert
+  Modal, Form, Button, Spinner, Alert, Row, Col
 } from 'react-bootstrap';
 import {
-  FiBriefcase, FiMapPin, FiGlobe, FiUser,
-  FiClock, FiSend, FiTag, FiHash,
-  FiPhone, FiMail, FiCheckSquare,
-  FiAward, FiBox, FiNavigation
-} from 'react-icons/fi';
-import styled, { keyframes, css } from 'styled-components'; // Import css for conditional styling
-
+  Briefcase, MapPin, Globe, User,
+  Clock, Hash, Phone, Mail, Box, LocateFixed
+} from 'lucide-react'; // Using lucide-react for icons
+import { useNavigate } from 'react-router-dom';
+import  {getUserIdFromToken}      from    '../handler/tokenDecorder'
 // --- Jikoni Express Color Palette ---
 const colors = {
   primary: '#FF4532', // Jikoni Red
@@ -26,207 +24,50 @@ const colors = {
   successGreen: '#28A745', // For positive feedback
 };
 
-// --- Animations ---
-const slideIn = keyframes`
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
-`;
+// Jikoni Express SVG Logo
+const JikoniExpressLogoSvg = ({ size = 48, color = 'white' }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    style={{ display: 'inline-block', verticalAlign: 'middle' }}
+  >
+    <path
+      d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM12 4C16.42 4 20 7.58 20 12C20 16.42 16.42 20 12 20C7.58 20 4 16.42 4 12C4 7.58 7.58 4 12 4Z"
+      fill={color}
+    />
+    <path
+      d="M12 6V18M6 12H18"
+      stroke={color}
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <path
+      d="M17 9H7L6 12H18L17 9Z"
+      fill={color}
+      stroke={color}
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <path
+      d="M10 17H14"
+      stroke={color}
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
 
-const pulse = keyframes`
-  0% { transform: scale(1); }
-  50% { transform: scale(1.05); }
-  100% { transform: scale(1); }
-`;
-
-// --- Styled Components ---
-const StyledModalHeader = styled(Modal.Header)`
-  background: linear-gradient(90deg, ${colors.primary} 0%, ${colors.gradientStart} 100%);
-  color: ${colors.cardBackground};
-  border-bottom: none;
-  padding: 1.8rem 2.5rem;
-  border-top-left-radius: 16px;
-  border-top-right-radius: 16px;
-  position: relative;
-  overflow: hidden;
-
-  .modal-title {
-    font-weight: 700;
-    font-size: 2rem;
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    text-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  }
-
-  .btn-close {
-    filter: invert(1) grayscale(100%) brightness(200%);
-    font-size: 1.2rem;
-    &:hover {
-      opacity: 0.7;
-      transform: scale(1.1);
-    }
-  }
-`;
-
-const StyledModalBody = styled(Modal.Body)`
-  padding: 2.5rem;
-  background-color: ${colors.cardBackground};
-  animation: ${slideIn} 0.5s ease-out;
-  border-bottom-left-radius: 16px;
-  border-bottom-right-radius: 16px;
-`;
-
-const FormGroup = styled(Form.Group)`
-  margin-bottom: 1.75rem;
-  position: relative;
-
-  label {
-    font-weight: 600;
-    color: ${colors.darkText};
-    margin-bottom: 0.6rem;
-    display: block;
-    font-size: 0.98rem;
-  }
-`;
-
-const IconWrapper = styled.div`
-  position: absolute;
-  top: 68%;
-  left: 1rem;
-  transform: translateY(-50%);
-  color: ${colors.placeholderText};
-  font-size: 1.2rem;
-`;
-
-const InputField = styled(Form.Control)`
-  width: 100%;
-  padding: 0.95rem 1rem 0.95rem 3rem;
-  border: 1px solid ${colors.borderColor};
-  border-radius: 10px;
-  font-size: 1.05rem;
-  color: ${colors.darkText};
-  background-color: ${colors.lightBackground};
-  transition: all 0.3s ease;
-
-  &::placeholder {
-    color: ${colors.placeholderText};
-    opacity: 0.8;
-  }
-
-  &:focus {
-    outline: none;
-    border-color: ${colors.primary};
-    box-shadow: 0 0 0 3px rgba(255, 69, 50, 0.2);
-    background-color: ${colors.cardBackground};
-  }
-
-  &[as="textarea"] {
-    min-height: 100px;
-    padding-top: 1rem;
-    padding-bottom: 1rem;
-    line-height: 1.5;
-  }
-
-  // Style for readOnly inputs
-  &:read-only {
-    background-color: ${colors.lightBackground};
-    cursor: not-allowed;
-    border-color: ${colors.borderColor};
-  }
-`;
-
-const LocationButton = styled(Button)`
-  position: absolute;
-  right: 10px;
-  top: 50%;
-  transform: translateY(-50%);
-  background: ${colors.primary};
-  border: none;
-  border-radius: 8px;
-  padding: 6px 10px;
-  z-index: 10;
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  gap: 5px;
-
-  &:hover {
-    background: ${colors.buttonHover};
-    transform: translateY(-50%) scale(1.05);
-  }
-
-  &:active {
-    transform: translateY(-50%) scale(0.95);
-  }
-
-  ${props => props.$isLocated && css`
-    background-color: ${colors.secondary}; // Change color when location is set
-    &:hover {
-      background: ${colors.successGreen};
-    }
-  `}
-`;
-
-
-const SubmitButton = styled(Button)`
-  width: 100%;
-  padding: 1rem;
-  background: ${colors.primary};
-  color: ${colors.cardBackground};
-  border: none;
-  border-radius: 10px;
-  font-size: 1.2rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.2s ease, transform 0.1s ease, box-shadow 0.2s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.8rem;
-  margin-top: 20px;
-
-  &:hover {
-    background: ${colors.buttonHover};
-    transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(255, 69, 50, 0.3);
-  }
-
-  &:active {
-    transform: translateY(0);
-    box-shadow: none;
-  }
-
-  &:disabled {
-    background: ${colors.disabledButton};
-    cursor: not-allowed;
-    transform: none;
-    box-shadow: none;
-  }
-`;
-
-const HeaderIcon = styled.span`
-  font-size: 2.8rem;
-  color: ${colors.cardBackground};
-`;
-
-const LocationAlert = styled(Alert)`
-  background-color: #e6f7ff;
-  border-left: 4px solid ${colors.primary};
-  border-radius: 8px;
-  padding: 15px;
-  margin-top: 15px;
-
-  strong {
-    color: ${colors.primary};
-  }
-
-  svg {
-    color: ${colors.primary};
-    margin-right: 10px;
-  }
-`;
 
 const VendorRegistrationModal = ({ show, onClose, onSubmit }) => {
+  const navigate = useNavigate();
+  const redirectTimerRef = useRef(null);
+
   const [submitting, setSubmitting] = useState(false);
   const [locationLoading, setLocationLoading] = useState(false);
   const [locationError, setLocationError] = useState(null);
@@ -234,14 +75,61 @@ const VendorRegistrationModal = ({ show, onClose, onSubmit }) => {
     latitude: -1.286389, // Default Nairobi latitude
     longitude: 36.817223 // Default Nairobi longitude
   });
+  const [userId, setUserId] = useState(null); // State to store the user ID
+  const [authMessage, setAuthMessage] = useState('');// Message for auth status
   const defaultCity = "Nairobi"; // Default city
 
-  useEffect(() => {
-    if (show) {
-      // Attempt to get user location when the modal first shows
-      getUserLocation();
-    }
-  }, [show]);
+
+  
+    // Effect to get userId from token and handle authentication status
+    useEffect(() => {
+      const getUserIdFromToken = () => {
+        const token = localStorage.getItem("token");
+        if (!token) return null;
+  
+        try {
+          const parts = token.split(".");
+          if (parts.length === 3) {
+            const payload = JSON.parse(atob(parts[1]));
+            // Adjust based on your actual token payload structure for user ID
+            return payload?.id || payload?.userId || payload?._id || null;
+          }
+        } catch (err) {
+          console.error("Token decode failed:", err);
+        }
+        return null;
+      };
+  
+      const id = getUserIdFromToken();
+      setUserId(id);
+  
+      // Clear any existing timer when the effect re-runs or component unmounts
+      if (redirectTimerRef.current) {
+        clearTimeout(redirectTimerRef.current);
+        redirectTimerRef.current = null;
+      }
+  
+      if (!id) {
+        setAuthMessage("⚠️ You must be logged in to continue. Redirecting to registration...");
+  
+        // Set the timer and store its ID in the ref
+        redirectTimerRef.current = setTimeout(() => {
+          navigate("/register");
+        }, 9000); // 4 seconds delay
+      } else {
+        // If user is now logged in, ensure no auth message is shown
+        setAuthMessage('');
+      }
+  
+      // Cleanup function for the effect: clear timer when component unmounts
+      return () => {
+        if (redirectTimerRef.current) {
+          clearTimeout(redirectTimerRef.current);
+        }
+      };
+    }, [navigate]); // Still depend only on navigate (which is stable)
+  
+  
 
   const getUserLocation = () => {
     if (!navigator.geolocation) {
@@ -250,7 +138,7 @@ const VendorRegistrationModal = ({ show, onClose, onSubmit }) => {
     }
 
     setLocationLoading(true);
-    setLocationError('');  // Clear previous errors
+    setLocationError('');
 
     navigator.geolocation.getCurrentPosition(
       (position) => {
@@ -259,7 +147,7 @@ const VendorRegistrationModal = ({ show, onClose, onSubmit }) => {
           longitude: position.coords.longitude,
         });
         setLocationLoading(false);
-        setLocationError(null); // Clear error on successful retrieval
+        setLocationError(null);
       },
       (error) => {
         let errorMessage = "Unable to retrieve your location. ";
@@ -283,9 +171,9 @@ const VendorRegistrationModal = ({ show, onClose, onSubmit }) => {
         setCoordinates({ latitude: -1.2921, longitude: 36.8219 }); // fallback to Nairobi
       },
       {
-        timeout: 10000, // optional timeout for location request (10 seconds)
-        maximumAge: 60000, // use cached position if less than 1 minute old
-        enableHighAccuracy: true // request the best possible results
+        timeout: 10000,
+        maximumAge: 60000,
+        enableHighAccuracy: true
       }
     );
   };
@@ -297,7 +185,7 @@ const VendorRegistrationModal = ({ show, onClose, onSubmit }) => {
 
     const data = {
       businessName: formData.get('businessName'),
-      licenceNumber: formData.get('licenceNumber'),
+      licenseNumber: formData.get('licenseNumber'), // Corrected name to 'licenseNumber' (with 's')
       contactPerson: formData.get('contactPerson'),
       phoneNumber: formData.get('phoneNumber'),
       email: formData.get('email'),
@@ -305,138 +193,400 @@ const VendorRegistrationModal = ({ show, onClose, onSubmit }) => {
       operatingHours: formData.get('operatingHours'),
       physicalAddress: formData.get('physicalAddress'),
       city: formData.get('city'),
-      latitude: coordinates.latitude, // Use state value for coordinates
-      longitude: coordinates.longitude // Use state value for coordinates
+      latitude: coordinates.latitude,
+      longitude: coordinates.longitude,
+      userId: userId // Ensure userId is passed with form data
     };
 
-    await onSubmit(data); // This prop will typically make the API call
-    setSubmitting(false);
+    try {
+        // Simulating the onSubmit prop making the API call
+        const response = await fetch("http://localhost:8000/apiV1/smartcity-ke/register-vendor", {
+            method: "POST",
+            headers: {
+                'Content-Type': 'application/json',
+                // Add Authorization header if needed, e.g., 'Authorization': `Bearer ${localStorage.getItem('token')}`
+            },
+            body: JSON.stringify(data),
+        }).then(res => res.json());
+
+        if (response && response.message === 'Vendor registered successfully!' && response.vendor && response.vendor.id) {
+            localStorage.setItem('isVendor', 'true');
+            localStorage.setItem('vendorId', response.vendor.id);
+            if (response.token) {
+                localStorage.setItem('vendorToken', response.token);
+            }
+            onClose();
+            navigate('/vendor/dashboard');
+        } else {
+            setLocationError(response.message || 'Vendor registration failed. Please try again.');
+        }
+    } catch (error) {
+        console.error("Error during vendor registration submission:", error);
+        setLocationError('An unexpected error occurred. Please try again later.');
+    } finally {
+        setSubmitting(false);
+    }
   };
 
-  const isLocationSet = coordinates.latitude !== -1.286389 || coordinates.longitude !== 36.817223; // Check if default has changed
+  const isLocationSet = coordinates.latitude !== -1.286389 || coordinates.longitude !== 36.817223;
+  const isFormDisabled = !userId || submitting || locationLoading; // Disable if no userId or submitting/loading
+
+  // Inline styles that correspond to the previous styled-components
+  const modalHeaderStyle = {
+    background: `linear-gradient(90deg, ${colors.primary} 0%, ${colors.gradientStart} 100%)`,
+    color: colors.cardBackground,
+    borderBottom: 'none',
+    padding: '1.8rem 2.5rem',
+    borderTopLeftRadius: '16px',
+    borderTopRightRadius: '16px',
+    position: 'relative',
+    overflow: 'hidden',
+  };
+
+  const modalTitleStyle = {
+    fontWeight: 700,
+    fontSize: '2rem',
+    display: 'flex',
+    flexDirection: 'column', // Arrange logo/text vertically
+    alignItems: 'flex-start', // Align content to start
+    gap: '0.5rem', // Reduced gap
+    textShadow: '0 2px 4px rgba(0,0,0,0.1)',
+  };
+
+  const btnCloseStyle = {
+    filter: 'invert(1) grayscale(100%) brightness(200%)',
+    fontSize: '1.2rem',
+    // Hover effects handled by Bootstrap's .btn-close
+  };
+
+  const modalBodyStyle = {
+    padding: '2.5rem',
+    backgroundColor: colors.cardBackground,
+    borderBottomLeftRadius: '16px',
+    borderBottomRightRadius: '16px',
+  };
+
+  const formGroupStyle = {
+    marginBottom: '1.75rem',
+    position: 'relative',
+  };
+
+  const labelStyle = {
+    fontWeight: 600,
+    color: colors.darkText,
+    marginBottom: '0.6rem',
+    display: 'block',
+    fontSize: '0.98rem',
+  };
+
+  const iconWrapperStyle = {
+    position: 'absolute',
+    top: '50%', // Adjusted for vertical centering with padding
+    left: '1rem',
+    transform: 'translateY(-50%)',
+    color: colors.placeholderText,
+    fontSize: '1.2rem',
+  };
+
+  const inputFieldStyle = {
+    width: '100%',
+    padding: '0.95rem 1rem 0.95rem 3rem',
+    border: `1px solid ${colors.borderColor}`,
+    borderRadius: '10px',
+    fontSize: '1.05rem',
+    color: colors.darkText,
+    backgroundColor: colors.lightBackground,
+    transition: 'all 0.3s ease',
+  };
+
+  const inputPlaceholderStyle = {
+    color: colors.placeholderText,
+    opacity: 0.8,
+  };
+
+  const textareaFieldStyle = {
+    minHeight: '100px',
+    paddingTop: '1rem',
+    paddingBottom: '1rem',
+    lineHeight: '1.5',
+  };
+
+  const readOnlyInputFieldStyle = {
+    backgroundColor: colors.lightBackground,
+    cursor: 'not-allowed',
+    borderColor: colors.borderColor,
+  };
+
+  const locationButtonStyle = {
+    position: 'absolute',
+    right: '10px',
+    top: '50%',
+    transform: 'translateY(-50%)',
+    background: isLocationSet ? colors.secondary : colors.primary, // Dynamic background based on location set
+    border: 'none',
+    borderRadius: '8px',
+    padding: '6px 10px',
+    zIndex: 10,
+    transition: 'all 0.3s ease',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '5px',
+    opacity: locationLoading ? 0.7 : 1,
+    cursor: locationLoading ? 'not-allowed' : 'pointer',
+  };
+
+  const submitButtonStyle = {
+    width: '100%',
+    padding: '1rem',
+    background: colors.primary,
+    color: colors.cardBackground,
+    border: 'none',
+    borderRadius: '10px',
+    fontSize: '1.2rem',
+    fontWeight: 600,
+    cursor: 'pointer',
+    transition: 'background 0.2s ease, transform 0.1s ease, box-shadow 0.2s ease',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '0.8rem',
+    marginTop: '20px',
+  };
+
+  const submitButtonHoverStyle = {
+    backgroundColor: colors.buttonHover,
+    transform: 'translateY(-2px)',
+    boxShadow: `0 6px 16px ${colors.primary}4D`, // Using a transparent primary color for shadow
+  };
+
+  const submitButtonDisabledStyle = {
+    background: colors.disabledButton,
+    cursor: 'not-allowed',
+    transform: 'none',
+    boxShadow: 'none',
+  };
+
+  const headerIconStyle = {
+    fontSize: '2.8rem',
+    color: colors.cardBackground,
+  };
+
+  const locationAlertStyle = {
+    backgroundColor: '#e6f7ff',
+    borderLeft: `4px solid ${colors.primary}`,
+    borderRadius: '8px',
+    padding: '15px',
+    marginTop: '15px',
+  };
+
+  const locationAlertStrongStyle = {
+    color: colors.primary,
+  };
+
+  const locationAlertSvgStyle = {
+    color: colors.primary,
+    marginRight: '10px',
+  };
 
   return (
     <Modal show={show} onHide={onClose} centered size="lg">
-      <StyledModalHeader closeButton>
-        <Modal.Title>
-          <HeaderIcon><FiAward /></HeaderIcon>
-          Register Your Liquor Business
+      {/* Modal Header */}
+      <Modal.Header style={modalHeaderStyle} closeButton>
+        <Modal.Title style={modalTitleStyle}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <JikoniExpressLogoSvg size={48} color={colors.cardBackground} />
+            <span style={{ fontSize: '2.2rem', fontWeight: 800, lineHeight: 1 }}>Jikoni Express</span>
+          </div>
+          <span style={{ fontSize: '1.2rem', fontWeight: 600, opacity: 0.9 }}>Register Your Liquor Business</span>
         </Modal.Title>
-      </StyledModalHeader>
-      <StyledModalBody>
+      </Modal.Header>
+
+      {/* Modal Body */}
+      <Modal.Body style={modalBodyStyle}>
+        {authMessage && (
+          <Alert variant={userId ? "success" : "danger"} className="mb-4 text-center">
+            {authMessage}
+          </Alert>
+        )}
+
         <p className="text-muted text-center mb-4">
           Join Jikoni Express to reach new customers and expand your liquor delivery services!
         </p>
-        <Form onSubmit={handleSubmit}>
-          <div className="row">
-            <div className="col-md-6">
-              <FormGroup>
-                <Form.Label>Business Name</Form.Label>
-                <IconWrapper><FiBriefcase /></IconWrapper>
-                <InputField name="businessName" type="text" placeholder="e.g., Cheers Liquor Store" required />
-              </FormGroup>
+        <Form onSubmit={handleSubmit} disabled={isFormDisabled}>
+          <Row>
+            <Col md={6}>
+              <Form.Group style={formGroupStyle}>
+                <Form.Label style={labelStyle}>Business Name</Form.Label>
+                <div style={iconWrapperStyle}><Briefcase size={24} /></div>
+                <Form.Control
+                  name="businessName"
+                  type="text"
+                  placeholder="e.g., Cheers Liquor Store"
+                  required
+                  style={inputFieldStyle}
+                  disabled={isFormDisabled}
+                />
+              </Form.Group>
 
-              <FormGroup>
-                <Form.Label>Liquor License Number</Form.Label>
-                <IconWrapper><FiHash /></IconWrapper>
-                <InputField name="licenceNumber" type="text" placeholder="e.g., LRN/2023/12345" required />
-              </FormGroup>
+              <Form.Group style={formGroupStyle}>
+                <Form.Label style={labelStyle}>Liquor License Number</Form.Label>
+                <div style={iconWrapperStyle}><Hash size={24} /></div>
+                <Form.Control
+                  name="licenseNumber" // Corrected name to 'licenseNumber' (with 's')
+                  type="text"
+                  placeholder="e.g., LRN/2023/12345"
+                  required
+                  style={inputFieldStyle}
+                  disabled={isFormDisabled}
+                />
+              </Form.Group>
 
-              <FormGroup>
-                <Form.Label>Contact Person</Form.Label>
-                <IconWrapper><FiUser /></IconWrapper>
-                <InputField name="contactPerson" type="text" placeholder="e.g., Jane Doe (Owner/Manager)" required />
-              </FormGroup>
+              <Form.Group style={formGroupStyle}>
+                <Form.Label style={labelStyle}>Contact Person</Form.Label>
+                <div style={iconWrapperStyle}><User size={24} /></div>
+                <Form.Control
+                  name="contactPerson"
+                  type="text"
+                  placeholder="e.g., Jane Doe (Owner/Manager)"
+                  required
+                  style={inputFieldStyle}
+                  disabled={isFormDisabled}
+                />
+              </Form.Group>
 
-              <FormGroup>
-                <Form.Label>Phone Number</Form.Label>
-                <IconWrapper><FiPhone /></IconWrapper>
-                <InputField name="phoneNumber" type="tel" placeholder="e.g., +2547XXXXXXXX" required />
-              </FormGroup>
+              <Form.Group style={formGroupStyle}>
+                <Form.Label style={labelStyle}>Phone Number</Form.Label>
+                <div style={iconWrapperStyle}><Phone size={24} /></div>
+                <Form.Control
+                  name="phoneNumber"
+                  type="tel"
+                  placeholder="e.g., +2547XXXXXXXX"
+                  required
+                  style={inputFieldStyle}
+                  disabled={isFormDisabled}
+                />
+              </Form.Group>
 
-              <FormGroup>
-                <Form.Label>Email Address</Form.Label>
-                <IconWrapper><FiMail /></IconWrapper>
-                <InputField name="email" type="email" placeholder="e.g., info@cheers.com" required />
-              </FormGroup>
-            </div>
+              <Form.Group style={formGroupStyle}>
+                <Form.Label style={labelStyle}>Email Address</Form.Label>
+                <div style={iconWrapperStyle}><Mail size={24} /></div>
+                <Form.Control
+                  name="email"
+                  type="email"
+                  placeholder="e.g., info@cheers.com"
+                  required
+                  style={inputFieldStyle}
+                  disabled={isFormDisabled}
+                />
+              </Form.Group>
+            </Col>
 
-            <div className="col-md-6">
-              <FormGroup>
-                <Form.Label>Types of Liquor Sold (comma separated)</Form.Label>
-                <IconWrapper><FiBox /></IconWrapper>
-                <InputField name="typesOfLiquor" placeholder="e.g., Wines, Spirits, Beers, Ciders" required />
-              </FormGroup>
+            <Col md={6}>
+              <Form.Group style={formGroupStyle}>
+                <Form.Label style={labelStyle}>Types of Liquor Sold (comma separated)</Form.Label>
+                <div style={iconWrapperStyle}><Box size={24} /></div>
+                <Form.Control
+                  name="typesOfLiquor"
+                  placeholder="e.g., Wines, Spirits, Beers, Ciders"
+                  required
+                  style={inputFieldStyle}
+                  disabled={isFormDisabled}
+                />
+              </Form.Group>
 
-              <FormGroup>
-                <Form.Label>Operating Hours</Form.Label>
-                <IconWrapper><FiClock /></IconWrapper>
-                <InputField name="operatingHours" type="text" placeholder="e.g., Mon-Sun 10 AM - 10 PM" required />
-              </FormGroup>
+              <Form.Group style={formGroupStyle}>
+                <Form.Label style={labelStyle}>Operating Hours</Form.Label>
+                <div style={iconWrapperStyle}><Clock size={24} /></div>
+                <Form.Control
+                  name="operatingHours"
+                  type="text"
+                  placeholder="e.g., Mon-Sun 10 AM - 10 PM"
+                  required
+                  style={inputFieldStyle}
+                  disabled={isFormDisabled}
+                />
+              </Form.Group>
 
-              <FormGroup>
-                <Form.Label>Physical Address</Form.Label>
-                <IconWrapper><FiMapPin /></IconWrapper>
-                <InputField name="physicalAddress" placeholder="e.g., Shop 5, ABC Plaza, Ngong Road" required />
-              </FormGroup>
+              <Form.Group style={formGroupStyle}>
+                <Form.Label style={labelStyle}>Physical Address</Form.Label>
+                <div style={iconWrapperStyle}><MapPin size={24} /></div>
+                <Form.Control
+                  name="physicalAddress"
+                  placeholder="e.g., Shop 5, ABC Plaza, Ngong Road"
+                  required
+                  style={inputFieldStyle}
+                  disabled={isFormDisabled}
+                />
+              </Form.Group>
 
-              <FormGroup>
-                <Form.Label>City</Form.Label>
-                <IconWrapper><FiGlobe /></IconWrapper>
-                <InputField name="city" defaultValue={defaultCity} required readOnly /> {/* Set to readOnly */}
-              </FormGroup>
+              <Form.Group style={formGroupStyle}>
+                <Form.Label style={labelStyle}>City</Form.Label>
+                <div style={iconWrapperStyle}><Globe size={24} /></div>
+                <Form.Control
+                  name="city"
+                  defaultValue={defaultCity}
+                  required
+                  readOnly
+                  style={{ ...inputFieldStyle, ...readOnlyInputFieldStyle }}
+                  disabled={isFormDisabled}
+                />
+              </Form.Group>
 
-              <FormGroup>
-                <Form.Label>Latitude</Form.Label>
-                <IconWrapper><FiNavigation /></IconWrapper>
-                <InputField
+              <Form.Group style={formGroupStyle}>
+                <Form.Label style={labelStyle}>Latitude</Form.Label>
+                <div style={iconWrapperStyle}><LocateFixed size={24} /></div>
+                <Form.Control
                   name="latitude"
                   type="number"
                   step="any"
                   value={coordinates.latitude}
-                  readOnly // Prevent manual input
+                  readOnly
                   required
+                  style={{ ...inputFieldStyle, ...readOnlyInputFieldStyle }}
+                  disabled={isFormDisabled}
                 />
-                <LocationButton
-                  $isLocated={isLocationSet} // Pass prop for conditional styling
+                <Button
                   variant="primary"
                   onClick={getUserLocation}
-                  disabled={locationLoading}
+                  disabled={locationLoading || isFormDisabled}
+                  style={locationButtonStyle}
                 >
                   {locationLoading ? (
                     <Spinner animation="border" size="sm" />
                   ) : (
                     <>
-                      <FiNavigation /> {isLocationSet ? 'Recalculate' : 'Locate My Business'}
+                      <LocateFixed size={18} /> {isLocationSet ? 'Recalculate' : 'Locate My Business'}
                     </>
                   )}
-                </LocationButton>
-              </FormGroup>
+                </Button>
+              </Form.Group>
 
-              <FormGroup>
-                <Form.Label>Longitude</Form.Label>
-                <IconWrapper><FiNavigation /></IconWrapper>
-                <InputField
+              <Form.Group style={formGroupStyle}>
+                <Form.Label style={labelStyle}>Longitude</Form.Label>
+                <div style={iconWrapperStyle}><LocateFixed size={24} /></div>
+                <Form.Control
                   name="longitude"
                   type="number"
                   step="any"
                   value={coordinates.longitude}
-                  readOnly // Prevent manual input
+                  readOnly
                   required
+                  style={{ ...inputFieldStyle, ...readOnlyInputFieldStyle }}
+                  disabled={isFormDisabled}
                 />
-              </FormGroup>
-            </div>
-          </div>
+              </Form.Group>
+            </Col>
+          </Row>
 
-          <LocationAlert variant="info">
+          <Alert variant="info" style={locationAlertStyle}>
             <div className="d-flex align-items-center">
-              <FiNavigation size={24} />
+              <LocateFixed size={24} style={locationAlertSvgStyle} />
               <div>
-                <strong>Location Notice:</strong> Your coordinates will be used by Jikoni Express riders to
+                <strong style={locationAlertStrongStyle}>Location Notice:</strong> Your coordinates will be used by Jikoni Express riders to
                 navigate to your business for order pickups. Please ensure they are accurate by using the "Locate My Business" button.
               </div>
             </div>
-          </LocationAlert>
+          </Alert>
 
           {locationError && (
             <Alert variant="danger" className="mt-3">
@@ -444,7 +594,11 @@ const VendorRegistrationModal = ({ show, onClose, onSubmit }) => {
             </Alert>
           )}
 
-          <SubmitButton type="submit" disabled={submitting}>
+          <Button
+            type="submit"
+            disabled={isFormDisabled}
+            style={isFormDisabled ? { ...submitButtonStyle, ...submitButtonDisabledStyle } : submitButtonStyle}
+          >
             {submitting ? (
               <>
                 <Spinner as="span" animation="border" size="sm" role="status" aria-hidden="true" />
@@ -453,9 +607,9 @@ const VendorRegistrationModal = ({ show, onClose, onSubmit }) => {
             ) : (
               'Register My Liquor Business'
             )}
-          </SubmitButton>
+          </Button>
         </Form>
-      </StyledModalBody>
+      </Modal.Body>
     </Modal>
   );
 };

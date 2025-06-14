@@ -24,7 +24,7 @@ const colors = {
 };
 
 const CartContainer = styled(Offcanvas)`
-  width: 380px !important;
+  width: 360px !important;
   box-shadow: -4px 0 20px rgba(0,0,0,0.05);
   background: ${colors.lightBackground};
   border-left: 1px solid ${colors.borderColor};
@@ -418,7 +418,10 @@ const CartSidebar = ({
 
   return (
     <>
-      <CartContainer show={show} onHide={onClose} placement="end">
+      <CartContainer show={show} onHide={onClose} placement="end"
+      style={{
+        zIndex: '2000'
+      }} >
         <Offcanvas.Header closeButton className="border-bottom" style={{ backgroundColor: colors.cardBackground }}>
           <Offcanvas.Title className="d-flex align-items-center gap-2">
             <CartPlus fontSize={24} style={{ color: colors.primary }} />

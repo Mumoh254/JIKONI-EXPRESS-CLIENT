@@ -151,7 +151,7 @@ const FoodPlatform = () => {
     userLocation: null,
     locationError: null
   });
-  
+   const [isLiqour, setIsLiqour] = useState(false);
   const navigate = useNavigate();
   const BASE_URL =  "https://neuro-apps-api-express-js-production-redy.onrender.com/apiV1/smartcity-ke";
   const [userId, setUserId] = useState(null);
@@ -164,6 +164,11 @@ const FoodPlatform = () => {
     servings: 1
   });
   const [orderHistory, setOrderHistory] = useState([]);
+
+
+ const goToLiquor = () => {
+  navigate('/jikoni-express/liqour-shots'); // Notice the leading slash
+};
 
 const parseTime = (timeStr, today) => {
   // Try 24-hr format first
@@ -503,7 +508,7 @@ const onClose = () => setShowModal(false);
   <div className="container">
     <div className="d-flex justify-content-between align-items-center py-2 py-md-3">
       <div className="d-flex align-items-center gap-2 gap-md-3">
-        <GiKenya className="text-primary header-icon gradient-icon" />
+        <GiKenya className=" header-icon gradient-icon" />
     <h1 className="m-0 brand-title display-6 fw-bold">
   <span className="jikoni-red">Jikoni</span>
   <span className="jikoni-green px-1">Express</span>
@@ -561,13 +566,50 @@ const onClose = () => setShowModal(false);
 </header>
 
 
-      <div className="py-4 container-xl">
+      <div className=" container-xl">
         {/* Stories Section */}
-        <div className="stories-fixed-section bg-white shadow-sm">
-       <div className="stories-fixed-section bg-white shadow-sm">
+        <div className="stories-fixed-section bg-white ">
+       <div className="stories-fixed-section bg-white ">
 
   
-  <h4 className="mb-3 fw-bold mt-3" style={{ color: '#FF4532' }}>🍴 Jikoni Express Stories</h4>
+ <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+<h4 className="mb-3 fw-bold mt-3" style={{ color: '#FF4532', display: 'flex', alignItems: 'center', gap: '8px' }}>
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="24"
+    height="24"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    style={{ color: 'green' }} // change icon color here
+  >
+    <path d="m16 2-2.3 2.3a3 3 0 0 0 0 4.2l1.8 1.8a3 3 0 0 0 4.2 0L22 8" />
+    <path d="M15 15 3.3 3.3a4.2 4.2 0 0 0 0 6l7.3 7.3c.7.7 2 .7 2.8 0L15 15Zm0 0 7 7" />
+    <path d="m2.1 21.8 6.4-6.3" />
+    <path d="m19 5-7 7" />
+  </svg>
+  Jikoni Reels
+</h4>
+
+
+      <button
+        onClick={goToLiquor}
+        style={{
+          Color: '#00C853',
+          border: 'none',
+         
+          padding: '8px 16px',
+          borderRadius: '10px',
+          cursor: 'pointer',
+          fontWeight: 'bold',
+        }}
+      >
+        🍷 Liquor
+      </button>
+    </div>
 
   <div className="stories-container">
     <div className="stories-scroll">
@@ -575,7 +617,7 @@ const onClose = () => setShowModal(false);
       <div 
         className="story-item" 
         onClick={() => registerAsChef()}
-        style={{ marginRight: '1.5rem' }}
+        style={{ marginRight: '0rem' }}
       >
         <div className="story-image-wrapper position-relative">
           <div className="story-gradient-border add-story-border">
@@ -729,9 +771,10 @@ const onClose = () => setShowModal(false);
       position: absolute;
       bottom: 15px;
       right: 1px;
+   
       background: #FF4532;
-      width: 20px;
-      height: 20px;
+      width: 22px;
+      height: 22px;
       border-radius: 50%;
       display: flex;
       align-items: center;
@@ -746,16 +789,15 @@ const onClose = () => setShowModal(false);
       padding: 1rem 0 1.5rem;
       -webkit-overflow-scrolling: touch;
     }
+.stories-scroll::-webkit-scrollbar {
+  height: 2px;
+  background: linear-gradient(90deg, #FF4532 0%, #00C853 100%);
+}
 
-    .stories-scroll::-webkit-scrollbar {
-      height: 3px;
-      background-color: #f5f5f5;
-    }
-
-    .stories-scroll::-webkit-scrollbar-thumb {
-      background: linear-gradient(45deg, #27ae60, #2ecc71);
-      border-radius: 4px;
-    }
+.stories-scroll::-webkit-scrollbar-thumb {
+  background: linear-gradient(90deg, #FF4532 0%, #00C853 100%);
+  border-radius: 1px;
+}
 
     .story-item {
       flex: 0 0 auto;

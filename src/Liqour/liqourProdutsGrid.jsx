@@ -441,216 +441,211 @@ const LiquorProductsGrid = () => {
           </p>
         </div>
 
-        {/* Top Trending Section */}
-   <div className="mb-5">
-      <div className="trending-carousel-container py-4 position-relative">
-        {/* Header with Fire Icon and Scroll Buttons */}
-        <div className="d-flex align-items-center justify-content-between mb-4 px-4">
-          <div className="d-flex align-items-center">
-            <Fire className="text-warning me-2" size={28} style={{ filter: "drop-shadow(0 0 4px rgba(197, 164, 103, 0.6))" }} />
-            <h3 className="fw-bold mb-0" style={{ color: theme.primary, letterSpacing: "1px", textShadow: "0 2px 4px rgba(0,0,0,0.2)" }}>
-              TOP TRENDING SPIRITS
-            </h3>
-          </div>
-          <div className="d-flex gap-2">
-            <Button 
-              variant="outline-light" 
-              className="rounded-circle p-2 d-flex align-items-center justify-content-center scroll-btn"
-              style={{ width: '42px', height: '42px', border: `1px solid ${theme.primary}` }}
-              onClick={scrollLeft}
-            >
-              &lt;
-            </Button>
-            <Button 
-              variant="outline-light" 
-              className="rounded-circle p-2 d-flex align-items-center justify-content-center scroll-btn"
-              style={{ width: '42px', height: '42px', border: `1px solid ${theme.primary}` }}
-              onClick={scrollRight}
-            >
-              &gt;
-            </Button>
-          </div>
-        </div>
+  {/* Top Trending Section */}
+<div className="mb-5">
+  <div className="trending-carousel-container py-4 position-relative">
+    
+    {/* Header with Fire Icon and Scroll Buttons */}
+    <div className="d-flex align-items-center justify-content-between mb-4 px-4">
+      <div className="d-flex align-items-center">
+        <Fire className="
+         me-2" size={28} style={{ 
 
-        {/* Carousel Scrollable List */}
-        <div
-          ref={carouselRef}
-          className="trending-carousel d-flex gap-4 px-4 pb-4"
+
+           color: '#FF4532',
+    filter: 'drop-shadow(0 0 4px rgba(255, 69, 50, 0.6))' // matching glow
+          
+          }} />
+        <h3 className="fw-bold mb-0" style={{ color: theme.primary, letterSpacing: "1px", textShadow: "0 2px 4px rgba(0,0,0,0.2)" }}>
+          TOP TRENDING 
+        </h3>
+      </div>
+      <div className="d-flex gap-2">
+        <Button
+          variant="outline-light"
+          className="rounded-circle p-2 d-flex align-items-center justify-content-center scroll-btn"
+          style={{ width: '42px', height: '42px', border: `1px solid ${theme.primary}` }}
+          onClick={scrollLeft}
         >
-          {products.map(product => (
-            <div 
-              key={product.id} 
-              className="trending-item flex-shrink-0"
-              style={{ 
-                width: '300px',
-                scrollSnapAlign: 'start',
-                transition: 'transform 0.3s ease, box-shadow 0.3s ease'
-              }}
-            >
-              <Card className="h-100 overflow-hidden border-0" 
-                style={{ 
-                  borderRadius: '16px', 
-                  background: 'rgba(255, 255, 255, 0.8)',
-                  backdropFilter: 'blur(10px)',
-            
-              
-                  transition: 'transform 0.3s ease, box-shadow 0.3s ease'
-                }}
-              >
-                <div className="position-relative d-flex align-items-center" 
-                  style={{ 
-                    height: '220px',
-                
+          &lt;
+        </Button>
+        <Button
+          variant="outline-light"
+          className="rounded-circle p-2 d-flex align-items-center justify-content-center scroll-btn"
+          style={{ width: '42px', height: '42px', border: `1px solid ${theme.primary}` }}
+          onClick={scrollRight}
+        >
+          &gt;
+        </Button>
+      </div>
+    </div>
+
+    {/* Carousel Scrollable List */}
+    <div
+      ref={carouselRef}
+      className="trending-carousel d-flex gap-4 px-4 pb-4"
+    >
+      {products.map(product => (
+        <div 
+          key={product.id} 
+          className="trending-item flex-shrink-0"
+          style={{ width: '350px', scrollSnapAlign: 'start', transition: 'transform 0.3s ease, box-shadow 0.3s ease' }}
+        >
+          <Card className="h-100 py-4 overflow-hidden border-0" 
+            style={{ 
+              borderRadius: '16px', 
+              background: 'rgba(255, 255, 255, 0.8)',
+              backdropFilter: 'blur(10px)',
+              transition: 'transform 0.3s ease, box-shadow 0.3s ease'
+            }}
+          >
+            <div className="position-relative d-flex align-items-center" style={{ height: '220px' }}>
+              <div className="w-50 h-100 d-flex align-items-center justify-content-center p-3">
+                <div
+                  className="w-100 h-100 d-flex align-items-center justify-content-center rounded"
+                  style={{
+                    backdropFilter: "blur(5px)",
+                    border: "1px solid rgba(197, 164, 103, 0.1)",
+                    overflowX: "auto",
+                    gap: "0.5rem",
                   }}
                 >
-               <div className="w-50 h-100 d-flex align-items-center justify-content-center p-3">
-  <div
-    className="w-100 h-100 d-flex align-items-center justify-content-center rounded"
-    style={{
-      backdropFilter: "blur(5px)",
-      border: "1px solid rgba(197, 164, 103, 0.1)",
-      overflowX: "auto",
-      gap: "0.5rem",
-    }}
-  >
-{product.photoUrls?.[0] && (
-  <img
-    src={product.photoUrls[0]}
-    alt={`${product.title} - 1`}
-    className="img-fluid"
-    style={{
-      minHeight: "100%",
-      objectFit: "cover",
-    }}
-      />
-    )}
+                  {product.photoUrls?.[0] && (
+                    <img
+                      src={product.photoUrls[0]}
+                      alt={`${product.title} - 1`}
+                      className="img-fluid"
+                      style={{
+                        minHeight: "100%",
+                        objectFit: "cover",
+                      }}
+                    />
+                  )}
+                </div>
+              </div>
+
+              <div className="w-50 p-3">
+                <Badge className="mb-2" style={{ background: "linear-gradient(135deg, #C5A467 0%, #8A6D3B 100%)", border: "none", fontWeight: 500, letterSpacing: "0.5px" }}>
+                  TRENDING
+                </Badge>
+                <h5 className="fw-bold mb-1" style={{ color: theme.dark, fontSize: '0.85rem' }}>{product.title}</h5>
+                <div className="d-flex align-items-center mb-2">
+                  <StarFill className="text-warning me-1" size={14} />
+                  <span className="fw-medium" style={{ color: "#ddd" }}>{product.rating}</span>
+                </div>
+                <p className="mb-2 small" style={{ color: "#aaa" }}>{product.brand}</p>
+                <h4 className="fw-bold mb-3" style={{ color: theme.primary, fontSize: '1.4rem', textShadow: "0 2px 4px rgba(0,0,0,0.3)" }}>
+                  KES {product.price.toLocaleString()}
+                </h4>
+                <Button 
+                  variant="outline-light" 
+                  size="sm"
+                  className="mt-1 view-details-btn"
+                  onClick={() => handleViewDetail(product)}
+                  style={{ 
+                    width: '100%', 
+                    fontWeight: 500,
+                    letterSpacing: "0.5px",
+                    background: "transparent",
+                    border: `1px solid ${theme.primary}`,
+                    color: theme.primary,
+                    transition: "all 0.3s ease"
+                  }}
+                >
+                  VIEW DETAILS
+                </Button>
+              </div>
+            </div>
+          </Card>
+        </div>
+      ))}
+    </div>
+
+    {/* 👇 Thin continuation line below carousel */}
+<div
+  className="carousel-continuation-line mx-4"
+  style={{
+    height: '1px',
+   background: 'linear-gradient(90deg, #FF4532 0%, #00C853 100%)',
+
+
+    marginTop: '-4px',
+    borderRadius: '1px'
+  }}
+></div>
+
+    {/* Inline CSS for the carousel */}
+    <style jsx>{`
+      .trending-carousel {
+        overflow-x: auto;
+        scroll-snap-type: x mandatory;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        padding-bottom: 12px;
+      }
+
+      .trending-carousel::-webkit-scrollbar {
+        display: none;
+      }
+
+      .trending-item {
+        scroll-snap-align: start;
+      }
+
+      .trending-item:hover {
+        transform: translateY(-8px);
+        z-index: 5;
+      }
+
+      .trending-item:hover .card {
+        border: 1px solid rgba(197, 164, 103, 0.4);
+      }
+
+      .trending-carousel-container::before,
+      .trending-carousel-container::after {
+        content: '';
+        position: absolute;
+        top: 70px;
+        bottom: 25px;
+        width: 100px;
+        pointer-events: none;
+        z-index: 10;
+        transition: opacity 0.3s ease;
+      }
+
+      .trending-carousel-container::before {
+        left: 0;
+      }
+
+      .trending-carousel-container::after {
+        right: 0;
+      }
+
+      .scroll-btn {
+        transition: all 0.3s ease;
+      }
+
+      .scroll-btn:hover {
+        background: ${theme.primary} !important;
+        color: #1a1a1a !important;
+        transform: scale(1.05);
+        border: 1px solid ${theme.primary} !important;
+      }
+
+      .view-details-btn:hover {
+        background: ${theme.primary} !important;
+        color: #1a1a1a !important;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(197, 164, 103, 0.3);
+      }
+
+      .badge {
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+      }
+    `}</style>
   </div>
 </div>
 
-                  <div className="w-50 p-3">
-                    <Badge pill className="mb-2" 
-                      style={{ 
-                        background: "linear-gradient(135deg, #C5A467 0%, #8A6D3B 100%)", 
-                        border: "none",
-                        fontWeight: 500,
-                        letterSpacing: "0.5px"
-                      }}
-                    >
-                      TRENDING
-                    </Badge>
-                    <h5 className="fw-bold mb-1" style={{ color: theme.light, fontSize: '1.1rem' }}>{product.title}</h5>
-                    <div className="d-flex align-items-center mb-2">
-                      <StarFill className="text-warning me-1" size={14} />
-                      <span className="fw-medium" style={{ color: "#ddd" }}>{product.rating}</span>
-                    </div>
-                    <p className="mb-2 small" style={{ color: "#aaa" }}>{product.brand}</p>
-                    <h4 className="fw-bold mb-3" style={{ color: theme.primary, fontSize: '1.4rem', textShadow: "0 2px 4px rgba(0,0,0,0.3)" }}>
-                      KES {product.price.toLocaleString()}
-                    </h4>
-                    <Button 
-                      variant="outline-light" 
-                      size="sm"
-                      className="mt-1 view-details-btn"
-                      onClick={() => handleViewDetail(product)}
-                      style={{ 
-                        width: '100%', 
-                        fontWeight: 500,
-                        letterSpacing: "0.5px",
-                        background: "transparent",
-                        border: `1px solid ${theme.primary}`,
-                        color: theme.primary,
-                        transition: "all 0.3s ease"
-                      }}
-                    >
-                      VIEW DETAILS
-                    </Button>
-                  </div>
-                </div>
-              </Card>
-            </div>
-          ))}
-        </div>
-
-        {/* CSS Styling */}
-        <style jsx>{`
-          .trending-carousel {
-            overflow-x: auto;
-            scroll-snap-type: x mandatory;
-            -webkit-overflow-scrolling: touch;
-            scrollbar-width: none;
-            padding-bottom: 12px;
-          }
-          
-          .trending-carousel::-webkit-scrollbar {
-            display: none;
-          }
-          
-          .trending-item {
-            scroll-snap-align: start;
-          }
-          
-          .trending-item:hover {
-            transform: translateY(-8px);
-            z-index: 5;
-          }
-          
-          .trending-item:hover .card {
-          
-            border: 1px solid rgba(197, 164, 103, 0.4);
-          }
-          
-          .trending-carousel-container::before,
-          .trending-carousel-container::after {
-            content: '';
-            position: absolute;
-            top: 70px;
-            bottom: 25px;
-            width: 100px;
-            pointer-events: none;
-            z-index: 10;
-            transition: opacity 0.3s ease;
-          }
-          
-          .trending-carousel-container::before {
-            left: 0;
-         
-          }
-          
-          .trending-carousel-container::after {
-            right: 0;
-         
-          }
-          
-          .scroll-btn {
-            transition: all 0.3s ease;
-          }
-          
-          .scroll-btn:hover {
-            background: ${theme.primary} !important;
-            color: #1a1a1a !important;
-            transform: scale(1.05);
-            border: 1px solid ${theme.primary} !important;
-          }
-          
-          .view-details-btn:hover {
-            background: ${theme.primary} !important;
-            color: #1a1a1a !important;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(197, 164, 103, 0.3);
-          }
-          
-          .badge {
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-          }
-        `}</style>
-      </div>
-
-
-
-
-
-
-        </div>
 
         {/* All Products Grid */}
         <div className="mb-4">

@@ -998,7 +998,33 @@ svg {
   color: #00C853;
 }
 
-.brand-title {
-  font-family: 'Poppins', sans-serif;
-  letter-spacing: 0.4px;
+
+
+.scroll-btn {
+  width: 42px !important;
+  height: 42px;
+  padding: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background-color: #00A644 !important;
+  border: none !important;
+}
+
+
+/*    animated   save d button    bottam nav */
+@keyframes bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(6px);
+  }
+}
+
+.arrow-animate {
+  animation: bounce 1.5s ease-in-out infinite;
+  transform-origin: center;
+  cursor: pointer; /* optional, if you want pointer on hover */
 }
