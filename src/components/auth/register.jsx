@@ -9,16 +9,16 @@ import {
   FiSmartphone,
   FiUserCheck,
   FiLoader
-} from 'react-icons/fi'; // Removed FiCreditCard as it's not used
+} from 'react-icons/fi';
 import axios from 'axios';
-import styled, { keyframes } from 'styled-components'; // Import keyframes for animations
+import styled, { keyframes } from 'styled-components';
 import * as Yup from 'yup';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 
 // --- Jikoni Express Color Palette ---
 const colors = {
   primary: '#FF4532', // Jikoni Red
-  secondary: '#00C853', // Jikoni Green
+  secondary: '#00C853', // Jikoni Green (used for success messages)
   darkText: '#1A202C', // Dark text for headings
   lightBackground: '#F0F2F5', // Light background for the page
   cardBackground: '#FFFFFF', // White for the form card
@@ -48,19 +48,19 @@ const PageWrapper = styled.div`
 `;
 
 const AuthContainer = styled.div`
-  max-width: 450px; /* Slightly wider for better spacing */
+  max-width: 450px;
   width: 100%;
   padding: 2.5rem;
   background: ${colors.cardBackground};
-  border-radius: 16px; /* More rounded corners */
-  box-shadow: 0 8px 24px rgba(0,0,0,0.15); /* More prominent shadow */
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.15);
   text-align: center;
 `;
 
 const Header = styled.div`
   margin-bottom: 2.5rem;
   .icon {
-    font-size: 3.5rem; /* Larger icon */
+    font-size: 3.5rem;
     color: ${colors.primary};
     margin-bottom: 1rem;
     display: block;
@@ -68,7 +68,7 @@ const Header = styled.div`
     margin-right: auto;
   }
   h1 {
-    font-size: 2.2rem; /* Larger heading */
+    font-size: 2.2rem;
     font-weight: 700;
     color: ${colors.darkText};
   }
@@ -90,17 +90,17 @@ const IconWrapper = styled.div`
   left: 1rem;
   transform: translateY(-50%);
   color: ${colors.placeholderText};
-  font-size: 1.2rem; /* Larger icon in input */
+  font-size: 1.2rem;
 `;
 
 const InputField = styled(Field)`
   width: 100%;
-  padding: 0.9rem 1.2rem 0.9rem 3rem; /* More padding and space for icon */
+  padding: 0.9rem 1.2rem 0.9rem 3rem;
   border: 1px solid ${colors.borderColor};
-  border-radius: 10px; /* Slightly more rounded */
+  border-radius: 10px;
   font-size: 1.05rem;
   color: ${colors.darkText};
-  background-color: ${colors.lightBackground}; /* Light background for inputs */
+  background-color: ${colors.lightBackground};
   transition: all 0.3s ease;
 
   &::placeholder {
@@ -109,9 +109,9 @@ const InputField = styled(Field)`
 
   &:focus {
     outline: none;
-    border-color: ${colors.primary}; /* Focus color primary */
-    box-shadow: 0 0 0 3px rgba(255, 69, 50, 0.2); /* Red glow on focus */
-    background-color: ${colors.cardBackground}; /* White background on focus */
+    border-color: ${colors.primary};
+    box-shadow: 0 0 0 3px rgba(255, 69, 50, 0.2);
+    background-color: ${colors.cardBackground};
   }
 `;
 
@@ -123,7 +123,7 @@ const SelectField = styled.select`
   font-size: 1.05rem;
   color: ${colors.darkText};
   background-color: ${colors.lightBackground};
-  appearance: none; /* Hide default select arrow */
+  appearance: none;
   transition: all 0.3s ease;
 
   &:focus {
@@ -137,29 +137,42 @@ const SelectField = styled.select`
 const ErrorText = styled.div`
   color: ${colors.errorText};
   font-size: 0.875rem;
-  margin-top: 0.5rem; /* More margin for clarity */
+  margin-top: 0.5rem;
   text-align: left;
+`;
+
+const SuccessText = styled.div`
+  color: ${colors.secondary}; /* Use secondary color (green) for success */
+  font-size: 0.95rem;
+  margin-top: 0.5rem;
+  margin-bottom: 1rem; /* Added margin to separate from button */
+  text-align: center;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
 `;
 
 const SubmitButton = styled.button`
   width: 100%;
   padding: 0.9rem;
   background: ${colors.primary};
-  color: ${colors.cardBackground}; /* White text */
+  color: ${colors.cardBackground};
   border: none;
   border-radius: 10px;
-  font-size: 1.1rem; /* Slightly larger text */
-  font-weight: 600; /* Bolder text */
+  font-size: 1.1rem;
+  font-weight: 600;
   cursor: pointer;
   transition: background 0.2s ease, transform 0.1s ease;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.75rem; /* More space between icon and text */
+  gap: 0.75rem;
 
   &:hover {
     background: ${colors.buttonHover};
-    transform: translateY(-1px); /* Slight lift on hover */
+    transform: translateY(-1px);
   }
 
   &:disabled {
@@ -171,17 +184,17 @@ const SubmitButton = styled.button`
 
 const LinkText = styled.p`
   text-align: center;
-  margin-top: 1.5rem; /* More space */
+  margin-top: 1.5rem;
   font-size: 0.95rem;
   color: ${colors.darkText};
 
   a {
-    color: ${colors.secondary}; /* Use Jikoni Green for links */
+    color: ${colors.secondary};
     font-weight: 600;
     text-decoration: none;
     transition: color 0.2s ease;
     &:hover {
-      color: #00B247; /* Slightly darker green on hover */
+      color: #00B247;
       text-decoration: underline;
     }
   }
@@ -202,7 +215,7 @@ const validationSchema = Yup.object().shape({
     .required('Gender is required')
     .oneOf(['MALE', 'FEMALE', 'OTHER'], 'Invalid gender selection'),
   Password: Yup.string()
-    .min(8, 'Password must be at least 8 characters') // Changed from 6 to 8 for stronger password
+    .min(8, 'Password must be at least 8 characters')
     .required('Password is required'),
   ConfirmPassword: Yup.string()
     .oneOf([Yup.ref('Password'), null], 'Passwords must match')
@@ -214,10 +227,13 @@ const BASE_URl = "https://neuro-apps-api-express-js-production-redy.onrender.com
 const Register = () => {
   const navigate = useNavigate();
   const [serverError, setServerError] = useState('');
+  const [registrationSuccess, setRegistrationSuccess] = useState(false); // New state for success message
 
-  const handleSubmit = async (values, { setSubmitting }) => {
+  const handleSubmit = async (values, { setSubmitting, resetForm }) => {
     try {
       setServerError('');
+      setRegistrationSuccess(false); // Reset success message on new submission
+
       const response = await axios.post(`${BASE_URl}/register`, {
         Name: values.Name,
         PhoneNumber: values.PhoneNumber,
@@ -225,12 +241,22 @@ const Register = () => {
         Gender: values.Gender,
         Password: values.Password,
       });
-      localStorage.setItem('token', response.data.token);
-      navigate('/login');
+
+      if (response.status === 201 || response.status === 200) { // Check for successful status codes
+        localStorage.setItem('token', response.data.token);
+        setRegistrationSuccess(true); // Set success message
+        resetForm(); // Clear the form fields on success
+        setTimeout(() => {
+          navigate('/login'); // Redirect to login after a short delay
+        }, 2000); // 2-second delay before redirecting
+      } else {
+        setServerError(response.data?.message || 'Registration failed with an unexpected status.');
+      }
     } catch (error) {
       setServerError(error.response?.data?.message || 'Registration failed. Please try again.');
+    } finally {
+      setSubmitting(false);
     }
-    setSubmitting(false);
   };
 
   return (
@@ -304,6 +330,11 @@ const Register = () => {
               </FormGroup>
 
               {serverError && <ErrorText style={{ marginBottom: '1rem' }}>{serverError}</ErrorText>}
+              {registrationSuccess && (
+                <SuccessText>
+                  <FiCheckCircle /> Successfully registered! Redirecting to login...
+                </SuccessText>
+              )}
 
               <SubmitButton type="submit" disabled={isSubmitting}>
                 {isSubmitting ? (
@@ -312,7 +343,7 @@ const Register = () => {
                     Registering...
                   </>
                 ) : (
-                  'Create Jikoni Account' // More branded text
+                  'Create Jikoni Account'
                 )}
               </SubmitButton>
 
