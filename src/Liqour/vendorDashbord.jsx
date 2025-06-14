@@ -9,6 +9,7 @@ import { Plus } from 'react-bootstrap-icons';
 import Swal from 'sweetalert2';
 import withReactContent from 'sweetalert2-react-content';
 import styled, { keyframes, css } from 'styled-components';
+import FoodPostForm from '../components/chefs/foods/foodPostForm'; // or the correct relative path
 
 
 // Jikoni Express SVG Logo - Re-defined here to ensure it's available within this file's scope.
