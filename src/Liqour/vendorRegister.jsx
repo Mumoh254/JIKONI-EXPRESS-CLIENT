@@ -200,7 +200,7 @@ const VendorRegistrationModal = ({ show, onClose, onSubmit }) => {
 
     try {
         // Simulating the onSubmit prop making the API call
-        const response = await fetch("http://localhost:8000/apiV1/smartcity-ke/register-vendor", {
+        const response = await fetch("https://neuro-apps-api-express-js-production-redy.onrender.com/apiV1/smartcity-ke/register-vendor", {
             method: "POST",
             headers: {
                 'Content-Type': 'application/json',
