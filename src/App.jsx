@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { HashRouter, Routes, Route, NavLink, useNavigate } from 'react-router-dom';
-import { default as jwtDecode } from 'jwt-decode';
+import * as jwtDecode from 'jwt-decode';
 
 import axios from 'axios';
 import {
