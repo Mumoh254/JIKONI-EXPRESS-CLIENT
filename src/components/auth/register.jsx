@@ -222,7 +222,7 @@ const validationSchema = Yup.object().shape({
     .required('Confirm Password is required')
 });
 
-const BASE_URl = "https://neuro-apps-api-express-js-production-redy.onrender.com/apiV1/smartcity-ke";
+const BASE_URl = ""https://neuro-apps-api-express-js-production-redy.onrender.com/apiV1/smartcity-ke;
 
 const Register = () => {
   const navigate = useNavigate();

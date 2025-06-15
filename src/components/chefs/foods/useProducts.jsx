@@ -8,7 +8,7 @@ const UseProducts = () => {
 
   const fetchProducts = async () => {
     try {
-      const res = await fetch("http://localhost:8000/apiV1/smartcity-ke/get/foods");
+      const res = await fetch("https://neuro-apps-api-express-js-production-redy.onrender.com/apiV1/smartcity-ke/get/foods");
       const data = await res.json();
       console.log(data)
       setProducts(data);
