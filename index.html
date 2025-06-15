@@ -137,6 +137,12 @@
         }
       }
 
+      if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/firebase-messaging-sw.js')
+    .then(reg => console.log('🟢 Service Worker registered:', reg))
+    .catch(err => console.error('🔴 Service Worker registration failed:', err));
+}
+
       function showToast(message, type, persistent = false) {
         const existingToast = document.querySelector('.network-toast');
         if (existingToast) existingToast.remove();

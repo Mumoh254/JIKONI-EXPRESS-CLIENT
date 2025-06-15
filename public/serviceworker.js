@@ -13,6 +13,8 @@ const INSTALL_CACHE = [
   '/assets/main.css'
 ];
 
+
+
 // Install event - cache essential assets immediately
 self.addEventListener('install', (event) => {
   self.skipWaiting(); // Activate worker immediately after install
