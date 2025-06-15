@@ -128,7 +128,7 @@ export default function FoodPostForm({ show, onHide, setFoods }) {
     });
 
     try {
-      const response = await fetch("http://localhost:8000/apiV1/smartcity-ke/create/food", {
+      const response = await fetch("https://neuro-apps-api-express-js-production-redy.onrender.com/apiV1/smartcity-ke/create/food", {
         method: "POST",
         body: formData
       });
