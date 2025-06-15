@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react'; // Import React hooks
 import { HashRouter, Routes, Route, NavLink, useNavigate } from 'react-router-dom';
 import {
     MdOutlineDownloadForOffline, MdFavoriteBorder, MdInsights, MdPeopleOutline, MdNotificationsNone, MdHome, MdOutlineFastfood
@@ -28,6 +27,50 @@ import NotificationsPanel from '../src/components/chefs/orders/notificationPanel
 import UserOrderDetails from './components/cartAndOrder/userOrderDetails';
 import AudioCall from './components/calls/audioCalls';
 import VendorDashboard from './Liqour/vendorDashbord'; // Import the VendorDashboard component
+import { requestFCMToken } from './utilities/firebaseUtilities'; // Import your requestFCMToken function
+
+// Firebase configuration (This would typically be in './utilities/firebaseUtilities.js')
+/*
+const firebaseConfig = {
+  apiKey: "AIzaSyBX7U1lDZihQ2tHq1CTfgm9EEamw8HlFoc",
+  authDomain: "jikoniexpressnotification.firebaseapp.com",
+  projectId: "jikoniexpressnotification",
+  storageBucket: "jikoniexpressnotification.firebasestorage.app",
+  messagingSenderId: "880547014610",
+  appId: "1:880547014610:web:9168f6b24052eecd448a0b",
+  measurementId: "G-G4FCZQ71M1"
+};
+
+// Your VAPID key for push notifications
+const vapidKey = 'BKWJV-ITEoOZo-YQ2VnBPu479gwTRjP02Cp8lJ2HxT9__zL4kJ9q5zbiC_-1T7emTaQ6u1NJAQ5HQpHvZcXKaLI';
+
+// Initialize Firebase App
+const app = initializeApp(firebaseConfig);
+
+// Get the Messaging service instance
+const messaging = getMessaging(app);
+
+// The requestFCMToken function should also be in './utilities/firebaseUtilities.js'
+export const requestFCMToken = async () => {
+  try {
+    const permission = await Notification.requestPermission();
+    if (permission === "granted") {
+      const currentToken = await getToken(messaging, { vapidKey });
+      if (currentToken) {
+        console.log('FCM Token:', currentToken);
+        return currentToken;
+      } else {
+        throw new Error('No FCM registration token available. Request permission to generate one.');
+      }
+    } else {
+      throw new Error('Notification permission denied. Cannot get FCM token.');
+    }
+  } catch (error) {
+    console.error('Error requesting FCM token:', error);
+    throw error;
+  }
+};
+*/
 
 const AppContainer = styled.div`
     min-height: 100vh;
@@ -72,9 +115,7 @@ const BottomNav = styled.nav`
         box-shadow: inset 0 1px 3px rgba(0,0,0,0.2);
         z-index: 1;
     }
-
     
-
     a {
         display: flex;
         flex-direction: column;
@@ -130,8 +171,8 @@ const BottomNav = styled.nav`
         svg {
             font-size: 1.5rem;
             margin-bottom: 0.1rem;
-            color:rgb(0, 0, 0)';
-    
+            color:rgb(0, 0, 0);
+            
             transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
         }
     }
@@ -148,7 +189,7 @@ const BottomNav = styled.nav`
 
             svg {
                 font-size: 1.2rem;
-                font-weight:   700;
+                font-weight: 700;
             }
         }
     }
@@ -190,6 +231,27 @@ function App() {
     const [isVendorMode, setIsVendorMode] = useState(false); // New state for vendor mode
     const [showNotifications, setShowNotifications] = useState(false);
 
+    // FCM Token related states
+    const [fcmToken, setFcmToken] = useState(null);
+    const [fcmError, setFcmError] = useState(null); // Renamed to avoid conflict with 'error' state if used elsewhere
+    const [fcmLoading, setFcmLoading] = useState(true); // Renamed to avoid conflict with 'loading' state if used elsewhere
+
+
+    // Effect to fetch FCM token
+    useEffect(() => {
+        const fetchFCMToken = async () => {
+            try {
+                const token = await requestFCMToken(); // Capture the returned token
+                setFcmToken(token);
+            } catch (err) {
+                setFcmError(err.message); // Set the error message
+            } finally {
+                setFcmLoading(false); // Stop loading regardless of success or failure
+            }
+        };
+
+        fetchFCMToken();
+    }, []); // Empty dependency array means this effect runs once after the initial render
 
     useEffect(() => {
         const userData = getUserNameFromToken();
@@ -292,48 +354,47 @@ function App() {
                     </>
                 ) : (
                     <>
-                     <NavLink to="/">
-  <MdHome style={{ color: 'red' }} /> Home
-</NavLink>
+                    <NavLink to="/">
+                        <MdHome style={{ color: 'red' }} /> Home
+                    </NavLink>
 
-                      <NavLink to="/jikoni/express/download">
-                           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-cloud-download-icon lucide-cloud-download"><path d="M12 13v8l-4-4"/><path d="m12 21 4-4"/><path d="M4.393 15.269A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.436 8.284"/></svg> Get App
-                        </NavLink>
-                <NavLink
-  to="/saved/foods"
-  className="nav-link"
-  style={{
-    color: '#FF4532',
-    fontWeight: '800',
-    fontSize:    '0.85rem'
-  }}
->
-  Saved
-  <svg
-  className="arrow-animate"
-  xmlns="http://www.w3.org/2000/svg"
-  width="20"
-  height="20"
-  viewBox="0 0 24 24"
-  fill="none"
-  stroke="#00C853"
-  strokeWidth="2"
-  strokeLinecap="round"
-  strokeLinejoin="round"
-  style={{ marginLeft: '4px' }}
->
-  <path d="m6 9 6 6 6-6" />
-</svg>
+                    <NavLink to="/jikoni/express/download">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-cloud-download-icon lucide-cloud-download"><path d="M12 13v8l-4-4"/><path d="m12 21 4-4"/><path d="M4.393 15.269A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.436 8.284"/></svg> Get App
+                    </NavLink>
+                    <NavLink
+                        to="/saved/foods"
+                        className="nav-link"
+                        style={{
+                            color: '#FF4532',
+                            fontWeight: '800',
+                            fontSize: '0.85rem'
+                        }}
+                    >
+                        Saved
+                        <svg
+                            className="arrow-animate"
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="20"
+                            height="20"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="#00C853"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            style={{ marginLeft: '4px' }}
+                        >
+                            <path d="m6 9 6 6 6-6" />
+                        </svg>
+                    </NavLink>
 
-</NavLink>
 
-
-                        <NavLink to="/jikoni-express/liqour-shots">
-                            <GiWineBottle /> Liquor
-                        </NavLink>
-                        <NavLink to="/culture/foods">
-                            <MdOutlineFastfood style={{ color: 'red' }} /> Foods
-                        </NavLink>
+                    <NavLink to="/jikoni-express/liqour-shots">
+                        <GiWineBottle /> Liquor
+                    </NavLink>
+                    <NavLink to="/culture/foods">
+                        <MdOutlineFastfood style={{ color: 'red' }} /> Foods
+                    </NavLink>
                     </>
                 )}
             </BottomNav>
