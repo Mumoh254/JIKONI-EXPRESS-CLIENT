@@ -1,234 +1,274 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 
- <title>🍽️ Jikoni Express | Taste the Speed of Food & Liquor Delivery 🚀</title>
+  <title>🍽️ Jikoni Express | Taste the Speed of Food & Liquor Delivery 🚀</title>
 
-  <meta name="description" content="Jikoni Express delivers delicious meals and premium liquor right to your doorstep. Fast, reliable, and made for your cravings.">
-  <meta name="keywords" content="Jikoni Express, food delivery, liquor delivery, online restaurant, alcohol delivery, Nairobi delivery, order food online">
-  <meta name="author" content="Welt Tallis Development Team">
+  <meta name="description" content="Jikoni Express delivers delicious meals and premium liquor right to your doorstep. Fast, reliable, and made for your cravings.">
+  <meta name="keywords" content="Jikoni Express, food delivery, liquor delivery, online restaurant, alcohol delivery, Nairobi delivery, order food online">
+  <meta name="author" content="Welt Tallis Development Team">
 
-    <meta name="theme-color" content="#7c2d12">
-  <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-title" content="Jikoni Express">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#FF4532"> <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Jikoni Express">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
-    <meta property="og:title" content="Jikoni Express - Your Craving, Delivered! 🚀">
-  <meta property="og:description" content="Craving something delicious or a refreshing drink? 🍔🍷 Jikoni Express delivers amazing meals and premium liquor directly to your door, super fast! ✨ Order now for an unforgettable experience! 🎉">
-  <meta property="og:image" content="/images/share.jpg">   <meta property="og:url" content="https://jikoniexpress.app">
-  <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:image" content="/images/share.jpg">   <meta name="twitter:description" content="Craving something delicious or a refreshing drink? 🍔🍷 Jikoni Express delivers amazing meals and premium liquor directly to your door, super fast! ✨ Order now for an unforgettable experience! 🎉">
+  <meta property="og:title" content="Jikoni Express - Your Craving, Delivered! 🚀">
+  <meta property="og:description" content="Craving something delicious or a refreshing drink? 🍔🍷 Jikoni Express delivers amazing meals and premium liquor directly to your door, super fast! ✨ Order now for an unforgettable experience! 🎉">
+  <meta property="og:image" content="/images/share.jpg">
+  <meta property="og:url" content="https://jikoniexpress.app">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="/images/share.jpg">
+  <meta name="twitter:description" content="Craving something delicious or a refreshing drink? 🍔🍷 Jikoni Express delivers amazing meals and premium liquor directly to your door, super fast! ✨ Order now for an unforgettable experience! 🎉">
 
-    <link rel="manifest" href="/manifest.json">
-  <link rel="icon" type="image/png" href="/images/logo2.png" />
-  <link rel="icon" href="/images/icon.svg" type="image/svg+xml">
-  <link rel="apple-touch-icon" href="/images/apple-touch-icon.png">
-  <link rel="mask-icon" href="/images/safari-pinned-tab.svg" color="#7c2d12">
+  <link rel="manifest" href="/manifest.json">
+  <link rel="icon" type="image/png" href="/images/logo2.png" />
+  <link rel="icon" href="/images/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/images/apple-touch-icon.png">
+  <link rel="mask-icon" href="/images/safari-pinned-tab.svg" color="#FF4532"> <link rel="preload"
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/css/bootstrap.min.css"
+    as="style"
+    integrity="sha384-SgOJa3DmI69IUzQ2PVdRZhwQ+dy64/BUtbMJw1MZ8t5HZApcHrRKUc4W0kG879m7"
+    crossorigin="anonymous">
 
-    <link rel="preload"
-    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/css/bootstrap.min.css"
-    as="style"
-    xintegrity="sha384-SgOJa3DmI69IUzQ2PVdRZhwQ+dy64/BUtbMJw1MZ8t5HZApcHrRKUc4W0kG879m7"
-    crossorigin="anonymous">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-SgOJa3DmI69IUzQ2PVdRZhwQ+dy64/BUtbMJw1MZ8t5HZApcHrRKUc4W0kG879m7" crossorigin="anonymous">
 
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/css/bootstrap.min.css" rel="stylesheet" xintegrity="sha384-SgOJa3DmI69IUzQ2PVdRZhwQ+dy64/BUtbMJw1MZ8t5HZApcHrRKUc4W0kG879m7" crossorigin="anonymous">
-  <style>
-    body {
-        margin: 0;
-        font-family: sans-serif;
+  <style>
+    :root {
+      --jikoni-red: #FF4532;
+      --jikoni-green: #00C853;
+      --dark-text: #1A202C;
+      --light-background: #F0F2F5;
+      --card-background: #FFFFFF;
+      --border-color: #D1D9E6;
+      --error-text: #EF4444;
+      --placeholder-text: #A0AEC0;
+      --button-hover: #E6392B;
+      --disabled-button: #CBD5E1;
     }
 
-    .loading-overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(255, 255, 255, 0.98); /* Slightly less transparent */
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      z-index: 9999;
-      backdrop-filter: blur(5px);
-    }
+    body {
+      margin: 0;
+      font-family: sans-serif;
+      overflow: hidden; /* Prevent scrollbar during loading */
+    }
+
+    .loading-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: var(--light-background); /* Use the light background color */
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      opacity: 1;
+      visibility: visible;
+      transition: opacity 0.5s ease-out, visibility 0.5s ease-out;
+    }
+
+    .loading-overlay.hidden {
+      opacity: 0;
+      visibility: hidden;
+    }
+
+    .loading-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2rem;
+      border-radius: 15px; /* Slightly rounded corners for the content area */
+      background-color: var(--card-background); /* White background for the content */
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1); /* Soft shadow for depth */
+      animation: fadeIn 0.8s ease-in-out;
+    }
 
     .loading-overlay img {
-        margin-bottom: 1.5rem; /* Space between logo and text */
-        animation: pulse 1.5s infinite ease-in-out alternate; /* Add a subtle pulse */
+      width: 120px; /* Slightly larger logo */
+      height: 120px;
+      margin-bottom: 1.5rem;
+      animation: pulse 1.8s infinite ease-in-out alternate; /* Smoother pulse */
     }
 
-    .loading-text {
-      margin-top: 1.5rem;
-      color: #7c2d12; /* Brand color for text */
-      font-weight: 800;
-      font-size: 1.25rem; /* Slightly larger text */
-      text-align: center;
-      padding: 0 1rem;
-    }
-
-    .loading-dots {
-        display: flex;
-        margin-top: 1rem;
+    .loading-text {
+      color: var(--dark-text); /* Dark text for better contrast */
+      font-weight: 700;
+      font-size: 1.35rem; /* Larger and bolder text */
+      text-align: center;
+      margin-bottom: 1rem;
     }
 
-    .loading-dots span {
-        width: 0.75rem;
-        height: 0.75rem;
-        background-color: #dc2626; /* Accent color for dots */
-        border-radius: 50%;
-        margin: 0 0.3rem;
-        animation: bounce 0.6s infinite alternate;
+    .tagline {
+      color: var(--placeholder-text); /* Muted color for the tagline */
+      font-size: 0.95rem;
+      text-align: center;
+      margin-top: 0.5rem;
+      padding: 0 1rem;
     }
 
-    .loading-dots span:nth-child(2) {
-        animation-delay: 0.2s;
+    .spinner {
+      width: 50px;
+      height: 50px;
+      border: 5px solid rgba(255, 69, 50, 0.2); /* Jikoni Red with transparency */
+      border-top-color: var(--jikoni-red); /* Solid Jikoni Red for the moving part */
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-top: 2rem; /* More space from text */
     }
 
-    .loading-dots span:nth-child(3) {
-        animation-delay: 0.4s;
+    .network-toast {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 12px 24px;
+      border-radius: 8px;
+      color: white;
+      font-weight: 500;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      z-index: 10000;
+      opacity: 0;
+      transition: opacity 0.3s ease-in-out;
     }
 
-    .network-toast {
-      position: fixed;
-      bottom: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      padding: 12px 24px;
-      border-radius: 8px;
-      color: white;
-      font-weight: 500;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-      z-index: 10000;
-      opacity: 0;
-      transition: opacity 0.3s ease-in-out;
-    }
+    .network-toast.visible {
+      opacity: 1;
+    }
 
-    .network-toast.visible {
-      opacity: 1;
-    }
+    .network-toast.online {
+      background: var(--jikoni-green); /* Jikoni Green for online */
+    }
 
-    .network-toast.online {
-      background: #16a34a;
-    }
-
-    .network-toast.offline {
-      background: #dc2626;
-    }
+    .network-toast.offline {
+      background: var(--error-text); /* Error Red for offline */
+    }
 
     /* Keyframe Animations */
     @keyframes pulse {
-        0% { transform: scale(1); }
-        100% { transform: scale(1.05); }
+      0% { transform: scale(1); }
+      100% { transform: scale(1.08); } /* More pronounced pulse */
     }
 
-    @keyframes bounce {
-        0% { transform: translateY(0); }
-        100% { transform: translateY(-0.75rem); } /* Adjusted bounce height */
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
     }
 
-  </style>
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
 </head>
 
 <body class="d-flex flex-column min-vh-100">
-  <div id="root" role="main"></div>
+  <div id="root" role="main"></div>
 
-    <div id="loading" class="loading-overlay" aria-live="polite">
-    <img src="/images/logo2.png" alt="Jikoni Express Logo" width="100" height="100">     <p class="loading-text">Jikoni Express — Spicing up kitchens, one byte at a time!</p>
-    <div class="loading-dots">
-        <span></span>
-        <span></span>
-        <span></span>
-    </div>
-  </div>
+  <div id="loading" class="loading-overlay" aria-live="polite">
+    <div class="loading-content">
+      <img src="/images/logo2.png" alt="Jikoni Express Logo">
+      <p class="loading-text">Jikoni Express</p>
+      <p class="tagline">Taste the Speed of Food & Liquor Delivery 🚀</p>
+      <div class="spinner"></div>
+    </div>
+  </div>
 
-  <script src="./src/main.jsx" type="module"></script>
+  <script src="./src/main.jsx" type="module"></script>
 
-    <script>
-    (function () {
-      const loadingEl = document.getElementById('loading');
-      let registration;
-      let toastTimeout;
+  <script>
+    (function () {
+      const loadingEl = document.getElementById('loading');
+      let registration;
+      let toastTimeout;
 
-      function showUpdateNotification() {
-        if (registration?.waiting) {
-          const toast = showToast('New version available! Refresh to update?', 'online', true);
-          toast.addEventListener('click', () => {
-            registration.waiting.postMessage({ type: 'SKIP_WAITING' });
-          });
-        }
-      }
+      function hideLoader() {
+        loadingEl.classList.add('hidden');
+        document.body.style.overflow = 'auto'; // Re-enable scrolling after loader hides
+      }
 
-      if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/firebase-messaging-sw.js')
-    .then(reg => console.log('🟢 Firebase Messaging Service Worker registered:', reg))
-    .catch(err => console.error('🔴 Firebase Messaging Service Worker registration failed:', err));
-}
+      function showUpdateNotification() {
+        if (registration?.waiting) {
+          const toast = showToast('New version available! Refresh to update?', 'online', true);
+          toast.addEventListener('click', () => {
+            registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+          });
+        }
+      }
 
-      function showToast(message, type, persistent = false) {
-        const existingToast = document.querySelector('.network-toast');
-        if (existingToast) existingToast.remove();
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/firebase-messaging-sw.js')
+          .then(reg => console.log('🟢 Firebase Messaging Service Worker registered:', reg))
+          .catch(err => console.error('🔴 Firebase Messaging Service Worker registration failed:', err));
+      }
 
-        const toast = document.createElement('div');
-        toast.className = `network-toast ${type}${persistent ? ' visible' : ''}`;
-        toast.textContent = message;
-        document.body.appendChild(toast);
+      function showToast(message, type, persistent = false) {
+        const existingToast = document.querySelector('.network-toast');
+        if (existingToast) existingToast.remove();
 
-        if (!persistent) {
-          toast.classList.add('visible');
-          clearTimeout(toastTimeout);
-          toastTimeout = setTimeout(() => {
-            toast.classList.remove('visible');
-            setTimeout(() => toast.remove(), 300);
-          }, 3000);
-        }
-        return toast;
-      }
+        const toast = document.createElement('div');
+        toast.className = `network-toast ${type}${persistent ? ' visible' : ''}`;
+        toast.textContent = message;
+        document.body.appendChild(toast);
 
-      if ('serviceWorker' in navigator) {
-        window.addEventListener('load', async () => {
-          try {
-            registration = await navigator.serviceWorker.register('/serviceworker.js', {
-              updateViaCache: 'none',
-              scope: '/'
-            });
+        if (!persistent) {
+          toast.classList.add('visible');
+          clearTimeout(toastTimeout);
+          toastTimeout = setTimeout(() => {
+            toast.classList.remove('visible');
+            setTimeout(() => toast.remove(), 300);
+          }, 3000);
+        }
+        return toast;
+      }
 
-            registration.addEventListener('updatefound', () => {
-              const newWorker = registration.installing;
-              newWorker.addEventListener('statechange', () => {
-                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                  showUpdateNotification();
-                }
-              });
-            });
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', async () => {
+          try {
+            registration = await navigator.serviceWorker.register('/serviceworker.js', {
+              updateViaCache: 'none',
+              scope: '/'
+            });
 
-            if (registration.waiting) showUpdateNotification();
+            registration.addEventListener('updatefound', () => {
+              const newWorker = registration.installing;
+              newWorker.addEventListener('statechange', () => {
+                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                  showUpdateNotification();
+                }
+              });
+            });
 
-            let refreshing = false;
-            navigator.serviceWorker.addEventListener('controllerchange', () => {
-              if (!refreshing) {
-                window.location.reload();
-                refreshing = true;
-              }
-            });
+            if (registration.waiting) showUpdateNotification();
 
-          } catch (error) {
-            console.error('Service Worker registration failed:', error);
-            showToast('Service Worker failed to load', 'offline');
-          } finally {
-            loadingEl.style.display = 'none';
-          }
-        });
+            let refreshing = false;
+            navigator.serviceWorker.addEventListener('controllerchange', () => {
+              if (!refreshing) {
+                window.location.reload();
+                refreshing = true;
+              }
+            });
 
-        window.addEventListener('online', () => showToast('Internet connection restored', 'online'));
-        window.addEventListener('offline', () => showToast('You are currently offline', 'offline'));
-      } else {
-        loadingEl.style.display = 'none';
-      }
-    })();
-  </script>
+          } catch (error) {
+            console.error('Service Worker registration failed:', error);
+            showToast('Service Worker failed to load', 'offline');
+          } finally {
+            // Hide the loader regardless of service worker success/failure
+            hideLoader();
+          }
+        });
+
+        window.addEventListener('online', () => showToast('Internet connection restored', 'online'));
+        window.addEventListener('offline', () => showToast('You are currently offline', 'offline'));
+      } else {
+        // If service workers are not supported, just hide the loader
+        hideLoader();
+      }
+    })();
+  </script>
 </body>
 </html>
