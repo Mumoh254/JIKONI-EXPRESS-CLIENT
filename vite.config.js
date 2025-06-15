@@ -1,27 +1,21 @@
-import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react';
+// vite.config.js
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
 
+// https://vitejs.dev/config/
 export default defineConfig({
-  plugins: [
-    react({
-      jsxRuntime: 'automatic', // 👈 React 17+ automatic runtime
-      babel: {
-        plugins: [
-          '@babel/plugin-transform-react-jsx', // optional fallback for legacy support
-        ],
-      },
-    }),
-  ],
+  plugins: [react()],
+  server: {
+    port: 3000,       // You can set your dev server port here
+    open: true,       // Opens browser automatically on start
+  },
   build: {
-    target: 'esnext', // 👈 Ensures modern build output for React 19
-    commonjsOptions: {
-      include: [/node_modules/], // Fixes some ESM/CommonJS issues
-    },
+    outDir: 'dist',   // Output folder for production build
   },
   resolve: {
     alias: {
-      react: 'react',
-      'react-dom': 'react-dom',
+      // Example alias for cleaner imports (optional)
+      '@': '/src',
     },
   },
-});
+})
