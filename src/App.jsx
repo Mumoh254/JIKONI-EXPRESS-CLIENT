@@ -191,6 +191,8 @@ function App() {
     const [isVendorMode, setIsVendorMode] = useState(false); // New state for vendor mode
     const [showNotifications, setShowNotifications] = useState(false);
     const [fcmToken, setFcmToken] = useState(null);
+    const [loading, setLoading] = useState(false);
+ const [error, setError] = useState(null); // ✅ This defines setError
 
     
  useEffect(() => {
