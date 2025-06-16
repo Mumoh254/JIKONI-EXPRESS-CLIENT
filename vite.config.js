@@ -1,21 +1,19 @@
 // vite.config.js
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
 
-// https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react()],
   server: {
-    port: 5173,       // You can set your dev server port here
-    open: true,       // Opens browser automatically on start
-  },
-  build: {
-    outDir: 'dist',   // Output folder for production build
-  },
-  resolve: {
-    alias: {
-      // Example alias for cleaner imports (optional)
-      '@': '/src',
+    host: true,         // Allow LAN access (local network)
+    port: 5173,         // Dev port
+    open: true,         // Auto open in browser
+    strictPort: true,   // Fail if port is taken
+    watch: {
+      usePolling: true, // Fix for Windows auto-refresh issue
     },
   },
-})
+  build: {
+    outDir: 'dist',      // Folder for production build
+  },
+});
