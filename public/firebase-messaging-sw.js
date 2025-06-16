@@ -28,23 +28,37 @@ const messaging = firebase.messaging();
 // --- Handle Background Messages ---
 // This listener triggers when a push notification is received while your web app
 // is not in the foreground (i.e., closed, minimized, or in another tab).
-messaging.onBackgroundMessage((payload) => {
-    console.log('[firebase-messaging-sw.js] Received background message:', payload);
+// In firebase-messaging-sw.js
+// Update the background message handler:
 
-    // Extract notification title and body from the payload, with fallbacks.
+messaging.onBackgroundMessage((payload) => {
+    console.log('[SW] Received background message:', payload);
+
     const notificationTitle = payload.notification?.title || 'New Message';
     const notificationOptions = {
         body: payload.notification?.body || 'You have a new message.',
-        // Use the icon provided in the payload, or a default image.
-        // Ensure '/firebase-logo.png' exists at your root or provide another path.
-        icon: payload.notification?.icon || '/images/rider.png',
-        // 'data' can contain custom key-value pairs for additional context or actions.
+        icon: payload.notification?.icon || '/images/rider.png', // Updated path
         data: payload.data || {}
     };
 
-    // 'self.registration.showNotification()' displays the notification in the user's
-    // device notification tray. This is the core functionality for background notifications.
-    self.registration.showNotification(notificationTitle, notificationOptions);
+    // Add vibration pattern for mobile devices
+    if ('vibrate' in Notification.prototype) {
+        notificationOptions.vibrate = [200, 100, 200];
+    }
+    
+    // Add timestamp for notification sorting
+    notificationOptions.timestamp = Date.now();
+
+    // Add actions if available in payload
+    if (payload.data && payload.data.actions) {
+        try {
+            notificationOptions.actions = JSON.parse(payload.data.actions);
+        } catch (e) {
+            console.error('Failed to parse actions', e);
+        }
+    }
+
+    return self.registration.showNotification(notificationTitle, notificationOptions);
 });
 
 // --- Handle Notification Clicks ---
