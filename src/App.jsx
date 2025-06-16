@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { HashRouter, Routes, Route, NavLink, useNavigate } from 'react-router-dom';
 import {
@@ -9,7 +8,7 @@ import { GiWineBottle, GiMeal } from 'react-icons/gi';
 import { FaStore } from 'react-icons/fa'; // Icon for Vendor Dashboard
 import styled, { css } from 'styled-components';
 import { useAuth } from './Context/authContext';
-import { getUserNameFromToken } from './handler/tokenDecorder';
+import { getUserNameFromToken, getUserIdFromToken } from './handler/tokenDecorder';
 import LandingPage from './landingPage';
 import Register from './components/auth/register';
 import Login from './components/auth/login';
@@ -28,7 +27,7 @@ import NotificationsPanel from '../src/components/chefs/orders/notificationPanel
 import UserOrderDetails from './components/cartAndOrder/userOrderDetails';
 import AudioCall from './components/calls/audioCalls';
 import VendorDashboard from './Liqour/vendorDashbord'; // Import the VendorDashboard component
-import { requestFCMToken } from './utilities/firebaseUtilities';
+import { requestFCMToken } from './utilities/firebaseUtilities'; // Ensure this utility function exists
 
 const AppContainer = styled.div`
     min-height: 100vh;
@@ -73,8 +72,6 @@ const BottomNav = styled.nav`
         box-shadow: inset 0 1px 3px rgba(0,0,0,0.2);
         z-index: 1;
     }
-
-    
 
     a {
         display: flex;
@@ -131,8 +128,7 @@ const BottomNav = styled.nav`
         svg {
             font-size: 1.5rem;
             margin-bottom: 0.1rem;
-            color:rgb(0, 0, 0)';
-    
+            color:rgb(0, 0, 0);
             transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
         }
     }
@@ -149,7 +145,7 @@ const BottomNav = styled.nav`
 
             svg {
                 font-size: 1.2rem;
-                font-weight:   700;
+                font-weight: 700;
             }
         }
     }
@@ -183,32 +179,88 @@ const NotificationBell = styled(NavLink)`
 
 function App() {
     const navigate = useNavigate();
-    const { user, logout } = useAuth();
-
+    const { logout } = useAuth();
     const [username, setUsername] = useState('');
     const [isChefMode, setIsChefMode] = useState(false);
     const [isRiderMode, setIsRiderMode] = useState(false);
-    const [isVendorMode, setIsVendorMode] = useState(false); // New state for vendor mode
+    const [isVendorMode, setIsVendorMode] = useState(false);
     const [showNotifications, setShowNotifications] = useState(false);
     const [fcmToken, setFcmToken] = useState(null);
-    const [loading, setLoading] = useState(false);
- const [error, setError] = useState(null); // ✅ This defines setError
+    const [userId, setUserId] = useState(null);
+    const [error, setError] = useState(null);
+    // New state to track if FCM token has been successfully synced to the backend
+    const [fcmTokenSynced, setFcmTokenSynced] = useState(false);
 
-    
- useEffect(() => {
-    const fetchFCMToken = async () => {
-      try {
-        const token = await requestFCMToken(); // Capture the returned token
-        setFcmToken(token);
-      } catch (err) {
-        setError(err.message); // Set the error message
-      } finally {
-        setLoading(false); // Stop loading regardless of success or failure
-      }
-    };
+    // Log userId on component render (initial and updates)
+    console.log("Current User ID in App component:", userId);
 
-    fetchFCMToken();
-  }, []); // Empty depe
+    useEffect(() => {
+        const id = getUserIdFromToken();
+        if (id) {
+            setUserId(id);
+            console.log("User ID retrieved from token:", id);
+        } else {
+            console.log("No User ID found in token.");
+        }
+    }, []);
+
+    // Request FCM token from Firebase
+    useEffect(() => {
+        // Only attempt to fetch FCM token if we haven't already successfully done so
+        if (!fcmToken) {
+            const fetchFCMToken = async () => {
+                try {
+                    console.log("Attempting to request FCM token...");
+                    const token = await requestFCMToken(); // This function should be defined in firebaseUtilities.js
+                    setFcmToken(token);
+                    console.log("FCM Token successfully retrieved:", token);
+                } catch (err) {
+                    console.error("Error requesting FCM token:", err.message);
+                    setError(err.message);
+                }
+            };
+            fetchFCMToken();
+        } else {
+            console.log("FCM Token already exists. Skipping request.");
+        }
+    }, [fcmToken]); // Re-run if fcmToken becomes null (e.g., on logout or error)
+
+    // Once both userId and fcmToken are available AND not yet synced, send to backend
+    useEffect(() => {
+        if (userId && fcmToken && !fcmTokenSynced) {
+            console.log("Attempting to sync token to backend with userId:", userId, "and fcmToken:", fcmToken);
+
+            const syncTokenToBackend = async () => {
+                try {
+                    const response = await fetch(`https://neuro-apps-api-express-js-production-redy.onrender.com/apiV1/smartcity-ke/user/${userId}/fcm-token`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ token: fcmToken }),
+                    });
+
+                    if (!response.ok) {
+                        const errorData = await response.json(); // Try to parse error response
+                        throw new Error(`Failed to save device token: ${response.status} - ${errorData.message || response.statusText}`);
+                    }
+
+                    console.log('✅ Device token saved successfully');
+                    setFcmTokenSynced(true); // Mark as synced after successful save
+                } catch (err) {
+                    console.error('❌ Error saving token to backend:', err.message);
+                    setError(err.message);
+                    // Do NOT set fcmTokenSynced to true on error, so it retries
+                }
+            };
+
+            syncTokenToBackend();
+        } else if (fcmTokenSynced) {
+            console.log("FCM Token already synced to backend. Skipping.");
+        } else {
+            console.log("Waiting for userId and fcmToken to be available before syncing.");
+        }
+    }, [userId, fcmToken, fcmTokenSynced]); // Dependencies to re-run this effect
 
     useEffect(() => {
         const userData = getUserNameFromToken();
@@ -216,32 +268,43 @@ function App() {
             setUsername(userData.name);
             if (userData.isChef) {
                 setIsChefMode(true);
+                console.log("User is in Chef Mode.");
             }
-            if (userData.isVendor) { // Check for isVendor from token
+            if (userData.isVendor) {
                 setIsVendorMode(true);
+                console.log("User is in Vendor Mode.");
             }
+        } else {
+            console.log("No user data found in token.");
         }
     }, []);
 
     useEffect(() => {
         const isChefLocal = localStorage.getItem('isChef');
         const isRiderLocal = localStorage.getItem('isRider');
-        const isVendorLocal = localStorage.getItem('isVendor'); // Get vendor status from local storage
+        const isVendorLocal = localStorage.getItem('isVendor');
 
         if (isChefLocal === 'true' && !isChefMode) {
             setIsChefMode(true);
             navigate('/chef/dashboard');
+            console.log("Redirecting to Chef Dashboard based on local storage.");
         } else if (isRiderLocal === 'true' && !isRiderMode) {
             setIsRiderMode(true);
             navigate('/rider/dashboard');
-        } else if (isVendorLocal === 'true' && !isVendorMode) { // Handle vendor redirection
+            console.log("Redirecting to Rider Dashboard based on local storage.");
+        } else if (isVendorLocal === 'true' && !isVendorMode) {
             setIsVendorMode(true);
             navigate('/vendor/dashboard');
+            console.log("Redirecting to Vendor Dashboard based on local storage.");
         }
-    }, [navigate, isChefMode, isRiderMode, isVendorMode]); // Add isVendorMode to dependency array
+    }, [navigate, isChefMode, isRiderMode, isVendorMode]);
 
     const handleLogout = () => {
+        console.log("Logging out...");
         logout();
+        // Reset FCM token state on logout so it re-registers for the new user (or next login)
+        setFcmToken(null);
+        setFcmTokenSynced(false);
         navigate('/login');
     };
 
@@ -267,7 +330,7 @@ function App() {
                     <Route path="/user/order-details" element={<UserOrderDetails />} />
                     <Route path="/rider/dashboard" element={<Board />} />
                     <Route path="/chef/dashboard" element={<ChefDashboard setIsChefMode={setIsChefMode} />} />
-                    <Route path="/vendor/dashboard" element={<VendorDashboard />} /> {/* New route for Vendor Dashboard */}
+                    <Route path="/vendor/dashboard" element={<VendorDashboard />} />
                 </Routes>
             </MainContent>
 
@@ -298,7 +361,7 @@ function App() {
                             {true && <span className="notification-badge">1</span>}
                         </NotificationBell>
                     </>
-                ) : isVendorMode ? ( // Conditional navigation for Vendor Mode
+                ) : isVendorMode ? (
                     <>
                         <NavLink to="/vendor/dashboard">
                             <FaStore /> Dashboard
@@ -307,44 +370,43 @@ function App() {
                             <MdNotificationsNone /> Alerts
                             {true && <span className="notification-badge">2</span>}
                         </NotificationBell>
-                        {/* Add more vendor-specific nav links as needed */}
                     </>
                 ) : (
                     <>
-                     <NavLink to="/">
-  <MdHome style={{ color: 'red' }} /> Home
-</NavLink>
-
-                      <NavLink to="/jikoni/express/download">
-                           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-cloud-download-icon lucide-cloud-download"><path d="M12 13v8l-4-4"/><path d="m12 21 4-4"/><path d="M4.393 15.269A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.436 8.284"/></svg> Get App
+                        <NavLink to="/">
+                            <MdHome style={{ color: 'red' }} /> Home
                         </NavLink>
-                <NavLink
-  to="/saved/foods"
-  className="nav-link"
-  style={{
-    color: '#FF4532',
-    fontWeight: '800',
-    fontSize:    '0.85rem'
-  }}
->
-  Saved
-  <svg
-  className="arrow-animate"
-  xmlns="http://www.w3.org/2000/svg"
-  width="20"
-  height="20"
-  viewBox="0 0 24 24"
-  fill="none"
-  stroke="#00C853"
-  strokeWidth="2"
-  strokeLinecap="round"
-  strokeLinejoin="round"
-  style={{ marginLeft: '4px' }}
->
-  <path d="m6 9 6 6 6-6" />
-</svg>
 
-</NavLink>
+                        <NavLink to="/jikoni/express/download">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-cloud-download-icon lucide-cloud-download"><path d="M12 13v8l-4-4"/><path d="m12 21 4-4"/><path d="M4.393 15.269A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.436 8.284"/></svg> Get App
+                        </NavLink>
+                        <NavLink
+                            to="/saved/foods"
+                            className="nav-link"
+                            style={{
+                                color: '#FF4532',
+                                fontWeight: '800',
+                                fontSize: '0.85rem'
+                            }}
+                        >
+                            Saved
+                            <svg
+                                className="arrow-animate"
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="20"
+                                height="20"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="#00C853"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                style={{ marginLeft: '4px' }}
+                            >
+                                <path d="m6 9 6 6 6-6" />
+                            </svg>
+
+                        </NavLink>
 
 
                         <NavLink to="/jikoni-express/liqour-shots">

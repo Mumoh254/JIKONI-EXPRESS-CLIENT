@@ -7,7 +7,7 @@ import { HashRouter } from 'react-router-dom';
 import ScrollToTop from './handler/goToTop.jsx';
 import { ThemeProvider } from 'styled-components';
 
-// Define your theme
+// ✅ Define your theme
 const theme = {
   colors: {
     primary: '#6366f1',
@@ -21,7 +21,7 @@ const theme = {
   },
 };
 
-// Create and mount the root
+// ✅ Create and mount the root
 const rootElement = document.getElementById('root');
 if (!rootElement) {
   throw new Error("Root element not found");

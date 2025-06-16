@@ -5,7 +5,7 @@ import {
 } from 'react-bootstrap-icons';
 import { useNavigate } from 'react-router-dom';
 import { io } from 'socket.io-client';
-import Peer from 'simple-peer';
+import Peer from 'peerjs';
 import styled, { keyframes } from 'styled-components';
 import moment from 'moment'; // For date/time formatting and comparison
 
