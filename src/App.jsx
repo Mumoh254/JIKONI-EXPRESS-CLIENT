@@ -32,7 +32,7 @@ import VendorDashboard from './Liqour/vendorDashbord';
 
 // Firebase
 import { app, VAPID_KEY } from './utilities/firebaseUtilities';
-import { getMessaging, getToken, onMessage, onTokenRefresh } from "firebase/messaging";
+import { getMessaging, getToken, onMessage } from "firebase/messaging"; // Removed onTokenRefresh
 
 // --- Styled Components ---
 const AppContainer = styled.div`
@@ -220,7 +220,7 @@ function App() {
                     return;
                 }
 
-                // Get initial token
+                // Get initial token (and it will automatically refresh and update)
                 try {
                     const token = await getToken(messaging, { vapidKey: VAPID_KEY });
                     if (token) {
@@ -232,21 +232,6 @@ function App() {
                     setError(`FCM Token Error: ${tokenError.message}`);
                 }
 
-                // Listen for token refresh
-                const unsubscribeTokenRefresh = onTokenRefresh(messaging, async () => {
-                    try {
-                        console.log("FCM token refreshed. Getting new token.");
-                        const newToken = await getToken(messaging, { vapidKey: VAPID_KEY });
-                        if (newToken) {
-                            console.log("New FCM token:", newToken);
-                            setFcmToken(newToken);
-                        }
-                    } catch (refreshError) {
-                        console.error("Unable to refresh token:", refreshError);
-                        setError(`Token Refresh Error: ${refreshError.message}`);
-                    }
-                });
-
                 // Listen for foreground messages
                 const unsubscribeOnMessage = onMessage(messaging, (payload) => {
                     console.log('Foreground push notification received:', payload);
@@ -255,7 +240,7 @@ function App() {
 
                 return () => {
                     unsubscribeOnMessage();
-                    unsubscribeTokenRefresh();
+                    // No need to unsubscribe from onTokenRefresh as it's no longer used directly
                 };
             } catch (error) {
                 console.error("FCM initialization failed:", error);

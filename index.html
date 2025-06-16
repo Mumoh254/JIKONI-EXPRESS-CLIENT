@@ -16,7 +16,7 @@
   <meta name="apple-mobile-app-title" content="Jikoni Express">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
-  <meta property="og:title" content="Jikoni Express - Your Craving, Delivered! 🚀">
+  <meta property="og:title" content="Jikoni Express - Your Craving, Delivered! �">
   <meta property="og:description" content="Craving something delicious or a refreshing drink? 🍔🍷 Jikoni Express delivers amazing meals and premium liquor directly to your door, super fast! ✨ Order now for an unforgettable experience! 🎉">
   <meta property="og:image" content="/images/share.jpg">
   <meta property="og:url" content="https://jikoniexpress.app">
@@ -63,7 +63,7 @@
       left: 0;
       width: 100%;
       height: 100%;
-      background: var(--light-background); /* Use the light background color */
+      background: linear-gradient(135deg, var(--jikoni-green) 0%, var(--jikoni-red) 100%); /* Red to green gradient background */
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -83,60 +83,80 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 2rem;
-      border-radius: 15px; /* Slightly rounded corners for the content area */
-      background-color: var(--card-background); /* White background for the content */
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1); /* Soft shadow for depth */
+      padding: 3rem 2rem; /* More padding */
+      border-radius: 15px;
+      background-color: var(--card-background);
+      box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2); /* More pronounced shadow */
       animation: fadeIn 0.8s ease-in-out;
+      width: 90%; /* Responsive width */
+      max-width: 400px; /* Max width for larger screens */
     }
 
-    .loading-overlay img {
-      width: 120px; /* Slightly larger logo */
-      height: 120px;
-      margin-bottom: 1.5rem;
-      animation: pulse 1.8s infinite ease-in-out alternate; /* Smoother pulse */
-    }
+    /* Removed .loading-overlay img styles as image is removed */
 
     .loading-text {
-      color: var(--dark-text); /* Dark text for better contrast */
-      font-weight: 700;
-      font-size: 1.35rem; /* Larger and bolder text */
+      color: var(--dark-text);
+      font-weight: 900; /* Extra bold */
+      font-size: 1.8rem; /* Larger font size */
       text-align: center;
-      margin-bottom: 1rem;
-      /* --- NEW STYLES FOR .loading-text --- */
-      letter-spacing: 0.05em; /* A bit more space between letters */
-      text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
-      transition: transform 0.3s ease-in-out;
+      margin-bottom: 0.8rem;
+      letter-spacing: 0.08em; /* More space between letters */
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2); /* Stronger shadow */
+      transition: transform 0.3s ease-in-out, color 0.3s ease-in-out;
+      background: linear-gradient(90deg, var(--jikoni-red), var(--jikoni-green));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent; /* Gradient text */
     }
 
     .loading-text:hover {
-        transform: scale(1.02); /* Slight scale on hover */
+        transform: scale(1.05); /* More pronounced scale on hover */
+        /* No color change, gradient remains */
     }
 
     .tagline {
-      color: var(--placeholder-text); /* Muted color for the tagline */
-      font-size: 0.95rem;
+      color: var(--placeholder-text);
+      font-size: 1rem; /* Slightly larger */
       text-align: center;
       margin-top: 0.5rem;
       padding: 0 1rem;
-      /* --- NEW STYLES FOR .tagline --- */
-      font-weight: 500; /* Make it slightly bolder */
-      letter-spacing: 0.02em; /* Subtle letter spacing */
+      font-weight: 600; /* Bolder tagline */
+      letter-spacing: 0.03em;
       transition: transform 0.3s ease-in-out;
     }
 
     .tagline:hover {
-        transform: scale(1.01); /* Slight scale on hover */
+        transform: scale(1.02);
     }
 
     .spinner {
-      width: 50px;
-      height: 50px;
-      border: 5px solid rgba(255, 69, 50, 0.2); /* Jikoni Red with transparency */
+      width: 60px; /* Larger spinner */
+      height: 60px;
+      border: 6px solid rgba(255, 69, 50, 0.3); /* Jikoni Red with transparency */
       border-top-color: var(--jikoni-red); /* Solid Jikoni Red for the moving part */
       border-radius: 50%;
       animation: spin 1s linear infinite;
-      margin-top: 2rem; /* More space from text */
+      margin-top: 2.5rem; /* More space */
+    }
+
+    .loader-button {
+      background: linear-gradient(90deg, var(--jikoni-red) 0%, var(--jikoni-green) 100%);
+      color: white;
+      border: none;
+      padding: 12px 25px;
+      border-radius: 8px;
+      font-size: 1.1rem;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 2rem;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+      transition: all 0.3s ease;
+      display: none; /* Hidden by default, show on error or timeout */
+    }
+
+    .loader-button:hover {
+      opacity: 0.9;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
     }
 
     .network-toast {
@@ -189,10 +209,11 @@
 
   <div id="loading" class="loading-overlay" aria-live="polite">
     <div class="loading-content">
-      <img src="/images/logo2.png" alt="Jikoni Express Logo">
+      <!-- Image removed as requested -->
       <p class="loading-text">Jikoni Express</p>
       <p class="tagline">Taste the Speed of Food & Liquor Delivery 🚀</p>
       <div class="spinner"></div>
+      <button id="continue-button" class="loader-button">Continue to App</button>
     </div>
   </div>
 
@@ -201,12 +222,21 @@
   <script>
     (function () {
       const loadingEl = document.getElementById('loading');
+      const continueButton = document.getElementById('continue-button');
       let registration;
       let toastTimeout;
+      let loaderTimeout; // To manage loader visibility after a delay
 
       function hideLoader() {
         loadingEl.classList.add('hidden');
         document.body.style.overflow = 'auto'; // Re-enable scrolling after loader hides
+      }
+
+      function showLoaderButton() {
+        // Only show button if loader is still visible after a delay (e.g., if SW fails)
+        if (!loadingEl.classList.contains('hidden')) {
+            continueButton.style.display = 'block';
+        }
       }
 
       function showUpdateNotification() {
@@ -214,6 +244,7 @@
           const toast = showToast('New version available! Refresh to update?', 'online', true);
           toast.addEventListener('click', () => {
             registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+            window.location.reload();
           });
         }
       }
@@ -238,46 +269,51 @@
         return toast;
       }
 
+      // Hide loader after a minimum delay to ensure smooth transition
+      window.addEventListener('load', () => {
+        // Minimum display time for loader (e.g., 2 seconds)
+        loaderTimeout = setTimeout(hideLoader, 2000); // Hide after 2 seconds by default
+      });
+
+      // Handle continue button click
+      continueButton.addEventListener('click', () => {
+          clearTimeout(loaderTimeout); // Clear any pending hide loader
+          hideLoader();
+      });
+      
       // ONLY ONE SERVICE WORKER REGISTRATION HERE
       if ('serviceWorker' in navigator) {
-        window.addEventListener('load', async () => {
-          try {
-            // Register your Firebase Messaging Service Worker.
-            // This service worker should also contain any other PWA/caching logic
-            // that was previously in /serviceworker.js if that file existed.
-            registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js', {
-              updateViaCache: 'none',
-              scope: '/'
-            });
-
-            console.log('🟢 Main Service Worker (Firebase Messaging) registered successfully:', registration);
-
-            registration.addEventListener('updatefound', () => {
-              const newWorker = registration.installing;
-              newWorker.addEventListener('statechange', () => {
-                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                  showUpdateNotification();
-                }
-              });
-            });
-
-            if (registration.waiting) showUpdateNotification();
-
-            let refreshing = false;
-            navigator.serviceWorker.addEventListener('controllerchange', () => {
-              if (!refreshing) {
-                window.location.reload();
-                refreshing = true;
+        navigator.serviceWorker.register('/firebase-messaging-sw.js').then(reg => {
+          registration = reg; // Store registration for future use
+          console.log('🟢 Service Worker registered successfully:', reg);
+          
+          reg.addEventListener('updatefound', () => {
+            const newWorker = reg.installing;
+            newWorker.addEventListener('statechange', () => {
+              if (newWorker.state === 'installed') {
+                console.log('New version installed. Ready to update.');
+                showUpdateNotification(); // Show the custom update notification
               }
             });
+          });
 
-          } catch (error) {
+          navigator.serviceWorker.addEventListener('controllerchange', () => {
+            window.location.reload();
+          });
+
+          navigator.serviceWorker.addEventListener('message', event => {
+            if (event.data.type === 'NEW_VERSION_AVAILABLE') {
+                console.log(`New version ${event.data.version} available`);
+                showUpdateNotification(); // Show the custom update notification
+            }
+          });
+        }).catch(error => {
             console.error('🔴 Service Worker registration failed:', error);
-            showToast('Service Worker failed to load', 'offline');
-          } finally {
-            // Hide the loader regardless of service worker success/failure
-            hideLoader();
-          }
+            showToast('Service Worker failed to load. You might be offline.', 'offline', true); // Persistent toast on failure
+            showLoaderButton(); // Show the continue button on SW registration failure
+        }).finally(() => {
+            // Ensure loader hides even if SW registration is very fast
+            // This is handled by window.load now, but keep in mind for future refactoring
         });
 
         window.addEventListener('online', () => showToast('Internet connection restored', 'online'));

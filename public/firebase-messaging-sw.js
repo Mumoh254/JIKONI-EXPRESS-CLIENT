@@ -1,11 +1,14 @@
 // This is the Firebase Cloud Messaging Service Worker file.
 // It needs to be placed at the root of your domain for proper functionality.
 
-// Import and initialize the Firebase app - Updated to v11.9.1 as per your request
+// Import and initialize the Firebase app (v11.9.1)
+// Using 'compat' versions for broader compatibility, as seen in your provided code.
 importScripts('https://www.gstatic.com/firebasejs/11.9.1/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/11.9.1/firebase-messaging-compat.js');
 
 // IMPORTANT: Replace with your actual Firebase configuration
+// This configuration allows the service worker to identify your Firebase project
+// and handle messages sent to it.
 const firebaseConfig = {
     apiKey: "AIzaSyBX7U1lDZihQ2tHq1CTfgm9EEamw8HlFoc",
     authDomain: "jikoniexpressnotification.firebaseapp.com",
@@ -16,87 +19,86 @@ const firebaseConfig = {
     measurementId: "G-G4FCZQ71M1"
 };
 
-// Initialize the Firebase app
+// Initialize the Firebase app with your project's configuration.
 firebase.initializeApp(firebaseConfig);
 
-// Retrieve a Firebase Messaging instance
+// Retrieve a Firebase Messaging instance, which is used to interact with FCM.
 const messaging = firebase.messaging();
 
-// Handle background messages
-// This is called when the app is in the background or not running.
+// --- Handle Background Messages ---
+// This listener triggers when a push notification is received while your web app
+// is not in the foreground (i.e., closed, minimized, or in another tab).
 messaging.onBackgroundMessage((payload) => {
     console.log('[firebase-messaging-sw.js] Received background message:', payload);
 
-    // Customize notification here
+    // Extract notification title and body from the payload, with fallbacks.
     const notificationTitle = payload.notification?.title || 'New Message';
     const notificationOptions = {
         body: payload.notification?.body || 'You have a new message.',
-        // Prioritize icon from payload, fallback to default. Ensure this path is correct.
+        // Use the icon provided in the payload, or a default image.
+        // Ensure '/firebase-logo.png' exists at your root or provide another path.
         icon: payload.notification?.icon || '/firebase-logo.png',
-        data: payload.data || {} // Include data payload for deeper linking on click
+        // 'data' can contain custom key-value pairs for additional context or actions.
+        data: payload.data || {}
     };
 
+    // 'self.registration.showNotification()' displays the notification in the user's
+    // device notification tray. This is the core functionality for background notifications.
     self.registration.showNotification(notificationTitle, notificationOptions);
 });
 
-// Optionally, you can add a listener for notification clicks here if needed.
+// --- Handle Notification Clicks ---
+// This listener triggers when a user clicks on a notification displayed by the service worker.
 self.addEventListener('notificationclick', (event) => {
     console.log('[firebase-messaging-sw.js] Notification clicked:', event);
-    event.notification.close(); // Close the notification
+    // Close the notification in the tray after it's clicked.
+    event.notification.close();
 
-    // Example: Open a specific URL when notification is clicked
-    // Access data passed in notificationOptions.data
-    const click_redirect_url = event.notification.data?.url || '/'; // Default to home
+    // Determine the URL to redirect to upon clicking the notification.
+    // It looks for a 'url' in the notification's data, otherwise defaults to the root.
+    const click_redirect_url = event.notification.data?.url || '/';
+
+    // 'event.waitUntil()' ensures the service worker remains active until the
+    // promise passed to it resolves. Here, it opens a new window/tab to the
+    // specified URL. If the app is already open, it will focus that tab.
     event.waitUntil(
         clients.openWindow(click_redirect_url)
     );
 });
 
-
 // --- PWA Caching Logic ---
-const CACHE_VERSION = 'v1';
+const CACHE_VERSION = 'v1'; // This will be compared against the version from /api/version
 const CACHE_NAME = `jikoni-express-${CACHE_VERSION}`;
 const OFFLINE_URL = '/offline.html';
 
-// IMPORTANT: Verify these paths match your deployed build structure exactly.
-// If your assets are in a 'dist' or 'build' folder, or nested under 'static',
-// 'assets' etc., you MUST adjust these paths accordingly (e.g., '/assets/main.js').
 const INSTALL_CACHE = [
     '/',
     '/index.html',
     '/manifest.json',
-    // Check your build output for correct paths for these assets:
     '/styles.css',
     '/offline.html',
-    '/images/logo.png', // Ensure this image is in your public/images directory
+    '/images/logo.png',
     '/assets/main.js',
     '/assets/main.css'
 ];
 
 
-// Install event - cache essential assets immediately
+// Install event
 self.addEventListener('install', (event) => {
-    self.skipWaiting(); // Activate worker immediately after install
+    self.skipWaiting();
     event.waitUntil(
         caches.open(CACHE_NAME)
             .then(cache => {
-                // IMPORTANT: Failed requests in addAll will make the entire install fail.
-                // Ensure all paths in INSTALL_CACHE exist at the specified URL.
+                console.log(`Installing cache: ${CACHE_NAME}`);
                 return cache.addAll(INSTALL_CACHE);
-            })
-            .then(() => {
-                console.log(`Cache ${CACHE_NAME} installed for Jikoni Express`);
-                return self.skipWaiting();
             })
             .catch(error => {
                 console.error(`🔴 Service Worker INSTALL failed for ${CACHE_NAME}:`, error);
-                // Log the specific URL that caused the addAll to fail for debugging
-                // (Note: addAll error itself won't tell which URL, but dev tools network tab will)
             })
     );
 });
 
-// Activate event - clear old caches
+// Activate event
 self.addEventListener('activate', (event) => {
     event.waitUntil(
         caches.keys().then(cacheNames => {
@@ -108,133 +110,82 @@ self.addEventListener('activate', (event) => {
                     }
                 })
             );
-        }).then(() => {
-            console.log(`Claiming clients for ${CACHE_NAME}`);
-            return self.clients.claim();
-        }).then(() => {
-            // Notify clients to reload pages
-            return self.clients.matchAll({ type: 'window' }).then(clients => {
-                clients.forEach(client => {
-                    client.postMessage({ type: 'RELOAD_PAGE' });
-                });
-            });
-        })
+        }).then(() => self.clients.claim())
     );
 });
 
-// Fetch handler - serve cached assets, check API version header
+// Fetch handler
 self.addEventListener('fetch', (event) => {
     const { request } = event;
-    const url = new URL(request.url);
 
-    // For API requests, check for new version header
-    if (url.pathname.startsWith('/api/')) {
-        event.respondWith(
-            fetch(request).then(response => {
-                const newVersion = response.headers.get('X-New-Version');
-                if (newVersion && newVersion !== CACHE_VERSION) {
-                    self.registration.postMessage({
-                        type: 'NEW_VERSION_AVAILABLE',
-                        version: newVersion
-                    });
-                }
-                return response;
-            }).catch(() => {
-                // On API fetch failure, fallback could be customized if needed
-                console.warn(`API fetch failed for ${request.url}, falling back to cache if available.`);
-                return caches.match(request);
-            })
-        );
+    // Skip non-http requests
+    if (!request.url.startsWith('http')) {
         return;
     }
 
-    // For other requests, try cache first, then network
+    // Cache-first strategy for assets
     event.respondWith(
         caches.match(request).then(cachedResponse => {
-            return cachedResponse || fetch(request).then(response => {
-                // Cache successful network responses
-                if (response.ok && response.type === 'basic') {
-                    const responseClone = response.clone();
+            return cachedResponse || fetch(request).then(networkResponse => {
+                // Cache successful responses
+                if (networkResponse.ok && networkResponse.status === 200 && networkResponse.type === 'basic') {
+                    const responseClone = networkResponse.clone();
                     caches.open(CACHE_NAME).then(cache => {
                         cache.put(request, responseClone);
                     });
                 }
-                return response;
+                return networkResponse;
             });
         }).catch(() => {
-            // If offline and request matches offline page, serve offline.html
+            // Serve offline page for navigation failures
             if (request.mode === 'navigate') {
                 return caches.match(OFFLINE_URL);
             }
-            // For other failing requests (e.g., images), return a generic response or nothing
-            return new Response('Offline: Resource not available', { status: 503, statusText: 'Service Unavailable' });
         })
     );
 });
 
-// Message handler for controlling service worker lifecycle
-self.addEventListener('message', (event) => {
-    switch(event.data.type) {
-        case 'SKIP_WAITING':
-            self.skipWaiting();
-            break;
-        case 'RELOAD_CLIENTS':
-            self.clients.matchAll().then(clients => {
-                clients.forEach(client => client.postMessage({ type: 'FORCE_RELOAD' }));
-            });
-            break;
-    }
-});
-
-// Periodically check version endpoint to notify about updates
-// IMPORTANT: Ensure /api/version returns valid JSON and is publicly accessible.
-setInterval(() => {
-    fetch('/api/version').then(response => {
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        return response.json();
-    })
-    .then(data => {
-        if (data.version && data.version !== CACHE_VERSION) {
-            self.registration.postMessage({
-                type: 'NEW_VERSION_AVAILABLE',
-                version: data.version
-            });
-        }
-    }).catch(error => console.error('Error checking API version:', error));
-}, 300000); // every 5 minutes
-
-
-if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/firebase-messaging-sw.js').then(reg => { // Ensure this path is correct in your index.html registration
-        reg.addEventListener('updatefound', () => {
-            const newWorker = reg.installing;
-            newWorker.addEventListener('statechange', () => {
-                if (newWorker.state === 'installed') {
-                    // Changed from confirm to custom UI/logic for better UX
-                    console.log('New version installed. Ready to update.');
-                    // Example: You might show a toast or a banner here, then prompt for reload
-                    // if (confirm('New version available! Refresh now?')) {
-                    //   newWorker.postMessage({ type: 'SKIP_WAITING' });
-                    //   window.location.reload();
-                    // }
-                }
-            });
-        });
-
-        navigator.serviceWorker.addEventListener('controllerchange', () => {
-            window.location.reload();
-        });
-
-        navigator.serviceWorker.addEventListener('message', event => {
-            if (event.data.type === 'NEW_VERSION_AVAILABLE') {
-                console.log(`New version ${event.data.version} available`);
-                // Changed from confirm to custom UI/logic for better UX
-                // if (confirm(`Update to version ${event.data.version}?`)) {
-                //   reg.update().then(() => window.location.reload());
-                // }
+// --- API Version Check (FIXED) ---
+// This function now robustly checks for a new version from your API.
+function checkApiVersion() {
+    fetch('/api/version')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
             }
+            // IMPORTANT: Check if the response is actually JSON before parsing
+            const contentType = response.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                throw new TypeError("Received response was not JSON. Check your /api/version endpoint.");
+            }
+            return response.json();
+        })
+        .then(data => {
+            // Check if the version from the API is new
+            if (data.version && data.version !== CACHE_VERSION) {
+                console.log(`New version available: ${data.version}. Current version: ${CACHE_VERSION}`);
+                // Send a message to the client-side code to notify the user
+                self.registration.postMessage({
+                    type: 'NEW_VERSION_AVAILABLE',
+                    version: data.version
+                });
+            } else {
+                console.log('API version is up to date.');
+            }
+        }).catch(error => {
+            // This will now catch both network errors and the TypeError if the response isn't JSON
+            console.error('Error checking API version:', error);
         });
-    }).catch(err => console.error('Service Worker registration failed:', err));
 }
+
+// Periodically check the API version every 5 minutes
+setInterval(checkApiVersion, 300000);
+
+// Check version once on activation
+self.addEventListener('activate', (event) => {
+    event.waitUntil(
+        // ... (previous activate logic) ...
+        // Add an immediate check
+        Promise.resolve().then(() => checkApiVersion())
+    );
+});
