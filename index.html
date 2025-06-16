@@ -12,8 +12,8 @@
 
   <meta name="theme-color" content="#FF4532">
   <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-title" content="Jikoni Express">
+  <meta name="apple-mobile-app-capable" content="yes">
+  <meta name="apple-mobile-app-title" content="Jikoni Express">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
   <meta property="og:title" content="Jikoni Express - Your Craving, Delivered! 🚀">
@@ -32,10 +32,10 @@
   <link rel="preload"
     href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/css/bootstrap.min.css"
     as="style"
-    integrity="sha384-SgOJa3DmI69IUzQ2PVdRZhwQ+dy64/BUtbMJw1MZ8t5HZApcHrRKUc4W0kG879m7"
+    xintegrity="sha384-SgOJa3DmI69IUzQ2PVdRZhwQ+dy64/BUtbMJw1MZ8t5HZApcHrRKUc4W0kG879m7"
     crossorigin="anonymous">
 
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-SgOJa3DmI69IUzQ2PVdRZhwQ+dy64/BUtbMJw1MZ8t5HZApcHrRKUc4W0kG879m7" crossorigin="anonymous">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/css/bootstrap.min.css" rel="stylesheet" xintegrity="sha384-SgOJa3DmI69IUzQ2PVdRZhwQ+dy64/BUtbMJw1MZ8t5HZApcHrRKUc4W0kG879m7" crossorigin="anonymous">
 
   <style>
     :root {
@@ -103,6 +103,14 @@
       font-size: 1.35rem; /* Larger and bolder text */
       text-align: center;
       margin-bottom: 1rem;
+      /* --- NEW STYLES FOR .loading-text --- */
+      letter-spacing: 0.05em; /* A bit more space between letters */
+      text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
+      transition: transform 0.3s ease-in-out;
+    }
+
+    .loading-text:hover {
+        transform: scale(1.02); /* Slight scale on hover */
     }
 
     .tagline {
@@ -111,6 +119,14 @@
       text-align: center;
       margin-top: 0.5rem;
       padding: 0 1rem;
+      /* --- NEW STYLES FOR .tagline --- */
+      font-weight: 500; /* Make it slightly bolder */
+      letter-spacing: 0.02em; /* Subtle letter spacing */
+      transition: transform 0.3s ease-in-out;
+    }
+
+    .tagline:hover {
+        transform: scale(1.01); /* Slight scale on hover */
     }
 
     .spinner {
