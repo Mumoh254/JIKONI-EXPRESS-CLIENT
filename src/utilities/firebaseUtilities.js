@@ -15,19 +15,15 @@ const firebaseConfig = {
   measurementId: "G-G4FCZQ71M1"
 };
 
-// Your VAPID Key
+
 const VAPID_KEY = 'BKWJV-ITEoOZo-YQ2VnBPu479gwTRjP02Cp8lJ2HxT9__zL4kJ9q5zbiC_-1T7emTaQ6u1NJAQ5HQpHvZcXKaLI';
 
 
-// Initialize Firebase App
+
 const app = initializeApp(firebaseConfig);
 
 // Initialize Firebase Messaging
 const messaging = getMessaging(app);
 
-// Export the initialized app, messaging instance, and VAPID key
-// These are named exports now.
-export { app, messaging, VAPID_KEY };
 
-// The requestFCMToken function is no longer needed here as its logic
-// is integrated directly into App.jsx for consolidated FCM handling.
+export { app, messaging, VAPID_KEY };
