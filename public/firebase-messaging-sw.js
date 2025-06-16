@@ -1,12 +1,14 @@
-
+// This is the Firebase Cloud Messaging Service Worker file.
+// It needs to be placed at the root of your domain for proper functionality.
 
 // Import and initialize the Firebase app (v11.9.1)
 // Using 'compat' versions for broader compatibility, as seen in your provided code.
 importScripts('https://www.gstatic.com/firebasejs/11.9.1/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/11.9.1/firebase-messaging-compat.js');
 
-
-
+// IMPORTANT: Replace with your actual Firebase configuration
+// This configuration allows the service worker to identify your Firebase project
+// and handle messages sent to it.
 const firebaseConfig = {
     apiKey: "AIzaSyBX7U1lDZihQ2tHq1CTfgm9EEamw8HlFoc",
     authDomain: "jikoniexpressnotification.firebaseapp.com",
@@ -22,6 +24,10 @@ firebase.initializeApp(firebaseConfig);
 
 // Retrieve a Firebase Messaging instance, which is used to interact with FCM.
 const messaging = firebase.messaging();
+
+// --- Handle Background Messages ---
+// This listener triggers when a push notification is received while your web app
+// is not in the foreground (i.e., closed, minimized, or in another tab).
 messaging.onBackgroundMessage((payload) => {
     console.log('[firebase-messaging-sw.js] Received background message:', payload);
 
@@ -30,18 +36,19 @@ messaging.onBackgroundMessage((payload) => {
     const notificationOptions = {
         body: payload.notification?.body || 'You have a new message.',
         // Use the icon provided in the payload, or a default image.
-        // Ensure '/images/rider.png' exists at your specified path.
+        // Ensure '/firebase-logo.png' exists at your root or provide another path.
         icon: payload.notification?.icon || '/images/rider.png',
         // 'data' can contain custom key-value pairs for additional context or actions.
         data: payload.data || {}
     };
 
-   
+    // 'self.registration.showNotification()' displays the notification in the user's
     // device notification tray. This is the core functionality for background notifications.
     self.registration.showNotification(notificationTitle, notificationOptions);
 });
 
-
+// --- Handle Notification Clicks ---
+// This listener triggers when a user clicks on a notification displayed by the service worker.
 self.addEventListener('notificationclick', (event) => {
     console.log('[firebase-messaging-sw.js] Notification clicked:', event);
     // Close the notification in the tray after it's clicked.
@@ -51,6 +58,9 @@ self.addEventListener('notificationclick', (event) => {
     // It looks for a 'url' in the notification's data, otherwise defaults to the root.
     const click_redirect_url = event.notification.data?.url || '/';
 
+    // 'event.waitUntil()' ensures the service worker remains active until the
+    // promise passed to it resolves. Here, it opens a new window/tab to the
+    // specified URL. If the app is already open, it will focus that tab.
     event.waitUntil(
         clients.openWindow(click_redirect_url)
     );
