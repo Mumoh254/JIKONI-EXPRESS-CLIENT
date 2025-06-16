@@ -33,7 +33,6 @@ import VendorDashboard from './Liqour/vendorDashbord'; // Import the VendorDashb
 // Firebase imports - Import 'app' and 'VAPID_KEY' from your firebaseUtilities
 import { app, VAPID_KEY } from './utilities/firebaseUtilities';
 // Import specific messaging functions directly from 'firebase/messaging'
-// Removed 'onTokenChanged' as per user request
 import { getMessaging, getToken, onMessage } from "firebase/messaging";
 
 
@@ -197,8 +196,7 @@ function App() {
     const [fcmToken, setFcmToken] = useState(null);
     const [userId, setUserId] = useState(null);
     const [error, setError] = useState(null);
-    // New state to track if FCM token has been successfully synced to the backend
-    const [fcmTokenSynced, setFcmTokenSynced] = useState(false);
+    // Removed fcmTokenSynced state as it's no longer needed for token sending logic
 
     // Initialize Firebase Messaging instance directly in App.jsx
     const messaging = getMessaging(app);
@@ -224,7 +222,7 @@ function App() {
                     if (token) {
                         console.log("Initial FCM token received:", token);
                         setFcmToken(token);
-                        setFcmTokenSynced(false); // New token, needs to be synced
+                        // No need to set fcmTokenSynced(false) here, as that state is removed
                     }
                 } catch (tokenError) {
                     console.error("Error getting FCM token:", tokenError);
@@ -238,9 +236,7 @@ function App() {
                     alert(`New Notification: ${payload.notification.title || 'Notification'} - ${payload.notification.body || ''}`);
                 });
 
-
                 return () => {
-                    // Removed unsubscribeOnTokenChanged as onTokenChanged is no longer used
                     unsubscribeOnMessage(); // Cleanup the onMessage listener
                 };
             } catch (error) {
@@ -266,9 +262,11 @@ function App() {
     }, []); // Runs once on mount
 
 
-    // 3. Sync FCM token to backend when userId and fcmToken are available and not yet synced
+    // 3. Sync FCM token to backend when userId and fcmToken are available
+    // This effect now simply sends the token if both are available,
+    // relying on the backend to handle old/duplicate tokens as specified.
     useEffect(() => {
-        if (userId && fcmToken && !fcmTokenSynced) {
+        if (userId && fcmToken) {
             console.log("Attempting to sync token to backend for userId:", userId, "and fcmToken:", fcmToken);
 
             const syncTokenToBackend = async () => {
@@ -289,21 +287,19 @@ function App() {
                     }
 
                     console.log('✅ Device token saved successfully');
-                    setFcmTokenSynced(true); // Mark as synced after successful save
                 } catch (err) {
                     console.error('❌ Error saving token to backend:', err.message);
                     setError(`Token Sync Error: ${err.message}`);
-                    // Do NOT set fcmTokenSynced to true on error, so it retries on next dependency change
+                    // The error is set, and the effect will re-run if dependencies change,
+                    // automatically retrying the sync if the error was transient
                 }
             };
 
             syncTokenToBackend();
-        } else if (fcmTokenSynced) {
-            console.log("FCM Token already synced to backend. Skipping.");
         } else {
             console.log("Waiting for userId and fcmToken to be available before syncing.");
         }
-    }, [userId, fcmToken, fcmTokenSynced]); // Dependencies to re-run this effect
+    }, [userId, fcmToken]); // Dependencies control when this effect re-runs
 
 
     // 4. Determine user roles from token and handle initial redirects
@@ -398,7 +394,7 @@ function App() {
         logout();
         // Reset FCM token states on logout to force re-registration for the next login
         setFcmToken(null);
-        setFcmTokenSynced(false);
+        // Removed setFcmTokenSynced as that state is removed
         setUserId(null); // Clear userId on logout
         setIsChefMode(false);
         setIsRiderMode(false);
