@@ -1,14 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { HashRouter, Routes, Route, NavLink, useNavigate } from 'react-router-dom';
 import {
-    MdOutlineDownloadForOffline, MdFavoriteBorder, MdInsights, MdPeopleOutline, MdNotificationsNone, MdHome, MdOutlineFastfood
+    MdInsights, MdPeopleOutline, MdNotificationsNone, MdHome, MdOutlineFastfood
 } from 'react-icons/md';
-import { RiUserAddLine, RiMotorbikeLine } from 'react-icons/ri';
+import { RiMotorbikeLine } from 'react-icons/ri';
 import { GiWineBottle, GiMeal } from 'react-icons/gi';
 import { FaStore } from 'react-icons/fa'; // Icon for Vendor Dashboard
 import styled, { css } from 'styled-components';
 import { useAuth } from './Context/authContext';
 import { getUserNameFromToken, getUserIdFromToken } from './handler/tokenDecorder';
+
+// Import all your components
 import LandingPage from './landingPage';
 import Register from './components/auth/register';
 import Login from './components/auth/login';
@@ -27,8 +29,15 @@ import NotificationsPanel from '../src/components/chefs/orders/notificationPanel
 import UserOrderDetails from './components/cartAndOrder/userOrderDetails';
 import AudioCall from './components/calls/audioCalls';
 import VendorDashboard from './Liqour/vendorDashbord'; // Import the VendorDashboard component
-import { requestFCMToken } from './utilities/firebaseUtilities'; // Ensure this utility function exists
 
+// Firebase imports - Import 'app' and 'VAPID_KEY' from your firebaseUtilities
+import { app, VAPID_KEY } from './utilities/firebaseUtilities';
+// Import specific messaging functions directly from 'firebase/messaging'
+// Removed 'onTokenChanged' as per user request
+import { getMessaging, getToken, onMessage } from "firebase/messaging";
+
+
+// --- Styled Components (UI remains intact) ---
 const AppContainer = styled.div`
     min-height: 100vh;
     position: relative;
@@ -39,7 +48,7 @@ const AppContainer = styled.div`
 const MainContent = styled.main`
     flex-grow: 1;
     padding: 1rem 0rem;
-    padding-bottom: 50px;
+    padding-bottom: 50px; /* Ensure content is above bottom nav */
 `;
 
 const BottomNav = styled.nav`
@@ -54,7 +63,7 @@ const BottomNav = styled.nav`
     display: flex;
     justify-content: space-around;
     padding: 0.3rem 0;
-    padding-bottom: calc(0.3rem + 8px);
+    padding-bottom: calc(0.3rem + 8px); /* Adjust for notch/safe area */
     border-top: 1px solid #f0f0f0;
     border-radius: 10px 10px 0 0;
     box-shadow:
@@ -176,7 +185,7 @@ const NotificationBell = styled(NavLink)`
     }
 `;
 
-
+// --- Main App Component ---
 function App() {
     const navigate = useNavigate();
     const { logout } = useAuth();
@@ -191,9 +200,60 @@ function App() {
     // New state to track if FCM token has been successfully synced to the backend
     const [fcmTokenSynced, setFcmTokenSynced] = useState(false);
 
-    // Log userId on component render (initial and updates)
-    console.log("Current User ID in App component:", userId);
+    // Initialize Firebase Messaging instance directly in App.jsx
+    const messaging = getMessaging(app);
 
+    // 1. FCM Initialization & Token Handling (Consolidated)
+    useEffect(() => {
+        const initializeFCM = async () => {
+            try {
+                console.log("Initializing FCM...");
+
+                // Check notification permission
+                const permission = await Notification.requestPermission();
+                if (permission !== 'granted') {
+                    console.warn("Notification permission not granted");
+                    return;
+                }
+
+                // Get initial token
+                try {
+                    const token = await getToken(messaging, {
+                        vapidKey: VAPID_KEY // Use the imported VAPID_KEY
+                    });
+                    if (token) {
+                        console.log("Initial FCM token received:", token);
+                        setFcmToken(token);
+                        setFcmTokenSynced(false); // New token, needs to be synced
+                    }
+                } catch (tokenError) {
+                    console.error("Error getting FCM token:", tokenError);
+                    setError(`FCM Token Error: ${tokenError.message}`);
+                }
+
+                // Listen for foreground messages
+                const unsubscribeOnMessage = onMessage(messaging, (payload) => {
+                    console.log('Foreground push notification received:', payload);
+                    // Using alert for demonstration, consider a custom modal or toast
+                    alert(`New Notification: ${payload.notification.title || 'Notification'} - ${payload.notification.body || ''}`);
+                });
+
+
+                return () => {
+                    // Removed unsubscribeOnTokenChanged as onTokenChanged is no longer used
+                    unsubscribeOnMessage(); // Cleanup the onMessage listener
+                };
+            } catch (error) {
+                console.error("FCM initialization failed:", error);
+                setError(`FCM Init Error: ${error.message}`);
+            }
+        };
+
+        initializeFCM();
+    }, [messaging]); // Dependency on 'messaging' instance
+
+
+    // 2. Extract userId from token on mount or token change
     useEffect(() => {
         const id = getUserIdFromToken();
         if (id) {
@@ -201,34 +261,15 @@ function App() {
             console.log("User ID retrieved from token:", id);
         } else {
             console.log("No User ID found in token.");
+            setUserId(null); // Clear userId if no token or invalid
         }
-    }, []);
+    }, []); // Runs once on mount
 
-    // Request FCM token from Firebase
-    useEffect(() => {
-        // Only attempt to fetch FCM token if we haven't already successfully done so
-        if (!fcmToken) {
-            const fetchFCMToken = async () => {
-                try {
-                    console.log("Attempting to request FCM token...");
-                    const token = await requestFCMToken(); // This function should be defined in firebaseUtilities.js
-                    setFcmToken(token);
-                    console.log("FCM Token successfully retrieved:", token);
-                } catch (err) {
-                    console.error("Error requesting FCM token:", err.message);
-                    setError(err.message);
-                }
-            };
-            fetchFCMToken();
-        } else {
-            console.log("FCM Token already exists. Skipping request.");
-        }
-    }, [fcmToken]); // Re-run if fcmToken becomes null (e.g., on logout or error)
 
-    // Once both userId and fcmToken are available AND not yet synced, send to backend
+    // 3. Sync FCM token to backend when userId and fcmToken are available and not yet synced
     useEffect(() => {
         if (userId && fcmToken && !fcmTokenSynced) {
-            console.log("Attempting to sync token to backend with userId:", userId, "and fcmToken:", fcmToken);
+            console.log("Attempting to sync token to backend for userId:", userId, "and fcmToken:", fcmToken);
 
             const syncTokenToBackend = async () => {
                 try {
@@ -236,12 +277,14 @@ function App() {
                         method: 'PUT',
                         headers: {
                             'Content-Type': 'application/json',
+                            // You might need an Authorization header here if your API is protected
+                            // 'Authorization': `Bearer ${localStorage.getItem('token')}`,
                         },
                         body: JSON.stringify({ token: fcmToken }),
                     });
 
                     if (!response.ok) {
-                        const errorData = await response.json(); // Try to parse error response
+                        const errorData = await response.json();
                         throw new Error(`Failed to save device token: ${response.status} - ${errorData.message || response.statusText}`);
                     }
 
@@ -249,8 +292,8 @@ function App() {
                     setFcmTokenSynced(true); // Mark as synced after successful save
                 } catch (err) {
                     console.error('❌ Error saving token to backend:', err.message);
-                    setError(err.message);
-                    // Do NOT set fcmTokenSynced to true on error, so it retries
+                    setError(`Token Sync Error: ${err.message}`);
+                    // Do NOT set fcmTokenSynced to true on error, so it retries on next dependency change
                 }
             };
 
@@ -262,62 +305,123 @@ function App() {
         }
     }, [userId, fcmToken, fcmTokenSynced]); // Dependencies to re-run this effect
 
+
+    // 4. Determine user roles from token and handle initial redirects
     useEffect(() => {
         const userData = getUserNameFromToken();
+        let shouldRedirect = false;
+
         if (userData) {
             setUsername(userData.name);
+
             if (userData.isChef) {
                 setIsChefMode(true);
+                setIsRiderMode(false);
+                setIsVendorMode(false);
                 console.log("User is in Chef Mode.");
-            }
-            if (userData.isVendor) {
+                if (window.location.pathname !== '/chef/dashboard') {
+                    shouldRedirect = true;
+                    navigate('/chef/dashboard');
+                }
+            } else if (userData.isRider) {
+                setIsRiderMode(true);
+                setIsChefMode(false);
+                setIsVendorMode(false);
+                console.log("User is in Rider Mode.");
+                if (window.location.pathname !== '/rider/dashboard') {
+                    shouldRedirect = true;
+                    navigate('/rider/dashboard');
+                }
+            } else if (userData.isVendor) {
                 setIsVendorMode(true);
+                setIsChefMode(false);
+                setIsRiderMode(false);
                 console.log("User is in Vendor Mode.");
+                if (window.location.pathname !== '/vendor/dashboard') {
+                    shouldRedirect = true;
+                    navigate('/vendor/dashboard');
+                }
+            } else {
+                // If user is logged in but not a specific role, ensure modes are false
+                setIsChefMode(false);
+                setIsRiderMode(false);
+                setIsVendorMode(false);
             }
         } else {
-            console.log("No user data found in token.");
+            // User is not logged in or token is invalid
+            setUsername('');
+            setIsChefMode(false);
+            setIsRiderMode(false);
+            setIsVendorMode(false);
+            console.log("No user data found in token or user logged out.");
+            // Optionally redirect to login if no token and not on public routes
+            const publicRoutes = ['/', '/register', '/verify-otp', '/login', '/forgot-password', '/jikoni/express/download'];
+            if (!publicRoutes.includes(window.location.pathname)) {
+                // navigate('/login'); // Uncomment if you want to force login for unauthenticated users on non-public routes
+            }
         }
-    }, []);
 
+        // Clean up localStorage flags if user is not in that role anymore (important after logout)
+        if (!userData || !userData.isChef) localStorage.removeItem('isChef');
+        if (!userData || !userData.isRider) localStorage.removeItem('isRider');
+        if (!userData || !userData.isVendor) localStorage.removeItem('isVendor');
+
+    }, [navigate]); // Re-run when navigate function changes (unlikely) or if you want to tie it to an auth state change
+
+    // This effect can be removed if the above consolidated effect handles all role-based redirects.
+    // Keeping it here for now if you explicitly rely on localStorage for initial redirect as a fallback
+    // but the above is preferred.
     useEffect(() => {
-        const isChefLocal = localStorage.getItem('isChef');
-        const isRiderLocal = localStorage.getItem('isRider');
-        const isVendorLocal = localStorage.getItem('isVendor');
+        const isChefLocal = localStorage.getItem('isChef') === 'true';
+        const isRiderLocal = localStorage.getItem('isRider') === 'true';
+        const isVendorLocal = localStorage.getItem('isVendor') === 'true';
 
-        if (isChefLocal === 'true' && !isChefMode) {
+        // Only redirect if current mode is not set AND localStorage suggests it should be
+        if (isChefLocal && !isChefMode && window.location.pathname !== '/chef/dashboard') {
             setIsChefMode(true);
             navigate('/chef/dashboard');
-            console.log("Redirecting to Chef Dashboard based on local storage.");
-        } else if (isRiderLocal === 'true' && !isRiderMode) {
+            console.log("Redirecting to Chef Dashboard based on local storage (fallback).");
+        } else if (isRiderLocal && !isRiderMode && window.location.pathname !== '/rider/dashboard') {
             setIsRiderMode(true);
             navigate('/rider/dashboard');
-            console.log("Redirecting to Rider Dashboard based on local storage.");
-        } else if (isVendorLocal === 'true' && !isVendorMode) {
+            console.log("Redirecting to Rider Dashboard based on local storage (fallback).");
+        } else if (isVendorLocal && !isVendorMode && window.location.pathname !== '/vendor/dashboard') {
             setIsVendorMode(true);
             navigate('/vendor/dashboard');
-            console.log("Redirecting to Vendor Dashboard based on local storage.");
+            console.log("Redirecting to Vendor Dashboard based on local storage (fallback).");
         }
     }, [navigate, isChefMode, isRiderMode, isVendorMode]);
 
-    const handleLogout = () => {
+
+    const handleLogout = useCallback(() => {
         console.log("Logging out...");
         logout();
-        // Reset FCM token state on logout so it re-registers for the new user (or next login)
+        // Reset FCM token states on logout to force re-registration for the next login
         setFcmToken(null);
         setFcmTokenSynced(false);
+        setUserId(null); // Clear userId on logout
+        setIsChefMode(false);
+        setIsRiderMode(false);
+        setIsVendorMode(false);
+        localStorage.removeItem('isChef'); // Explicitly clear local storage flags
+        localStorage.removeItem('isRider');
+        localStorage.removeItem('isVendor');
         navigate('/login');
-    };
+    }, [logout, navigate]);
 
 
     return (
         <AppContainer>
             <MainContent>
+                {/* Display any global errors (e.g., FCM issues) */}
+                {error && <div style={{ color: 'red', textAlign: 'center', padding: '10px' }}>Error: {error}</div>}
+
                 <Routes>
                     <Route path="/" element={<LandingPage />} />
                     <Route path="/register" element={<Register />} />
                     <Route path="/verify-otp" element={<VerifyOtp />} />
                     <Route path="/login" element={<Login />} />
-                    <Route path="/logout" element={<Logout />} />
+                    <Route path="/logout" element={<Logout onLogout={handleLogout} />} /> {/* Pass handleLogout */}
                     <Route path="/audio/calls" element={<AudioCall />} />
                     <Route path="/forgot-password" element={<ForgotPassword />} />
                     <Route path="/jikoni-express/liqour-shots" element={<Liqour />} />
@@ -327,13 +431,15 @@ function App() {
                     <Route path="/jikoni/express/download" element={<Download />} />
                     <Route path="/saved/foods" element={<SavedFoods />} />
                     <Route path="/user/order-details/:orderId" element={<UserOrderDetails />} />
-                    <Route path="/user/order-details" element={<UserOrderDetails />} />
+                    <Route path="/user/order-details" element={<UserOrderDetails />} /> {/* This might be a generic order list */}
                     <Route path="/rider/dashboard" element={<Board />} />
+                    {/* Pass setIsChefMode to ChefDashboard if it needs to update the parent's state */}
                     <Route path="/chef/dashboard" element={<ChefDashboard setIsChefMode={setIsChefMode} />} />
                     <Route path="/vendor/dashboard" element={<VendorDashboard />} />
                 </Routes>
             </MainContent>
 
+            {/* Bottom Navigation */}
             <BottomNav>
                 {isChefMode ? (
                     <>
@@ -346,8 +452,10 @@ function App() {
                         <NavLink to="/chef/dashboard">
                             <GiMeal /> Menu
                         </NavLink>
+                        {/* NotificationBell as="div" means it won't navigate but will trigger the onClick */}
                         <NotificationBell as="div" onClick={() => setShowNotifications(!showNotifications)}>
                             <MdNotificationsNone /> Alerts
+                            {/* Replace 'true' with an actual notification count check */}
                             {true && <span className="notification-badge">3</span>}
                         </NotificationBell>
                     </>
@@ -405,10 +513,7 @@ function App() {
                             >
                                 <path d="m6 9 6 6 6-6" />
                             </svg>
-
                         </NavLink>
-
-
                         <NavLink to="/jikoni-express/liqour-shots">
                             <GiWineBottle /> Liquor
                         </NavLink>
