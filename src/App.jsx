@@ -32,7 +32,7 @@ import VendorDashboard from './Liqour/vendorDashbord';
 
 // Firebase
 import { app, VAPID_KEY } from './utilities/firebaseUtilities';
-import { getMessaging, getToken, onMessage } from "firebase/messaging"; // Removed onTokenRefresh
+import { getMessaging, getToken, onMessage } from "firebase/messaging";
 
 // --- Styled Components ---
 const AppContainer = styled.div`
@@ -235,12 +235,24 @@ function App() {
                 // Listen for foreground messages
                 const unsubscribeOnMessage = onMessage(messaging, (payload) => {
                     console.log('Foreground push notification received:', payload);
-                    alert(`New Notification: ${payload.notification.title || 'Notification'} - ${payload.notification.body || ''}`);
+                    // Use the Notification API to show a system-level notification
+                    if (Notification.permission === 'granted') {
+                        const notificationTitle = payload.notification?.title || 'New Message';
+                        const notificationOptions = {
+                            body: payload.notification?.body || 'You have a new message.',
+                            icon: payload.notification?.icon || '/images/rider.png', // Ensure this path is correct for your icon
+                            data: payload.data || {} // Pass any custom data to the notification
+                        };
+                        new Notification(notificationTitle, notificationOptions);
+                    } else {
+                        // Fallback or log if notification permission is not granted
+                        console.warn('Notification permission not granted, cannot show foreground notification in tray.');
+                        // You could still use a custom in-app modal here if desired
+                    }
                 });
 
                 return () => {
                     unsubscribeOnMessage();
-                    // No need to unsubscribe from onTokenRefresh as it's no longer used directly
                 };
             } catch (error) {
                 console.error("FCM initialization failed:", error);
