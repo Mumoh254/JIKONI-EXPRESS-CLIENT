@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import styled, { keyframes, css } from 'styled-components';
-import { getUserNameFromToken } from '../../handler/tokenDecorder';
+import { getUserNameFromToken } from '../../handler/tokenDecorder'; // Ensure this path is correct
 
 // Import Icons
 import {
@@ -14,23 +14,23 @@ import {
   FaCreditCard,     // Secure payments
   FaGift,           // Rewards
   FaEnvelope,       // Email
-  FaPhoneAlt        // Phone
+  FaPhoneAlt,       // Phone
+  FaCopyright       // Copyright
 } from 'react-icons/fa';
 
-// --- Jikoni Express Color Palette (Balanced & Sleek) ---
+// --- Jikoni Express Color Palette ---
 const colors = {
-  primary: '#FF4532',         // Jikoni Red - Bold Accent
-  secondary: '#00C853',       // Jikoni Green - Success/Contrast
-  tertiary: '#3498DB',        // Vibrant Blue - Another accent
-  quaternary: '#F39C12',      // Warm Yellow - Another accent
-  darkText: '#2C3E50',        // Deep Charcoal - Main text
-  lightText: '#7F8C8D',       // Muted Grey - Secondary text
-  backgroundLight: '#F8F9FA', // Off-White - General background
-  cardBackground: '#FFFFFF',  // Pure White - Card background
-  borderLight: '#ECEFF1',     // Very Light Grey - Subtle borders
-  shadow: 'rgba(0,0,0,0.08)', // Subtle Shadow
-  buttonHover: '#E6392B',     // Slightly darker red for hover
-  disabledButton: '#CFD8DC',  // Light grey for disabled state
+  primary: '#FF4532',         // Jikoni Red
+  secondary: '#00C853',       // Jikoni Green (used for success messages)
+  darkText: '#1A202C',        // Dark text for headings
+  lightBackground: '#F0F2F5', // Light background for the page
+  cardBackground: '#FFFFFF',  // White for the form card
+  borderColor: '#D1D9E6',     // Light border for inputs
+  errorText: '#EF4444',       // Red for errors (unused in this component directly but good to have)
+  placeholderText: '#A0AEC0', // Muted text for placeholders (unused here, for inputs usually)
+  buttonHover: '#E6392B',     // Darker red on button hover
+  disabledButton: '#CBD5E1',  // Gray for disabled buttons
+  shadow: 'rgba(0,0,0,0.1)',  // General shadow color
 };
 
 // --- Animations ---
@@ -45,9 +45,9 @@ const slideUp = keyframes`
 `;
 
 const pulseEffect = keyframes`
-  0% { transform: scale(1); box-shadow: 0 4px 10px ${colors.shadow}; }
-  50% { transform: scale(1.01); box-shadow: 0 6px 15px ${colors.shadow}; }
-  100% { transform: scale(1); box-shadow: 0 4px 10px ${colors.shadow}; }
+  0% { transform: scale(1); box-shadow: 0 4px 12px ${colors.shadow}; }
+  50% { transform: scale(1.01); box-shadow: 0 8px 20px ${colors.shadow}; }
+  100% { transform: scale(1); box-shadow: 0 4px 12px ${colors.shadow}; }
 `;
 
 // --- Styled Components ---
@@ -57,309 +57,438 @@ const DownloadContainer = styled.div`
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  background-color: ${colors.backgroundLight};
-  padding: 20px;
-  font-family: 'Poppins', sans-serif;
+  background-color: ${colors.lightBackground}; /* Applied new light background */
+  padding: 30px;
+  font-family: 'Poppins', sans-serif; /* Keep Poppins for modern look */
   animation: ${fadeIn} 0.6s ease-out;
   overflow: hidden;
+  box-sizing: border-box;
+
+  @media (max-width: 768px) {
+    padding: 20px;
+  }
+  @media (max-width: 480px) {
+    padding: 15px;
+  }
 `;
 
 const DownloadCard = styled.div`
-  background-color: ${colors.cardBackground};
-  border-radius: 12px; /* Sleeker, less rounded */
-  box-shadow: 0 8px 25px ${colors.shadow}; /* Clean, crisp shadow */
-  max-width: 420px; /* Significantly smaller card */
+  background-color: ${colors.cardBackground}; /* Applied new card background */
+  border-radius: 16px;
+  box-shadow: 0 12px 30px ${colors.shadow};
+  max-width: 480px;
   width: 100%;
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  border: 1px solid ${colors.borderLight}; /* Fine, subtle border */
-  animation: ${slideUp} 0.7s ease-out forwards; /* Card slides in */
+  border: 1px solid ${colors.borderColor}; /* Applied new border color */
+  animation: ${slideUp} 0.7s ease-out forwards;
+
+  @media (max-width: 480px) {
+    border-radius: 12px;
+    box-shadow: 0 6px 20px ${colors.shadow};
+  }
 `;
 
 const HeaderSection = styled.div`
-  background-color: ${colors.primary}; /* Solid Red Header */
+  background-color: ${colors.primary}; /* Jikoni Red */
   color: white;
-  padding: 25px 20px; /* Reduced padding */
+  padding: 35px 25px;
   text-align: center;
   position: relative;
   overflow: hidden;
-  border-bottom: 3px solid ${colors.secondary}; /* Green accent strip */
+  border-bottom: 4px solid ${colors.secondary}; /* Jikoni Green accent */
+
+  @media (max-width: 480px) {
+    padding: 30px 20px;
+  }
 `;
 
 const AppIcon = styled.div`
-  background-color: rgba(255,255,255,0.15); /* Very subtle transparency */
+  background-color: rgba(255,255,255,0.2);
   color: white;
-  width: 60px; /* Smaller icon */
-  height: 60px;
+  width: 70px;
+  height: 70px;
   border-radius: 50%;
   display: flex;
   justify-content: center;
   align-items: center;
-  font-size: 2.5rem; /* Adjusted icon size */
-  margin: 0 auto 10px;
-  box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+  font-size: 3rem;
+  margin: 0 auto 15px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
 `;
 
 const Title = styled.h1`
   margin: 0;
-  font-weight: 800; /* Bold, but not overly aggressive */
-  letter-spacing: 0.5px;
-  font-size: 28px; /* Compact title size */
-  text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+  font-weight: 800;
+  letter-spacing: 1px;
+  font-size: 32px;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+
+  @media (max-width: 480px) {
+    font-size: 28px;
+  }
 `;
 
 const Subtitle = styled.p`
-  margin: 4px 0 0;
-  font-size: 14px; /* Compact subtitle */
-  opacity: 0.9;
+  margin: 6px 0 0;
+  font-size: 16px;
+  opacity: 0.95;
+
+  @media (max-width: 480px) {
+    font-size: 14px;
+  }
 `;
 
 const ContentSection = styled.div`
-  padding: 25px; /* Compact padding */
+  padding: 30px;
   text-align: center;
-  background-color: ${colors.cardBackground};
+  background-color: ${colors.cardBackground}; /* New card background */
+
+  @media (max-width: 480px) {
+    padding: 25px;
+  }
 `;
 
 const Greeting = styled.h2`
-  font-size: 20px; /* Compact greeting */
-  color: ${colors.darkText};
-  margin: 0 0 10px;
+  font-size: 24px;
+  color: ${colors.darkText}; /* New dark text */
+  margin: 0 0 15px;
   font-weight: 700;
+
+  @media (max-width: 480px) {
+    font-size: 20px;
+  }
 `;
 
 const Instruction = styled.p`
-  font-size: 14px; /* Compact instruction text */
-  color: ${colors.lightText};
-  margin-bottom: 25px;
-  line-height: 1.5;
+  font-size: 15px;
+  color: ${colors.darkText}; /* Using darkText for readability on white background */
+  margin-bottom: 30px;
+  line-height: 1.6;
+
+  @media (max-width: 480px) {
+    font-size: 14px;
+    margin-bottom: 25px;
+  }
 `;
 
 const InstallButton = styled.button`
   background-color: ${props => props.disabled ? colors.disabledButton : colors.primary};
-  color: ${props => props.disabled ? colors.darkText : 'white'};
+  color: ${props => props.disabled ? colors.darkText : 'white'}; /* Adjusted disabled text color */
   border: none;
-  padding: 12px 25px; /* Very compact padding */
-  font-size: 16px; /* Compact text size */
+  padding: 14px 30px;
+  font-size: 18px;
   font-weight: 600;
-  border-radius: 8px; /* Sleek, less rounded */
+  border-radius: 10px;
   cursor: ${props => props.disabled ? 'not-allowed' : 'pointer'};
   transition: all 0.2s ease-in-out;
-  margin: 10px auto;
+  margin: 15px auto;
   width: 100%;
-  max-width: 240px; /* Very compact button */
+  max-width: 280px;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  box-shadow: 0 4px 10px ${colors.shadow};
+  gap: 10px;
+  box-shadow: 0 6px 15px ${colors.shadow};
 
   &:not(:disabled):hover {
     background-color: ${colors.buttonHover};
-    transform: translateY(-2px);
-    box-shadow: 0 6px 15px ${colors.shadow};
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px ${colors.shadow};
   }
 
   ${props => !props.disabled && css`
     animation: ${pulseEffect} 2s infinite ease-in-out;
   `}
+
+  @media (max-width: 480px) {
+    padding: 12px 25px;
+    font-size: 16px;
+    max-width: 240px;
+  }
+`;
+
+const FallbackInstruction = styled.p`
+  font-size: 14px;
+  color: ${colors.darkText}; /* Using darkText for readability */
+  margin-top: 20px;
+  line-height: 1.6;
+  padding: 0 20px;
+  
+  strong {
+    color: ${colors.primary}; /* Highlight strong text with Jikoni Red */
+    font-weight: 700;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 13px;
+    padding: 0 15px;
+  }
 `;
 
 const FeaturesSection = styled.div`
-  margin-top: 30px; /* Compact space */
+  margin-top: 40px;
   text-align: left;
-  border-top: 1px solid ${colors.borderLight};
-  padding-top: 20px;
+  border-top: 1px solid ${colors.borderColor}; /* New border color */
+  padding-top: 30px;
+
+  @media (max-width: 480px) {
+    margin-top: 30px;
+    padding-top: 20px;
+  }
 `;
 
 const FeaturesTitle = styled.h3`
-  color: ${colors.darkText};
-  font-size: 18px;
-  margin-bottom: 15px;
+  color: ${colors.darkText}; /* New dark text */
+  font-size: 20px;
+  margin-bottom: 20px;
   font-weight: 700;
   text-transform: uppercase;
+  letter-spacing: 0.5px;
+
+  @media (max-width: 480px) {
+    font-size: 18px;
+    margin-bottom: 15px;
+  }
 `;
 
 const FeatureList = styled.ul`
   list-style: none;
   padding-left: 0;
-  color: ${colors.lightText};
-  line-height: 1.6;
+  color: ${colors.darkText}; /* New dark text */
+  line-height: 1.8;
 `;
 
 const FeatureItem = styled.li`
   display: flex;
-  align-items: center;
-  margin-bottom: 10px; /* Compact space */
-  font-size: 14px; /* Very compact feature text */
+  align-items: flex-start;
+  margin-bottom: 15px;
+  font-size: 15px;
   font-weight: 500;
-  animation: ${fadeIn} 0.5s ease-out forwards; /* Simple fade in */
+  animation: ${fadeIn} 0.5s ease-out forwards;
 
   svg {
-    font-size: 18px; /* Compact icon size */
-    margin-right: 10px;
+    font-size: 20px;
+    margin-right: 12px;
     flex-shrink: 0;
-    /* Use a mix of colors for features */
-    &:nth-child(1) { color: ${colors.primary}; }      // Red
-    &:nth-child(2) { color: ${colors.secondary}; }    // Green
-    &:nth-child(3) { color: ${colors.tertiary}; }     // Blue
-    &:nth-child(4) { color: ${colors.quaternary}; }  // Yellow
-    &:nth-child(5) { color: ${colors.primary}; }      // Red (loop back)
+    /* Use primary and secondary for features for consistency */
+    &:nth-of-type(odd) { color: ${colors.primary}; } 
+    &:nth-of-type(even) { color: ${colors.secondary}; } 
+  }
+
+  @media (max-width: 480px) {
+    font-size: 14px;
+    margin-bottom: 12px;
+    svg {
+      font-size: 18px;
+    }
   }
 `;
 
-const DeveloperSection = styled.div`
-  background-color: ${colors.darkText};
-  color: white;
-  padding: 25px; /* Compact padding */
+const DeveloperSection = styled.footer`
+  background-color: ${colors.darkText}; /* Using darkText for the footer background */
+  color: ${colors.cardBackground}; /* White text on dark footer */
+  padding: 30px;
   text-align: center;
-  border-top: 2px solid ${colors.secondary}; /* Green accent */
+  border-top: 4px solid ${colors.primary}; /* Jikoni Red accent for footer */
+  border-bottom-left-radius: 16px;
+  border-bottom-right-radius: 16px;
+
+  @media (max-width: 480px) {
+    padding: 25px;
+    border-bottom-left-radius: 12px;
+    border-bottom-right-radius: 12px;
+  }
 `;
 
 const DeveloperTitle = styled.h3`
-  color: ${colors.secondary};
-  font-size: 16px;
-  margin-bottom: 12px;
+  color: ${colors.secondary}; /* Jikoni Green accent for footer title */
+  font-size: 17px;
+  margin-bottom: 15px;
   font-weight: 600;
   text-transform: uppercase;
+  letter-spacing: 0.8px;
+
+  @media (max-width: 480px) {
+    font-size: 15px;
+    margin-bottom: 12px;
+  }
 `;
 
 const DeveloperCard = styled.div`
-  background-color: rgba(255,255,255,0.05); /* Very subtle transparency */
-  border-radius: 8px;
-  padding: 15px; /* Compact padding */
-  border: 1px solid rgba(255,255,255,0.1);
+  background-color: rgba(255,255,255,0.1); /* Slight white overlay on dark background */
+  border-radius: 10px;
+  padding: 20px;
+  border: 1px solid rgba(255,255,255,0.15);
+  box-shadow: inset 0 2px 5px rgba(0,0,0,0.2);
+
+  @media (max-width: 480px) {
+    padding: 15px;
+  }
 `;
 
 const CompanyName = styled.h4`
-  color: ${colors.primary};
-  font-size: 20px; /* Compact size */
-  margin: 0 0 8px;
+  color: ${colors.primary}; /* Jikoni Red for company name in footer */
+  font-size: 22px;
+  margin: 0 0 10px;
   font-weight: 700;
-  letter-spacing: 0.5px;
+  letter-spacing: 1px;
+
+  @media (max-width: 480px) {
+    font-size: 20px;
+  }
 `;
 
 const Tagline = styled.p`
-  font-size: 13px; /* Very compact size */
-  opacity: 0.9;
-  margin-bottom: 15px;
-  line-height: 1.5;
+  font-size: 14px;
+  opacity: 0.8;
+  margin-bottom: 20px;
+  line-height: 1.6;
+
+  @media (max-width: 480px) {
+    font-size: 13px;
+    margin-bottom: 15px;
+  }
 `;
 
 const ContactInfo = styled.div`
-  font-size: 13px; /* Very compact size */
-  line-height: 1.6;
+  font-size: 14px;
+  line-height: 1.8;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
 
   p {
     margin: 0;
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
     font-weight: 500;
     
     svg {
-      color: ${colors.primary};
-      font-size: 16px;
+      color: ${colors.secondary}; /* Jikoni Green for contact icons */
+      font-size: 18px;
+    }
+  }
+
+  @media (max-width: 480px) {
+    font-size: 13px;
+    gap: 8px;
+    p {
+      svg {
+        font-size: 16px;
+      }
     }
   }
 `;
 
+const CopyrightText = styled.p`
+  margin-top: 25px;
+  font-size: 12px;
+  color: ${colors.cardBackground}; /* White text for copyright */
+  opacity: 0.7;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+
+  svg {
+    font-size: 14px;
+    color: ${colors.secondary}; /* Jikoni Green for copyright icon */
+  }
+
+  @media (max-width: 480px) {
+    margin-top: 20px;
+    font-size: 11px;
+  }
+`;
+
+
 const Download = () => {
   const [username, setUserName] = useState('');
   const [isInstalled, setIsInstalled] = useState(false);
+  const [showInstallButton, setShowInstallButton] = useState(false);
   const deferredPrompt = useRef(null);
-  const [initialLoad, setInitialLoad] = useState(true);
 
-  // Auto-refresh logic to force prompt
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+
   useEffect(() => {
-    const isDownloadPage = window.location.pathname.includes('/jikoni/express/download');
-    const params = new URLSearchParams(window.location.search);
-
-    if (isDownloadPage && !params.has('refreshed')) {
-      params.set('refreshed', 'true');
-      window.history.replaceState({}, '', `?${params.toString()}`);
-      window.location.reload();
-    } else {
-      setInitialLoad(false);
+    const userData = getUserNameFromToken();
+    if (userData) {
+      setUserName(userData.name);
     }
-  }, []);
 
-  useEffect(() => {
-    if (!initialLoad) {
-      const userData = getUserNameFromToken();
-      if (userData) setUserName(userData.name);
-    }
-  }, [initialLoad]);
+    const checkPWAStatus = () => {
+      const standalone = window.matchMedia('(display-mode: standalone)').matches;
+      const iosStandalone = window.navigator.standalone === true;
 
-  useEffect(() => {
-    if (initialLoad) return;
-
-    const checkInstalled = () => {
-      const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
-      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-      const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-
-      if (isStandalone || (isIOS && isSafari && navigator.standalone)) {
+      if (standalone || iosStandalone) {
         setIsInstalled(true);
+        console.log('App detected as installed (standalone mode).');
+      } else {
+        setIsInstalled(false);
+        console.log('App not detected as installed.');
       }
     };
 
-    const handleBeforeInstall = (e) => {
-      e.preventDefault();
-      console.log('📦 beforeinstallprompt event captured');
-      deferredPrompt.current = e;
-      setIsInstalled(false);
+    checkPWAStatus();
 
-      setTimeout(() => {
-        if (deferredPrompt.current && !isInstalled) {
-          handleInstall();
-        }
-      }, 500);
+    const handleBeforeInstallPrompt = (e) => {
+      e.preventDefault();
+      console.log('📦 beforeinstallprompt event captured.');
+      deferredPrompt.current = e;
+      setShowInstallButton(true);
     };
 
-    checkInstalled();
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
 
-    window.addEventListener('beforeinstallprompt', handleBeforeInstall);
-    window.addEventListener('appinstalled', () => {
+    const handleAppInstalled = () => {
       setIsInstalled(true);
+      setShowInstallButton(false);
       deferredPrompt.current = null;
-      console.log('✅ App installed successfully (appinstalled event)');
+      console.log('✅ App installed successfully (appinstalled event).');
       trackInstall();
-    });
+    };
+
+    window.addEventListener('appinstalled', handleAppInstalled);
 
     return () => {
-      window.removeEventListener('beforeinstallprompt', handleBeforeInstall);
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      window.removeEventListener('appinstalled', handleAppInstalled);
     };
-  }, [initialLoad, isInstalled]);
+  }, []);
 
-  const handleInstall = async () => {
+  const handleInstallClick = async () => {
     if (isInstalled) {
       console.log('App is already installed.');
       return;
     }
 
-    if (!deferredPrompt.current) {
-      alert("To install, use your browser's 'Add to Home Screen' option.");
+    if (isIOS) {
+      alert("To install Jikoni Express on your iPhone/iPad:\n\n1. Tap the 'Share' icon (⬆️) at the bottom of your browser.\n2. Scroll down and select 'Add to Home Screen'.");
       return;
     }
 
-    try {
-      deferredPrompt.current.prompt();
-      const { outcome } = await deferredPrompt.current.userChoice;
+    if (deferredPrompt.current) {
+      try {
+        deferredPrompt.current.prompt();
+        const { outcome } = await deferredPrompt.current.userChoice;
 
-      if (outcome === 'accepted') {
-        console.log('✅ User accepted the install prompt');
-      } else {
-        console.log('❌ User dismissed the install prompt');
+        if (outcome === 'accepted') {
+          console.log('✅ User accepted the install prompt.');
+        } else {
+          console.log('❌ User dismissed the install prompt.');
+        }
+      } catch (error) {
+        console.error('Error during PWA installation prompt:', error);
+        alert("There was an error trying to install the app. Please try your browser's 'Add to Home Screen' option manually.");
+      } finally {
+        deferredPrompt.current = null;
       }
-    } catch (error) {
-      console.error('Installation error during prompt:', error);
-    } finally {
-      deferredPrompt.current = null;
+    } else {
+      alert("To install Jikoni Express, please use your browser's 'Add to Home Screen' or 'Install app' option in the menu.");
     }
   };
 
@@ -373,18 +502,12 @@ const Download = () => {
         body: JSON.stringify({ user: username || 'Guest' }),
       });
 
-      if (!response.ok) throw new Error('Tracking failed');
-      console.log('✅ Installation tracked');
+      if (!response.ok) throw new Error('Tracking installation failed');
+      console.log('✅ Installation tracked successfully.');
     } catch (error) {
-      console.error('Tracking error:', error);
+      console.error('Error tracking installation:', error);
     }
   };
-
-  if (initialLoad) {
-    return null;
-  }
-
-  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
 
   return (
     <DownloadContainer>
@@ -410,14 +533,26 @@ const Download = () => {
             </InstallButton>
           ) : (
             <>
-              {isIOS ? (
-                <InstallButton onClick={handleInstall}>
-                  <FaApple /> Install for iOS
+              {showInstallButton || isIOS ? (
+                <InstallButton onClick={handleInstallClick}>
+                  {isIOS ? <FaApple /> : <FaGooglePlay />}
+                  {isIOS ? 'Add to Home Screen (iOS)' : 'Install App'}
                 </InstallButton>
               ) : (
-                <InstallButton onClick={handleInstall}>
-                  <FaGooglePlay /> Install for Android
+                <InstallButton disabled>
+                  <FaMobileAlt /> Preparing for Install...
                 </InstallButton>
+              )}
+
+              {!isInstalled && isIOS && (
+                <FallbackInstruction>
+                  On iOS, tap the **'Share' icon (⬆️)** in your browser's toolbar, then scroll down and select **'Add to Home Screen'** to install.
+                </FallbackInstruction>
+              )}
+               {!isInstalled && !isIOS && !showInstallButton && (
+                <FallbackInstruction>
+                  If the "Install App" button doesn't appear, you might find an "Add to Home Screen" or "Install App" option in your browser's menu (e.g., three dots icon).
+                </FallbackInstruction>
               )}
             </>
           )}
@@ -425,11 +560,11 @@ const Download = () => {
           <FeaturesSection>
             <FeaturesTitle>App Highlights</FeaturesTitle>
             <FeatureList>
-              <FeatureItem><FaRocket /> Instant food & liquor delivery</FeatureItem>
-              <FeatureItem><FaMapMarkerAlt /> Real-time order tracking</FeatureItem>
-              <FeatureItem><FaCrown /> Exclusive chef specials</FeatureItem>
-              <FeatureItem><FaCreditCard /> Secure in-app payments</FeatureItem>
-              <FeatureItem><FaGift /> Earn rewards with every order</FeatureItem>
+              <FeatureItem><FaRocket /> Instant food & liquor delivery right to your door.</FeatureItem>
+              <FeatureItem><FaMapMarkerAlt /> Real-time order tracking from kitchen to your couch.</FeatureItem>
+              <FeatureItem><FaCrown /> Exclusive chef specials and hidden gems only for app users.</FeatureItem>
+              <FeatureItem><FaCreditCard /> Secure in-app payments for a hassle-free checkout.</FeatureItem>
+              <FeatureItem><FaGift /> Earn rewards with every order and redeem for discounts!</FeatureItem>
             </FeatureList>
           </FeaturesSection>
         </ContentSection>
@@ -444,6 +579,9 @@ const Download = () => {
               <p><FaPhoneAlt /> +254 740 045 355</p>
             </ContactInfo>
           </DeveloperCard>
+          <CopyrightText>
+            <FaCopyright /> {new Date().getFullYear()} WELT TALLIS. All rights reserved.
+          </CopyrightText>
         </DeveloperSection>
       </DownloadCard>
     </DownloadContainer>
