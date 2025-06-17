@@ -6,7 +6,7 @@ import {
 import { RiMotorbikeLine } from 'react-icons/ri';
 import { GiWineBottle, GiMeal } from 'react-icons/gi';
 import { FaStore } from 'react-icons/fa';
-import styled from 'styled-components'; // Removed unused 'css' import
+import styled from 'styled-components';
 import { useAuth } from './Context/authContext';
 import { getUserNameFromToken, getUserIdFromToken } from './handler/tokenDecorder';
 
@@ -317,62 +317,67 @@ function App() {
         syncTokenToBackend();
     }, [userId, fcmToken]);
 
-    // User role handling - REVERTED TO PREVIOUS LOGIC FOR LOCALSTORAGE CLEARING
+    // User role and redirection handling - Simplified to prioritize chefId for chef mode
     useEffect(() => {
         const userData = getUserNameFromToken();
         const path = window.location.pathname;
 
-        if (userData) {
-            setUsername(userData.name);
+        const storedChefId = localStorage.getItem('chefId');
+        const storedRiderId = localStorage.getItem('riderId'); // Assuming you'd have this too
+        const storedVendorId = localStorage.getItem('vendorId'); // Assuming you'd have this too
 
-            if (userData.isChef) {
-                setIsChefMode(true);
-                setIsRiderMode(false);
-                setIsVendorMode(false);
-                // Only redirect if not already on the chef dashboard
-                if (path !== '/chef/dashboard') {
-                    navigate('/chef/dashboard');
-                }
-            } else if (userData.isRider) {
-                setIsRiderMode(true);
-                setIsChefMode(false);
-                setIsVendorMode(false);
-                // Only redirect if not already on the rider dashboard
-                if (path !== '/rider/dashboard') {
-                    navigate('/rider/dashboard');
-                }
-            } else if (userData.isVendor) {
-                setIsVendorMode(true);
-                setIsChefMode(false);
-                setIsRiderMode(false);
-                // Only redirect if not already on the vendor dashboard
-                if (path !== '/vendor/dashboard') {
-                    navigate('/vendor/dashboard');
-                }
-            } else {
-                // User is logged in but has no specific role
-                setIsChefMode(false);
-                setIsRiderMode(false);
-                setIsVendorMode(false);
+        // Priority 1: Chef Mode (if chefId exists)
+        if (storedChefId) {
+            console.log("Chef ID found in local storage. Setting Chef Mode.");
+            setIsChefMode(true);
+            setIsRiderMode(false);
+            setIsVendorMode(false);
+            if (path !== '/chef/dashboard') {
+                navigate('/chef/dashboard');
             }
-            // IMPORTANT: Only clear localStorage for roles IF THE USER IS LOGGED IN 
-            // AND the specific role is NOT present in their userData.
-            // This ensures we don't clear valid role flags when they exist.
-            if (!userData.isChef) localStorage.removeItem('isChef');
-            if (!userData.isRider) localStorage.removeItem('isRider');
-            if (!userData.isVendor) localStorage.removeItem('isVendor');
-
+        } 
+        // Priority 2: Rider Mode (if riderId exists)
+        else if (storedRiderId) {
+            console.log("Rider ID found in local storage. Setting Rider Mode.");
+            setIsRiderMode(true);
+            setIsChefMode(false);
+            setIsVendorMode(false);
+            if (path !== '/rider/dashboard') {
+                navigate('/rider/dashboard');
+            }
+        }
+        // Priority 3: Vendor Mode (if vendorId exists)
+        else if (storedVendorId) {
+            console.log("Vendor ID found in local storage. Setting Vendor Mode.");
+            setIsVendorMode(true);
+            setIsChefMode(false);
+            setIsRiderMode(false);
+            if (path !== '/vendor/dashboard') {
+                navigate('/vendor/dashboard');
+            }
+        }
+        // If no specific role ID is found, check token for general user or if roles are explicitly false
+        else if (userData) {
+            setUsername(userData.name);
+            // Ensure all role modes are off if no specific role ID triggered them
+            setIsChefMode(false);
+            setIsRiderMode(false);
+            setIsVendorMode(false);
         } else {
-            // User is not logged in, clear all role-related states and localStorage
+            // No user data or role IDs, implies not logged in or no specific role
             setUsername('');
             setIsChefMode(false);
             setIsRiderMode(false);
             setIsVendorMode(false);
-            localStorage.removeItem('isChef');
+            // Clear all role-related items in local storage if no user data
+            localStorage.removeItem('chefId');
+            localStorage.removeItem('riderId');
+            localStorage.removeItem('vendorId');
+            localStorage.removeItem('isChef'); // If you were using this previously
             localStorage.removeItem('isRider');
             localStorage.removeItem('isVendor');
         }
-    }, [navigate]); // navigate is a dependency as it's used inside
+    }, [navigate]);
 
     // Handle user logout
     const handleLogout = useCallback(() => {
@@ -383,8 +388,11 @@ function App() {
         setIsChefMode(false); // Reset role states
         setIsRiderMode(false);
         setIsVendorMode(false);
-        // Clear specific role flags from localStorage upon explicit logout
-        localStorage.removeItem('isChef');
+        // Clear all role-related items from localStorage upon explicit logout
+        localStorage.removeItem('chefId');
+        localStorage.removeItem('riderId');
+        localStorage.removeItem('vendorId');
+        localStorage.removeItem('isChef'); 
         localStorage.removeItem('isRider');
         localStorage.removeItem('isVendor');
         navigate('/login'); // Redirect to login page
