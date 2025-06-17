@@ -32,7 +32,7 @@ import VendorDashboard from './Liqour/vendorDashbord';
 
 // Firebase
 import { app, VAPID_KEY } from './utilities/firebaseUtilities';
-import { getMessaging, getToken, onMessage } from "firebase/messaging";
+import { getMessaging, getToken, onMessage, isSupported } from "firebase/messaging";
 
 // --- Styled Components ---
 const AppContainer = styled.div`
@@ -192,53 +192,107 @@ function App() {
     const [fcmToken, setFcmToken] = useState(null);
     const [userId, setUserId] = useState(null);
     const [error, setError] = useState(null);
+    const [messaging, setMessaging] = useState(null);
 
-    const messaging = getMessaging(app);
+    // Initialize Firebase messaging
+    useEffect(() => {
+        const initializeMessaging = async () => {
+            try {
+                const isSupportedResult = await isSupported();
+                if (!isSupportedResult) {
+                    console.log('Firebase Messaging not supported in this environment');
+                    return null;
+                }
+                
+                const messagingInstance = getMessaging(app);
+                setMessaging(messagingInstance);
+                return messagingInstance;
+            } catch (error) {
+                console.error('Failed to initialize Firebase Messaging:', error);
+                setError('Push notifications not supported in this browser');
+                return null;
+            }
+        };
+
+        initializeMessaging();
+    }, []);
 
     // Register service worker for mobile
     useEffect(() => {
-        if ('serviceWorker' in navigator) {
+        if ('serviceWorker' in navigator && messaging) {
             navigator.serviceWorker.register('/firebase-messaging-sw.js')
                 .then(reg => {
                     console.log('Service Worker registered:', reg);
+                    // Explicitly set messaging to use this service worker
+                    messaging.useServiceWorker(reg);
                 })
                 .catch(err => {
                     console.error('Service Worker registration failed:', err);
                 });
         }
-    }, []);
+    }, [messaging]);
 
     // FCM Initialization & Token Handling
     useEffect(() => {
+        if (!messaging) return;
+
         const initializeFCM = async () => {
             try {
                 console.log("Initializing FCM...");
 
-                const permission = await Notification.requestPermission();
+                // Check and request notification permission
+                let permission = Notification.permission;
+                if (permission !== 'granted') {
+                    permission = await Notification.requestPermission();
+                }
+                
                 if (permission !== 'granted') {
                     console.warn("Notification permission not granted");
                     return;
                 }
 
+                // Get FCM token
                 try {
-                    const token = await getToken(messaging, { vapidKey: VAPID_KEY });
+                    const token = await getToken(messaging, { 
+                        vapidKey: VAPID_KEY,
+                        serviceWorkerRegistration: await navigator.serviceWorker.ready
+                    });
+                    
                     if (token) {
                         console.log("Initial FCM token received:", token);
                         setFcmToken(token);
+                    } else {
+                        console.log('No registration token available.');
                     }
                 } catch (tokenError) {
                     console.error("Error getting FCM token:", tokenError);
                     setError(`FCM Token Error: ${tokenError.message}`);
                 }
 
+                // Handle foreground messages
                 const unsubscribeOnMessage = onMessage(messaging, (payload) => {
                     console.log('Foreground push notification received:', payload);
-                    // Play IN-APP sound for foreground messages
+                    
+                    // Play sound for foreground notifications
                     try {
-                        const audio = new Audio('/sounds/notification.mp3'); // Ensure this path is correct
+                        const audio = new Audio('/sounds/notification.mp3');
                         audio.play().catch(e => console.error('Failed to play foreground sound:', e));
                     } catch (audioError) {
-                        console.error('Error creating or playing audio in foreground:', audioError);
+                        console.error('Error creating or playing audio:', audioError);
+                    }
+                    
+                    // Ask service worker to show notification
+                    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+                        navigator.serviceWorker.controller.postMessage({
+                            type: 'FOREGROUND_NOTIFICATION',
+                            title: payload.notification?.title || 'New Message',
+                            options: {
+                                body: payload.notification?.body || 'You have a new message.',
+                                icon: payload.notification?.icon || '/images/rider.png',
+                                data: payload.data || {},
+                                badge: '/images/badge.png'
+                            }
+                        });
                     }
                 });
 
@@ -316,28 +370,24 @@ function App() {
         syncTokenToBackend();
     }, [userId, fcmToken]);
 
-    // --- User role and redirection handling ---
-    // If chefId exists in local storage, assume chef mode and redirect.
-    // Otherwise, handle rider, vendor, or regular user based on other flags.
+    // User role handling
     useEffect(() => {
         const path = window.location.pathname;
         const storedChefId = localStorage.getItem('chefId');
         const storedRiderId = localStorage.getItem('riderId'); 
         const storedVendorId = localStorage.getItem('vendorId');
 
-        // Priority 1: Chef Mode if chefId is present
+        // Priority 1: Chef Mode
         if (storedChefId) {
-            console.log("Chef ID found in local storage. Setting Chef Mode and redirecting.");
             setIsChefMode(true);
-            setIsRiderMode(false);
+            setIsRiderMode(false); 
             setIsVendorMode(false);
             if (path !== '/chef/dashboard') {
                 navigate('/chef/dashboard');
             }
         } 
-        // Priority 2: Rider Mode if riderId is present (and not a chef)
+        // Priority 2: Rider Mode
         else if (storedRiderId) {
-            console.log("Rider ID found in local storage. Setting Rider Mode and redirecting.");
             setIsRiderMode(true);
             setIsChefMode(false);
             setIsVendorMode(false);
@@ -345,9 +395,8 @@ function App() {
                 navigate('/rider/dashboard');
             }
         }
-        // Priority 3: Vendor Mode if vendorId is present (and not a chef or rider)
+        // Priority 3: Vendor Mode
         else if (storedVendorId) {
-            console.log("Vendor ID found in local storage. Setting Vendor Mode and redirecting.");
             setIsVendorMode(true);
             setIsChefMode(false);
             setIsRiderMode(false);
@@ -355,7 +404,7 @@ function App() {
                 navigate('/vendor/dashboard');
             }
         }
-        // Fallback: If no specific role ID, check if user is logged in via token
+        // Fallback: Regular user
         else {
             const userData = getUserNameFromToken();
             if (userData) {
@@ -363,30 +412,28 @@ function App() {
             } else {
                 setUsername('');
             }
-            // Ensure all role modes are off if no specific role ID triggered them
             setIsChefMode(false);
             setIsRiderMode(false);
             setIsVendorMode(false);
         }
     }, [navigate]);
-
+                 
     // Handle user logout
     const handleLogout = useCallback(() => {
         console.log("Logging out...");
-        logout(); // Call the logout function from auth context
-        setFcmToken(null); // Clear FCM token state
-        setUserId(null); // Clear user ID state
-        setIsChefMode(false); // Reset role states
+        logout();
+        setFcmToken(null);
+        setUserId(null);
+        setIsChefMode(false);
         setIsRiderMode(false);
         setIsVendorMode(false);
-        // Clear all role-related items from localStorage upon explicit logout
         localStorage.removeItem('chefId');
         localStorage.removeItem('riderId');
         localStorage.removeItem('vendorId');
-        localStorage.removeItem('isChef'); // If you were using this previously
+        localStorage.removeItem('isChef');
         localStorage.removeItem('isRider');
         localStorage.removeItem('isVendor');
-        navigate('/login'); // Redirect to login page
+        navigate('/login');
     }, [logout, navigate]);
 
     return (

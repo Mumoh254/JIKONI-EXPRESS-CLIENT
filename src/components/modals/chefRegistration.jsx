@@ -1,4 +1,4 @@
-import React, { useState, useEffect ,   useRef  } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Modal, Form, Button, Spinner, Alert, Row, Col
 } from 'react-bootstrap';
@@ -7,7 +7,8 @@ import {
 } from 'react-icons/fi';
 import styled, { keyframes } from 'styled-components';
 import { useNavigate } from 'react-router-dom'; // Import useNavigate
-import   {getUserIdFromToken  }   from  '../../handler/tokenDecorder'
+import { getUserIdFromToken } from '../../handler/tokenDecorder'; // Make sure this function is correct
+
 // --- Jikoni Express Color Palette ---
 const colors = {
   primary: '#FF4532',
@@ -21,7 +22,7 @@ const colors = {
   buttonHover: '#E6392B',
   disabledButton: '#CBD5E1',
   gradientStart: '#FF6F59',
-  successGreen: '#28A745', // Added for consistency if needed, though not directly used in this specific file
+  successGreen: '#28A745',
 };
 
 // --- Animations ---
@@ -51,9 +52,9 @@ const StyledModalHeader = styled(Modal.Header)`
     font-weight: 700;
     font-size: 2rem;
     display: flex;
-    flex-direction: column; /* Arrange logo/text vertically */
-    align-items: flex-start; /* Align content to start */
-    gap: 0.5rem; /* Reduced gap */
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
     text-shadow: 0 2px 4px rgba(0,0,0,0.1);
   }
 
@@ -126,7 +127,7 @@ const InputField = styled(Form.Control)`
     line-height: 1.5;
   }
 
-  &:disabled { /* Style for disabled inputs */
+  &:disabled {
     background-color: ${colors.disabledButton};
     cursor: not-allowed;
   }
@@ -233,8 +234,6 @@ const LocationStatus = styled.div`
   color: ${props => props.error ? colors.errorText : colors.secondary};
 `;
 
-// Jikoni Express SVG Logo - Re-defined here to ensure it's available within this file's scope.
-// This is a simplified example. In a real app, you might have common SVG components in a shared folder.
 const JikoniExpressLogoSvg = ({ size = 48, color = 'white' }) => (
   <svg
     width={size}
@@ -275,17 +274,17 @@ const JikoniExpressLogoSvg = ({ size = 48, color = 'white' }) => (
 
 
 const ChefRegistrationModal = ({ show, onClose, onSubmit }) => {
-  const navigate = useNavigate(); // Initialize navigate hook
+  const navigate = useNavigate();
   const redirectTimerRef = useRef(null);
 
   const [submitting, setSubmitting] = useState(false);
   const [geolocating, setGeolocating] = useState(false);
   const [geolocationError, setGeolocationError] = useState(null);
   const [locationStatus, setLocationStatus] = useState('Click below to detect your location');
-  const [userId, setUserId] = useState(null); // State to store the user ID
-  const [authMessage, setAuthMessage] = useState(''); // Message for auth status
+  const [userId, setUserId] = useState(null);
+  const [authMessage, setAuthMessage] = useState('');
+  const [registrationSuccess, setRegistrationSuccess] = useState(false); // New state for success
 
-  // Form state
   const [formData, setFormData] = useState({
     bio: '',
     speciality: '',
@@ -297,45 +296,23 @@ const ChefRegistrationModal = ({ show, onClose, onSubmit }) => {
     longitude: ''
   });
 
-  // Effect to get userId from token and handle authentication status
   useEffect(() => {
-    const getUserIdFromToken = () => {
-      const token = localStorage.getItem("token");
-      if (!token) return null;
+    // This function can be simplified if getUserIdFromToken from '../../handler/tokenDecorder' works reliably
+    const retrieveUserId = () => {
+      const id = getUserIdFromToken();
+      setUserId(id);
 
-      try {
-        const parts = token.split(".");
-        if (parts.length === 3) {
-          const payload = JSON.parse(atob(parts[1]));
-          // Adjust based on your actual token payload structure for user ID
-          return payload?.id || payload?.userId || payload?._id || null;
-        }
-      } catch (err) {
-        console.error("Token decode failed:", err);
+      if (!id) {
+        setAuthMessage("⚠️ You must be logged in to continue. Redirecting to registration...");
+        redirectTimerRef.current = setTimeout(() => {
+          navigate("/register");
+        }, 4000); // Reduced delay for faster user experience
+      } else {
+        setAuthMessage('');
       }
-      return null;
     };
 
-    const id = getUserIdFromToken();
-    setUserId(id);
-
-    // Clear any existing timer when the effect re-runs or component unmounts
-    if (redirectTimerRef.current) {
-      clearTimeout(redirectTimerRef.current);
-      redirectTimerRef.current = null;
-    }
-
-    if (!id) {
-      setAuthMessage("⚠️ You must be logged in to continue. Redirecting to registration...");
-
-      // Set the timer and store its ID in the ref
-      redirectTimerRef.current = setTimeout(() => {
-        navigate("/register");
-      }, 9000); // 4 seconds delay
-    } else {
-      // If user is now logged in, ensure no auth message is shown
-      setAuthMessage('');
-    }
+    retrieveUserId();
 
     // Cleanup function for the effect: clear timer when component unmounts
     return () => {
@@ -343,26 +320,19 @@ const ChefRegistrationModal = ({ show, onClose, onSubmit }) => {
         clearTimeout(redirectTimerRef.current);
       }
     };
-  }, [navigate]); // Still depend only on navigate (which is stable)
+  }, [navigate]);
 
-
-  // Reset form when modal closes (only if not showing)
   useEffect(() => {
     if (!show) {
       setFormData({
-        bio: '',
-        speciality: '',
-        experienceYears: '',
-        certifications: '',
-        location: '',
-        city: '',
-        latitude: '',
-        longitude: ''
+        bio: '', speciality: '', experienceYears: '', certifications: '',
+        location: '', city: '', latitude: '', longitude: ''
       });
       setGeolocationError(null);
       setLocationStatus('Click below to detect your location');
+      setRegistrationSuccess(false); // Reset success state on close
     }
-  }, [show]); // Only reset when 'show' prop changes to false
+  }, [show]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -375,6 +345,7 @@ const ChefRegistrationModal = ({ show, onClose, onSubmit }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitting(true);
+    setGeolocationError(null); // Clear previous errors
 
     const data = {
       ...formData,
@@ -387,11 +358,31 @@ const ChefRegistrationModal = ({ show, onClose, onSubmit }) => {
       userId: userId, // Ensure userId is passed with form data
     };
 
-    await onSubmit(data); // Assuming onSubmit handles the actual API call
-    setSubmitting(false);
+    try {
+      // Assuming onSubmit is a prop that triggers the API call in the parent
+      // and returns the API response, specifically looking for chefId.
+      const response = await onSubmit(data); 
+      
+      // If the onSubmit function (in parent) handles the actual API call
+      // and returns the response from the backend:
+      if (response && response.data && response.data.chefId) {
+        localStorage.setItem('chefId', response.data.chefId); // Save chefId
+        setRegistrationSuccess(true);
+        onClose(); // Close the modal
+        // The App.jsx useEffect will now pick up chefId and redirect
+      } else {
+        // Handle cases where API call was successful but chefId wasn't returned
+        console.error("Chef registration successful, but chefId not found in response.", response);
+        setGeolocationError("Registration successful, but couldn't get chef ID. Please refresh.");
+      }
+    } catch (error) {
+      console.error("Chef registration failed:", error);
+      setGeolocationError(error.response?.data?.message || "Registration failed. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
-  // Get user's current location
   const getCurrentLocation = () => {
     setGeolocating(true);
     setLocationStatus('Detecting your location...');
@@ -407,8 +398,6 @@ const ChefRegistrationModal = ({ show, onClose, onSubmit }) => {
       async (position) => {
         try {
           const { latitude, longitude } = position.coords;
-
-          // Reverse geocode to get address
           const response = await fetch(
             `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`
           );
@@ -423,7 +412,7 @@ const ChefRegistrationModal = ({ show, onClose, onSubmit }) => {
             ...prev,
             latitude: latitude.toString(),
             longitude: longitude.toString(),
-            city: data.address.city || data.address.town || data.address.village || 'Nairobi', // Fallback to Nairobi
+            city: data.address.city || data.address.town || data.address.village || 'Nairobi',
             location: data.display_name || `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`
           }));
 
@@ -468,14 +457,15 @@ const ChefRegistrationModal = ({ show, onClose, onSubmit }) => {
     );
   };
 
-  // Disable form if no user ID or if submitting/geolocating
-  const isFormDisabled = !userId || submitting || geolocating;
+  const isFormDisabled = !userId || submitting || geolocating || registrationSuccess; // Disable on success
+  const isLocationButtonDisabled = geolocating || isFormDisabled;
+  const isSubmitButtonDisabled = isFormDisabled || !formData.latitude || !formData.location || !formData.city;
+
 
   return (
     <Modal show={show} onHide={onClose} centered size="lg">
       <StyledModalHeader closeButton>
         <Modal.Title>
-          {/* Jikoni Express Logo and Title */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <JikoniExpressLogoSvg size={48} color={colors.cardBackground} />
             <span style={{ fontSize: '2.2rem', fontWeight: 800, lineHeight: 1 }}>Jikoni Express</span>
@@ -489,6 +479,11 @@ const ChefRegistrationModal = ({ show, onClose, onSubmit }) => {
             {authMessage}
           </Alert>
         )}
+        {registrationSuccess && (
+          <Alert variant="success" className="mb-4 text-center">
+            Chef profile registered successfully! Redirecting to dashboard...
+          </Alert>
+        )}
 
         <p className="text-muted text-center mb-4">
           Share your culinary passion with the world! Fill out your profile to join the Jikoni Express network.
@@ -500,7 +495,7 @@ const ChefRegistrationModal = ({ show, onClose, onSubmit }) => {
           </Alert>
         )}
 
-        <Form onSubmit={handleSubmit} disabled={isFormDisabled}>
+        <Form onSubmit={handleSubmit}> {/* Removed disabled prop here, let individual fields handle */}
           <Row>
             <Col md={6}>
               <FormGroup>
@@ -514,7 +509,7 @@ const ChefRegistrationModal = ({ show, onClose, onSubmit }) => {
                   value={formData.bio}
                   onChange={handleChange}
                   required
-                  disabled={isFormDisabled} /* Disable input if form is disabled */
+                  disabled={isFormDisabled}
                 />
               </FormGroup>
 
@@ -527,7 +522,7 @@ const ChefRegistrationModal = ({ show, onClose, onSubmit }) => {
                   value={formData.speciality}
                   onChange={handleChange}
                   required
-                  disabled={isFormDisabled} /* Disable input if form is disabled */
+                  disabled={isFormDisabled}
                 >
                   <option value="">Select a specialty</option>
                   <option value="African Cuisine">African Cuisine</option>
@@ -550,7 +545,7 @@ const ChefRegistrationModal = ({ show, onClose, onSubmit }) => {
                   value={formData.experienceYears}
                   onChange={handleChange}
                   required
-                  disabled={isFormDisabled} /* Disable input if form is disabled */
+                  disabled={isFormDisabled}
                 />
               </FormGroup>
 
@@ -562,7 +557,7 @@ const ChefRegistrationModal = ({ show, onClose, onSubmit }) => {
                   placeholder="e.g., HACCP, Food Safety, Culinary Diploma"
                   value={formData.certifications}
                   onChange={handleChange}
-                  disabled={isFormDisabled} /* Disable input if form is disabled */
+                  disabled={isFormDisabled}
                 />
               </FormGroup>
             </Col>
@@ -582,7 +577,7 @@ const ChefRegistrationModal = ({ show, onClose, onSubmit }) => {
                     value={formData.location}
                     onChange={handleChange}
                     required
-                    disabled={isFormDisabled} /* Disable input if form is disabled */
+                    disabled={isFormDisabled}
                   />
                 </FormGroup>
 
@@ -594,7 +589,7 @@ const ChefRegistrationModal = ({ show, onClose, onSubmit }) => {
                     value={formData.city || "Nairobi"}
                     onChange={handleChange}
                     required
-                    disabled={isFormDisabled} /* Disable input if form is disabled */
+                    disabled={isFormDisabled}
                   />
                 </FormGroup>
 
@@ -610,7 +605,7 @@ const ChefRegistrationModal = ({ show, onClose, onSubmit }) => {
                         value={formData.latitude}
                         onChange={handleChange}
                         required
-                        disabled={isFormDisabled} /* Disable input if form is disabled */
+                        disabled={isFormDisabled}
                       />
                     </FormGroup>
                   </Col>
@@ -625,7 +620,7 @@ const ChefRegistrationModal = ({ show, onClose, onSubmit }) => {
                         value={formData.longitude}
                         onChange={handleChange}
                         required
-                        disabled={isFormDisabled} /* Disable input if form is disabled */
+                        disabled={isFormDisabled}
                       />
                     </FormGroup>
                   </Col>
@@ -633,7 +628,7 @@ const ChefRegistrationModal = ({ show, onClose, onSubmit }) => {
 
                 <LocationButton
                   onClick={getCurrentLocation}
-                  disabled={geolocating || isFormDisabled} /* Disable button if form is disabled */
+                  disabled={isLocationButtonDisabled}
                 >
                   {geolocating ? (
                     <>
@@ -656,7 +651,7 @@ const ChefRegistrationModal = ({ show, onClose, onSubmit }) => {
             </Col>
           </Row>
 
-          <SubmitButton type="submit" disabled={isFormDisabled || !formData.latitude}>
+          <SubmitButton type="submit" disabled={isSubmitButtonDisabled}>
             {submitting ? (
               <>
                 <Spinner as="span" animation="border" size="sm" role="status" aria-hidden="true" />

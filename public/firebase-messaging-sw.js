@@ -1,14 +1,7 @@
-// This is the Firebase Cloud Messaging Service Worker file.
-// It needs to be placed at the root of your domain for proper functionality.
-
-// Import and initialize the Firebase app (v11.9.1)
-// Using 'compat' versions for broader compatibility, as seen in your provided code.
+// Import and initialize Firebase
 importScripts('https://www.gstatic.com/firebasejs/11.9.1/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/11.9.1/firebase-messaging-compat.js');
 
-// IMPORTANT: Replace with your actual Firebase configuration
-// This configuration allows the service worker to identify your Firebase project
-// and handle messages sent to it.
 const firebaseConfig = {
     apiKey: "AIzaSyBX7U1lDZihQ2tHq1CTfgm9EEamw8HlFoc",
     authDomain: "jikoniexpressnotification.firebaseapp.com",
@@ -19,70 +12,65 @@ const firebaseConfig = {
     measurementId: "G-G4FCZQ71M1"
 };
 
-// Initialize the Firebase app with your project's configuration.
 firebase.initializeApp(firebaseConfig);
-
-// Retrieve a Firebase Messaging instance, which is used to interact with FCM.
 const messaging = firebase.messaging();
 
-// --- Handle Background Messages ---
-// This listener triggers when a push notification is received while your web app
-// is not in the foreground (i.e., closed, minimized, or in another tab).
-// In firebase-messaging-sw.js
-// Update the background message handler:
-
+// Enhanced notification handler
 messaging.onBackgroundMessage((payload) => {
     console.log('[SW] Received background message:', payload);
 
     const notificationTitle = payload.notification?.title || 'New Message';
     const notificationOptions = {
         body: payload.notification?.body || 'You have a new message.',
-        icon: payload.notification?.icon || '/images/rider.png', // Updated path
+        icon: payload.notification?.icon || '/images/rider.png',
         data: payload.data || {},
-        // Add a custom sound for background notifications
-        // Make sure this path is relative to your service worker or an absolute URL
-        sound: '/sounds/notification.mp3', // <-- Add this line!
-                                            // Make sure 'notification.mp3' exists at this path
-        silent: false // Explicitly set to false if you want sound
+        badge: '/images/rider.png', // Small icon for mobile notifications
+        vibrate: [200, 100, 200, 100, 200], // Vibration pattern for mobile
+        requireInteraction: false,
+        timestamp: Date.now()
     };
 
-    // Add vibration pattern for mobile devices
-    if ('vibrate' in Notification.prototype) {
-        notificationOptions.vibrate = [200, 100, 200];
+    // Add sound if available
+    if (payload.data?.sound) {
+        notificationOptions.sound = payload.data.sound;
     }
 
-    // Add timestamp for notification sorting
-    notificationOptions.timestamp = Date.now();
-
-    // Add actions if available in payload
-    if (payload.data && payload.data.actions) {
-        try {
-            notificationOptions.actions = JSON.parse(payload.data.actions);
-        } catch (e) {
-            console.error('Failed to parse actions', e);
-        }
-    }
-
-    return self.registration.showNotification(notificationTitle, notificationOptions);
+    // Show notification
+    return self.registration.showNotification(notificationTitle, notificationOptions)
+        .catch(error => {
+            console.error('Failed to show notification:', error);
+        });
 });
 
-// --- Handle Notification Clicks ---
-// This listener triggers when a user clicks on a notification displayed by the service worker.
+// Notification click handler
 self.addEventListener('notificationclick', (event) => {
-    console.log('[firebase-messaging-sw.js] Notification clicked:', event);
-    // Close the notification in the tray after it's clicked.
     event.notification.close();
-
-    // Determine the URL to redirect to upon clicking the notification.
-    // It looks for a 'url' in the notification's data, otherwise defaults to the root.
-    const click_redirect_url = event.notification.data?.url || '/';
-
-    // 'event.waitUntil()' ensures the service worker remains active until the
-    // promise passed to it resolves. Here, it opens a new window/tab to the
-    // specified URL. If the app is already open, it will focus that tab.
+    const url = event.notification.data?.url || '/';
+    
     event.waitUntil(
-        clients.openWindow(click_redirect_url)
+        clients.matchAll({type: 'window'}).then(windowClients => {
+            // Check if app is already open
+            for (const client of windowClients) {
+                if (client.url === url && 'focus' in client) {
+                    return client.focus();
+                }
+            }
+            
+            // Open new window if not found
+            if (clients.openWindow) {
+                return clients.openWindow(url);
+            }
+        })
     );
+});
+
+// Handle messages from main app
+self.addEventListener('message', (event) => {
+    if (event.data && event.data.type === 'FOREGROUND_NOTIFICATION') {
+        const { title, options } = event.data;
+        self.registration.showNotification(title, options)
+            .catch(error => console.error('Service worker failed to show notification:', error));
+    }
 });
 
 // --- PWA Caching Logic ---
