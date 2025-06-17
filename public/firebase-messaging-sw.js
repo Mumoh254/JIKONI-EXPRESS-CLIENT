@@ -15,6 +15,12 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const messaging = firebase.messaging();
 
+// Function to show notification
+const showNotification = (title, options) => {
+    return self.registration.showNotification(title, options)
+        .catch(error => console.error('Failed to show notification:', error));
+};
+
 // Handle background messages
 messaging.onBackgroundMessage((payload) => {
     console.log('[SW] Received background message:', payload);
@@ -36,8 +42,7 @@ messaging.onBackgroundMessage((payload) => {
     const notificationTitle = notificationData.title || 'New Message';
     
     // Show notification
-    return self.registration.showNotification(notificationTitle, notificationOptions)
-        .catch(error => console.error('Failed to show notification:', error));
+    showNotification(notificationTitle, notificationOptions);
 });
 
 // Notification click handler
@@ -58,6 +63,14 @@ self.addEventListener('notificationclick', (event) => {
             }
         })
     );
+});
+
+// Handle messages from the client (for foreground notifications)
+self.addEventListener('message', (event) => {
+    if (event.data && event.data.type === 'SHOW_NOTIFICATION') {
+        const { title, options } = event.data;
+        showNotification(title, options);
+    }
 });
 
 // --- PWA Caching Logic ---

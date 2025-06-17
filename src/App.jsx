@@ -269,37 +269,34 @@ function App() {
                     setError(`FCM Token Error: ${tokenError.message}`);
                 }
 
-            // In your FCM initialization useEffect
-const unsubscribeOnMessage = onMessage(messaging, (payload) => {
-    console.log('Foreground push notification received:', payload);
-    
-    // Play sound for foreground notifications
-    try {
-        const audio = new Audio('/sounds/notification.mp3');
-        audio.play().catch(e => console.error('Failed to play foreground sound:', e));
-    } catch (audioError) {
-        console.error('Error creating or playing audio:', audioError);
-    }
-    
-    // Extract custom data from payload
-    const notificationData = payload.data || {};
-    
-    // Ask service worker to show notification
-    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-        navigator.serviceWorker.controller.postMessage({
-            type: 'SHOW_NOTIFICATION',
-            title: notificationData.title || 'New Message',
-            options: {
-                body: notificationData.body || 'You have a new message.',
-                icon: notificationData.imageUrl || '/images/rider.png',
-                data: notificationData,
-                badge: '/images/badge.png',
-                vibrate: [200, 100, 200, 100, 200],
-                timestamp: Date.now()
-            }
-        });
-    }
-});
+                // Handle foreground messages
+                const unsubscribeOnMessage = onMessage(messaging, (payload) => {
+                    console.log('Foreground push notification received:', payload);
+                    
+                    // Play sound for foreground notifications
+                    try {
+                        const audio = new Audio('/sounds/notification.mp3');
+                        audio.play().catch(e => console.error('Failed to play foreground sound:', e));
+                    } catch (audioError) {
+                        console.error('Error creating or playing audio:', audioError);
+                    }
+                    
+                    // Ask service worker to show notification
+                    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+                        navigator.serviceWorker.controller.postMessage({
+                            type: 'SHOW_NOTIFICATION',
+                            title: payload.data?.title || 'New Message',
+                            options: {
+                                body: payload.data?.body || 'You have a new message.',
+                                icon: payload.data?.imageUrl || '/images/rider.png',
+                                data: payload.data || {},
+                                badge: '/images/badge.png',
+                                vibrate: [200, 100, 200, 100, 200],
+                                timestamp: Date.now()
+                            }
+                        });
+                    }
+                });
 
                 return () => {
                     unsubscribeOnMessage();

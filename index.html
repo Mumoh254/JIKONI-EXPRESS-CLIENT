@@ -274,14 +274,7 @@
     })();
 
     
-// Add this to your service worker
-self.addEventListener('message', (event) => {
-    if (event.data && event.data.type === 'SHOW_NOTIFICATION') {
-        const { title, options } = event.data;
-        self.registration.showNotification(title, options)
-            .catch(error => console.error('Service worker failed to show notification:', error));
-    }
-});
+
   </script>
 </body>
 </html>
