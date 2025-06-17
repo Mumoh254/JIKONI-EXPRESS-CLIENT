@@ -38,14 +38,19 @@ messaging.onBackgroundMessage((payload) => {
     const notificationOptions = {
         body: payload.notification?.body || 'You have a new message.',
         icon: payload.notification?.icon || '/images/rider.png', // Updated path
-        data: payload.data || {}
+        data: payload.data || {},
+        // Add a custom sound for background notifications
+        // Make sure this path is relative to your service worker or an absolute URL
+        sound: '/sounds/notification.mp3', // <-- Add this line!
+                                            // Make sure 'notification.mp3' exists at this path
+        silent: false // Explicitly set to false if you want sound
     };
 
     // Add vibration pattern for mobile devices
     if ('vibrate' in Notification.prototype) {
         notificationOptions.vibrate = [200, 100, 200];
     }
-    
+
     // Add timestamp for notification sorting
     notificationOptions.timestamp = Date.now();
 
