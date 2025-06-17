@@ -24,7 +24,7 @@ messaging.onBackgroundMessage((payload) => {
         body: payload.notification?.body || 'You have a new message.',
         icon: payload.notification?.icon || '/images/rider.png',
         data: payload.data || {},
-        badge: '/images/rider.png', // Small icon for mobile notifications
+        badge: '/images/badge.png', // Small icon for mobile notifications
         vibrate: [200, 100, 200, 100, 200], // Vibration pattern for mobile
         requireInteraction: false,
         timestamp: Date.now()
@@ -72,7 +72,6 @@ self.addEventListener('message', (event) => {
             .catch(error => console.error('Service worker failed to show notification:', error));
     }
 });
-
 // --- PWA Caching Logic ---
 const CACHE_VERSION = 'v1'; // This will be compared against the version from /api/version
 const CACHE_NAME = `jikoni-express-${CACHE_VERSION}`;

@@ -290,7 +290,10 @@ function App() {
                                 body: payload.notification?.body || 'You have a new message.',
                                 icon: payload.notification?.icon || '/images/rider.png',
                                 data: payload.data || {},
-                                badge: '/images/badge.png'
+                                badge: '/images/badge.png',
+                                vibrate: [200, 100, 200, 100, 200],
+                                sound: '/sounds/notification.mp3',
+                                timestamp: Date.now()
                             }
                         });
                     }
