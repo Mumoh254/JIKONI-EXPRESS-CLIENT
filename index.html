@@ -272,6 +272,16 @@
       // Optional: If the app hasn't loaded after a longer delay, show the continue button
       setTimeout(showLoaderButton, 5000); // Show button after 5 seconds if still loading
     })();
+
+    
+// Add this to your service worker
+self.addEventListener('message', (event) => {
+    if (event.data && event.data.type === 'SHOW_NOTIFICATION') {
+        const { title, options } = event.data;
+        self.registration.showNotification(title, options)
+            .catch(error => console.error('Service worker failed to show notification:', error));
+    }
+});
   </script>
 </body>
 </html>

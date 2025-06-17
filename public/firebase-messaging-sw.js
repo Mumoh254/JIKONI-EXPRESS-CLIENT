@@ -15,31 +15,29 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const messaging = firebase.messaging();
 
-// Enhanced notification handler
+// Handle background messages
 messaging.onBackgroundMessage((payload) => {
     console.log('[SW] Received background message:', payload);
-
-    const notificationTitle = payload.notification?.title || 'New Message';
+    
+    // Extract custom data from payload
+    const notificationData = payload.data || {};
+    
+    // Build notification options
     const notificationOptions = {
-        body: payload.notification?.body || 'You have a new message.',
-        icon: payload.notification?.icon || '/images/rider.png',
-        data: payload.data || {},
-        badge: '/images/badge.png', // Small icon for mobile notifications
-        vibrate: [200, 100, 200, 100, 200], // Vibration pattern for mobile
-        requireInteraction: false,
+        body: notificationData.body || 'You have a new message.',
+        icon: notificationData.imageUrl || '/images/rider.png',
+        data: notificationData,
+        badge: '/images/badge.png',
+        vibrate: [200, 100, 200, 100, 200],
         timestamp: Date.now()
     };
-
-    // Add sound if available
-    if (payload.data?.sound) {
-        notificationOptions.sound = payload.data.sound;
-    }
-
+    
+    // Add title from data if available
+    const notificationTitle = notificationData.title || 'New Message';
+    
     // Show notification
     return self.registration.showNotification(notificationTitle, notificationOptions)
-        .catch(error => {
-            console.error('Failed to show notification:', error);
-        });
+        .catch(error => console.error('Failed to show notification:', error));
 });
 
 // Notification click handler
@@ -49,14 +47,12 @@ self.addEventListener('notificationclick', (event) => {
     
     event.waitUntil(
         clients.matchAll({type: 'window'}).then(windowClients => {
-            // Check if app is already open
             for (const client of windowClients) {
                 if (client.url === url && 'focus' in client) {
                     return client.focus();
                 }
             }
             
-            // Open new window if not found
             if (clients.openWindow) {
                 return clients.openWindow(url);
             }
@@ -64,14 +60,6 @@ self.addEventListener('notificationclick', (event) => {
     );
 });
 
-// Handle messages from main app
-self.addEventListener('message', (event) => {
-    if (event.data && event.data.type === 'FOREGROUND_NOTIFICATION') {
-        const { title, options } = event.data;
-        self.registration.showNotification(title, options)
-            .catch(error => console.error('Service worker failed to show notification:', error));
-    }
-});
 // --- PWA Caching Logic ---
 const CACHE_VERSION = 'v1'; // This will be compared against the version from /api/version
 const CACHE_NAME = `jikoni-express-${CACHE_VERSION}`;
