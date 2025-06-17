@@ -240,7 +240,6 @@ function App() {
                     } catch (audioError) {
                         console.error('Error creating or playing audio in foreground:', audioError);
                     }
-                    // DO NOT call new Notification() here. The service worker handles that.
                 });
 
                 return () => {
@@ -317,18 +316,18 @@ function App() {
         syncTokenToBackend();
     }, [userId, fcmToken]);
 
-    // User role and redirection handling - Simplified to prioritize chefId for chef mode
+    // --- User role and redirection handling ---
+    // If chefId exists in local storage, assume chef mode and redirect.
+    // Otherwise, handle rider, vendor, or regular user based on other flags.
     useEffect(() => {
-        const userData = getUserNameFromToken();
         const path = window.location.pathname;
-
         const storedChefId = localStorage.getItem('chefId');
-        const storedRiderId = localStorage.getItem('riderId'); // Assuming you'd have this too
-        const storedVendorId = localStorage.getItem('vendorId'); // Assuming you'd have this too
+        const storedRiderId = localStorage.getItem('riderId'); 
+        const storedVendorId = localStorage.getItem('vendorId');
 
-        // Priority 1: Chef Mode (if chefId exists)
+        // Priority 1: Chef Mode if chefId is present
         if (storedChefId) {
-            console.log("Chef ID found in local storage. Setting Chef Mode.");
+            console.log("Chef ID found in local storage. Setting Chef Mode and redirecting.");
             setIsChefMode(true);
             setIsRiderMode(false);
             setIsVendorMode(false);
@@ -336,9 +335,9 @@ function App() {
                 navigate('/chef/dashboard');
             }
         } 
-        // Priority 2: Rider Mode (if riderId exists)
+        // Priority 2: Rider Mode if riderId is present (and not a chef)
         else if (storedRiderId) {
-            console.log("Rider ID found in local storage. Setting Rider Mode.");
+            console.log("Rider ID found in local storage. Setting Rider Mode and redirecting.");
             setIsRiderMode(true);
             setIsChefMode(false);
             setIsVendorMode(false);
@@ -346,9 +345,9 @@ function App() {
                 navigate('/rider/dashboard');
             }
         }
-        // Priority 3: Vendor Mode (if vendorId exists)
+        // Priority 3: Vendor Mode if vendorId is present (and not a chef or rider)
         else if (storedVendorId) {
-            console.log("Vendor ID found in local storage. Setting Vendor Mode.");
+            console.log("Vendor ID found in local storage. Setting Vendor Mode and redirecting.");
             setIsVendorMode(true);
             setIsChefMode(false);
             setIsRiderMode(false);
@@ -356,26 +355,18 @@ function App() {
                 navigate('/vendor/dashboard');
             }
         }
-        // If no specific role ID is found, check token for general user or if roles are explicitly false
-        else if (userData) {
-            setUsername(userData.name);
+        // Fallback: If no specific role ID, check if user is logged in via token
+        else {
+            const userData = getUserNameFromToken();
+            if (userData) {
+                setUsername(userData.name);
+            } else {
+                setUsername('');
+            }
             // Ensure all role modes are off if no specific role ID triggered them
             setIsChefMode(false);
             setIsRiderMode(false);
             setIsVendorMode(false);
-        } else {
-            // No user data or role IDs, implies not logged in or no specific role
-            setUsername('');
-            setIsChefMode(false);
-            setIsRiderMode(false);
-            setIsVendorMode(false);
-            // Clear all role-related items in local storage if no user data
-            localStorage.removeItem('chefId');
-            localStorage.removeItem('riderId');
-            localStorage.removeItem('vendorId');
-            localStorage.removeItem('isChef'); // If you were using this previously
-            localStorage.removeItem('isRider');
-            localStorage.removeItem('isVendor');
         }
     }, [navigate]);
 
@@ -392,7 +383,7 @@ function App() {
         localStorage.removeItem('chefId');
         localStorage.removeItem('riderId');
         localStorage.removeItem('vendorId');
-        localStorage.removeItem('isChef'); 
+        localStorage.removeItem('isChef'); // If you were using this previously
         localStorage.removeItem('isRider');
         localStorage.removeItem('isVendor');
         navigate('/login'); // Redirect to login page
@@ -401,10 +392,8 @@ function App() {
     return (
         <AppContainer>
             <MainContent>
-                {/* Display any general error messages */}
                 {error && <div style={{ color: 'red', textAlign: 'center', padding: '10px' }}>Error: {error}</div>}
 
-                {/* React Router Routes */}
                 <Routes>
                     <Route path="/" element={<LandingPage />} />
                     <Route path="/register" element={<Register />} />
@@ -427,7 +416,6 @@ function App() {
                 </Routes>
             </MainContent>
 
-            {/* Bottom Navigation */}
             <BottomNav>
                 {isChefMode ? (
                     <>
@@ -442,7 +430,6 @@ function App() {
                         </NavLink>
                         <NotificationBell as="div" onClick={() => setShowNotifications(!showNotifications)}>
                             <MdNotificationsNone /> Alerts
-                            {/* Placeholder for actual notification count */}
                             {true && <span className="notification-badge">3</span>} 
                         </NotificationBell>
                     </>
@@ -453,7 +440,6 @@ function App() {
                         </NavLink>
                         <NotificationBell as="div" onClick={() => setShowNotifications(!showNotifications)}>
                             <MdNotificationsNone /> Alerts
-                            {/* Placeholder for actual notification count */}
                             {true && <span className="notification-badge">1</span>}
                         </NotificationBell>
                     </>
@@ -464,7 +450,6 @@ function App() {
                         </NavLink>
                         <NotificationBell as="div" onClick={() => setShowNotifications(!showNotifications)}>
                             <MdNotificationsNone /> Alerts
-                            {/* Placeholder for actual notification count */}
                             {true && <span className="notification-badge">2</span>}
                         </NotificationBell>
                     </>
@@ -492,7 +477,6 @@ function App() {
                 )}
             </BottomNav>
 
-            {/* Notifications Panel */}
             {showNotifications && (
                 <NotificationsPanel onClose={() => setShowNotifications(false)} />
             )}
