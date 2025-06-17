@@ -6,7 +6,7 @@ import {
 import { RiMotorbikeLine } from 'react-icons/ri';
 import { GiWineBottle, GiMeal } from 'react-icons/gi';
 import { FaStore } from 'react-icons/fa';
-import styled from 'styled-components'; // Removed unused 'css' import
+import styled, { css } from 'styled-components';
 import { useAuth } from './Context/authContext';
 import { getUserNameFromToken, getUserIdFromToken } from './handler/tokenDecorder';
 
@@ -196,13 +196,12 @@ function App() {
     const messaging = getMessaging(app);
 
     // Register service worker for mobile
+    
     useEffect(() => {
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('/firebase-messaging-sw.js')
                 .then(reg => {
                     console.log('Service Worker registered:', reg);
-                    // You might want to store the registration for later use, e.g., to check for updates
-                    // setServiceWorkerRegistration(reg); 
                 })
                 .catch(err => {
                     console.error('Service Worker registration failed:', err);
@@ -216,11 +215,9 @@ function App() {
             try {
                 console.log("Initializing FCM...");
 
-                // Request notification permission once at app load
                 const permission = await Notification.requestPermission();
                 if (permission !== 'granted') {
-                    console.warn("Notification permission not granted. User will not receive notifications.");
-                    // You might want to show a UI element prompting the user to enable notifications
+                    console.warn("Notification permission not granted");
                     return;
                 }
 
@@ -236,31 +233,27 @@ function App() {
                     setError(`FCM Token Error: ${tokenError.message}`);
                 }
 
-                // --- Listen for FOREGROUND messages ONLY ---
-                // The service worker handles background and system-level foreground notifications.
-                // This listener is for when your app is actively in use (foreground)
-                // and you want to trigger in-app UI updates or sounds without showing a duplicate system notification.
+                // Listen for foreground messages
                 const unsubscribeOnMessage = onMessage(messaging, (payload) => {
                     console.log('Foreground push notification received:', payload);
-                    
-                    // --- Play IN-APP sound for foreground messages ---
-                    try {
-                        const audio = new Audio('/sounds/notification.mp3'); // Ensure this path is correct
-                        audio.play().catch(e => console.error('Failed to play foreground sound:', e));
-                    } catch (audioError) {
-                        console.error('Error creating or playing audio in foreground:', audioError);
+                    // Use the Notification API to show a system-level notification
+                    if (Notification.permission === 'granted') {
+                        const notificationTitle = payload.notification?.title || 'New Message';
+                        const notificationOptions = {
+                            body: payload.notification?.body || 'You have a new message.',
+                            icon: payload.notification?.icon || '/images/rider.png', // Ensure this path is correct for your icon
+                            data: payload.data || {} // Pass any custom data to the notification
+                        };
+                        new Notification(notificationTitle, notificationOptions);
+                    } else {
+                        // Fallback or log if notification permission is not granted
+                        console.warn('Notification permission not granted, cannot show foreground notification in tray.');
+                        // You could still use a custom in-app modal here if desired
                     }
-
-                    // Optional: You can add logic here to update your UI, e.g.,
-                    // - Increment a notification badge count (like your existing `notification-badge`)
-                    // - Show a temporary in-app toast/banner
-                    // - Update state to re-fetch data for a notifications panel
-                    // Example: setShowNotifications(true); // To open the panel automatically
-                    // Remember: DO NOT call `new Notification()` here. The service worker handles that.
                 });
 
                 return () => {
-                    unsubscribeOnMessage(); // Clean up the listener when the component unmounts
+                    unsubscribeOnMessage();
                 };
             } catch (error) {
                 console.error("FCM initialization failed:", error);
@@ -269,7 +262,7 @@ function App() {
         };
 
         initializeFCM();
-    }, [messaging]); // Dependency array should include 'messaging'
+    }, [messaging]);
 
     // User ID handling with token change detection
     useEffect(() => {
@@ -287,7 +280,7 @@ function App() {
         // Initial update
         updateUserId();
 
-        // Listen for token changes (e.g., login/logout in other tabs)
+        // Listen for token changes
         const handleStorageChange = (e) => {
             if (e.key === 'token') {
                 updateUserId();
@@ -300,11 +293,11 @@ function App() {
 
     // Token sync with retry mechanism
     useEffect(() => {
-        if (!userId || !fcmToken) return; // Only sync if both are available
+        if (!userId || !fcmToken) return;
 
         const syncTokenToBackend = async (retryCount = 0) => {
             try {
-                console.log(`Syncing token for userId: ${userId}, attempt: ${retryCount + 1}`);
+                console.log("Syncing token to backend for userId:", userId);
                 
                 const response = await fetch(`https://neuro-apps-api-express-js-production-redy.onrender.com/apiV1/smartcity-ke/user/${userId}/fcm-token`, {
                     method: 'PUT',
@@ -327,81 +320,81 @@ function App() {
                     const delay = Math.pow(2, retryCount) * 1000;
                     console.log(`Retrying in ${delay}ms...`);
                     setTimeout(() => syncTokenToBackend(retryCount + 1), delay);
-                } else {
-                    console.error('Max retries reached for token sync. Token might not be synced.');
                 }
             }
         };
 
         syncTokenToBackend();
-    }, [userId, fcmToken]); // Re-run when userId or fcmToken changes
+    }, [userId, fcmToken]);
 
-    // User role handling (simplified and made more concise)
+    // User role handling
     useEffect(() => {
         const userData = getUserNameFromToken();
-        const path = window.location.pathname;
-
-        const updateRolesAndRedirect = (isChef, isRider, isVendor, dashboardPath) => {
-            setIsChefMode(isChef);
-            setIsRiderMode(isRider);
-            setIsVendorMode(isVendor);
-            if (path !== dashboardPath) {
-                navigate(dashboardPath);
-            }
-        };
+        let shouldRedirect = false;
 
         if (userData) {
             setUsername(userData.name);
 
             if (userData.isChef) {
-                updateRolesAndRedirect(true, false, false, '/chef/dashboard');
+                setIsChefMode(true);
+                setIsRiderMode(false);
+                setIsVendorMode(false);
+                if (window.location.pathname !== '/chef/dashboard') {
+                    shouldRedirect = true;
+                    navigate('/chef/dashboard');
+                }
             } else if (userData.isRider) {
-                updateRolesAndRedirect(false, true, false, '/rider/dashboard');
+                setIsRiderMode(true);
+                setIsChefMode(false);
+                setIsVendorMode(false);
+                if (window.location.pathname !== '/rider/dashboard') {
+                    shouldRedirect = true;
+                    navigate('/rider/dashboard');
+                }
             } else if (userData.isVendor) {
-                updateRolesAndRedirect(false, false, true, '/vendor/dashboard');
+                setIsVendorMode(true);
+                setIsChefMode(false);
+                setIsRiderMode(false);
+                if (window.location.pathname !== '/vendor/dashboard') {
+                    shouldRedirect = true;
+                    navigate('/vendor/dashboard');
+                }
             } else {
-                // If user is logged in but has no specific role, ensure roles are false
                 setIsChefMode(false);
                 setIsRiderMode(false);
                 setIsVendorMode(false);
             }
         } else {
-            // User is not logged in
             setUsername('');
             setIsChefMode(false);
             setIsRiderMode(false);
             setIsVendorMode(false);
         }
 
-        // Clean up localStorage for roles not present in current token
         if (!userData || !userData.isChef) localStorage.removeItem('isChef');
         if (!userData || !userData.isRider) localStorage.removeItem('isRider');
         if (!userData || !userData.isVendor) localStorage.removeItem('isVendor');
-    }, [navigate]); // navigate is a dependency as it's used inside
+    }, [navigate]);
 
-    // Handle user logout
     const handleLogout = useCallback(() => {
         console.log("Logging out...");
-        logout(); // Call the logout function from auth context
-        setFcmToken(null); // Clear FCM token state
-        setUserId(null); // Clear user ID state
-        setIsChefMode(false); // Reset role states
+        logout();
+        setFcmToken(null);
+        setUserId(null);
+        setIsChefMode(false);
         setIsRiderMode(false);
         setIsVendorMode(false);
-        // Clear specific role flags from localStorage
         localStorage.removeItem('isChef');
         localStorage.removeItem('isRider');
         localStorage.removeItem('isVendor');
-        navigate('/login'); // Redirect to login page
+        navigate('/login');
     }, [logout, navigate]);
 
     return (
         <AppContainer>
             <MainContent>
-                {/* Display any general error messages */}
                 {error && <div style={{ color: 'red', textAlign: 'center', padding: '10px' }}>Error: {error}</div>}
 
-                {/* React Router Routes */}
                 <Routes>
                     <Route path="/" element={<LandingPage />} />
                     <Route path="/register" element={<Register />} />
@@ -417,14 +410,13 @@ function App() {
                     <Route path="/jikoni/express/download" element={<Download />} />
                     <Route path="/saved/foods" element={<SavedFoods />} />
                     <Route path="/user/order-details/:orderId" element={<UserOrderDetails />} />
-                    <Route path="/user/order-details" element={<UserOrderDetails />} /> {/* Consider merging if possible or clarify purpose */}
+                    <Route path="/user/order-details" element={<UserOrderDetails />} />
                     <Route path="/rider/dashboard" element={<Board />} />
                     <Route path="/chef/dashboard" element={<ChefDashboard setIsChefMode={setIsChefMode} />} />
                     <Route path="/vendor/dashboard" element={<VendorDashboard />} />
                 </Routes>
             </MainContent>
 
-            {/* Bottom Navigation */}
             <BottomNav>
                 {isChefMode ? (
                     <>
@@ -439,8 +431,7 @@ function App() {
                         </NavLink>
                         <NotificationBell as="div" onClick={() => setShowNotifications(!showNotifications)}>
                             <MdNotificationsNone /> Alerts
-                            {/* Assuming 'true' here is a placeholder for actual notification count */}
-                            {true && <span className="notification-badge">3</span>} 
+                            {true && <span className="notification-badge">3</span>}
                         </NotificationBell>
                     </>
                 ) : isRiderMode ? (
@@ -450,7 +441,6 @@ function App() {
                         </NavLink>
                         <NotificationBell as="div" onClick={() => setShowNotifications(!showNotifications)}>
                             <MdNotificationsNone /> Alerts
-                            {/* Assuming 'true' here is a placeholder for actual notification count */}
                             {true && <span className="notification-badge">1</span>}
                         </NotificationBell>
                     </>
@@ -461,7 +451,6 @@ function App() {
                         </NavLink>
                         <NotificationBell as="div" onClick={() => setShowNotifications(!showNotifications)}>
                             <MdNotificationsNone /> Alerts
-                            {/* Assuming 'true' here is a placeholder for actual notification count */}
                             {true && <span className="notification-badge">2</span>}
                         </NotificationBell>
                     </>
@@ -489,7 +478,6 @@ function App() {
                 )}
             </BottomNav>
 
-            {/* Notifications Panel */}
             {showNotifications && (
                 <NotificationsPanel onClose={() => setShowNotifications(false)} />
             )}
