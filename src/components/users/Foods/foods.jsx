@@ -30,6 +30,10 @@ import { GiKenya } from 'react-icons/gi';
 import { RiMotorbikeFill } from 'react-icons/ri';
 import { FaCartPlus } from "react-icons/fa";
 import { SiCodechef } from "react-icons/si";
+import { FixedSizeList as List } from 'react-window';
+
+
+
 const theme = {
   primary: '#2563eb',
   secondary: '#c3e703',
@@ -1088,7 +1092,9 @@ const onClose = () => setShowModal(false);
                   transition: 'all 0.3s ease'
                 }}>
                   <div className="position-relative" style={{ overflow: 'hidden' }}>
-                  <Carousel 
+
+                    <list>
+             <Carousel 
   interval={3000} // Auto-play every 3 seconds
   indicators={food.photoUrls?.length > 1}
   controls={false}
@@ -1107,6 +1113,8 @@ const onClose = () => setShowModal(false);
     </Carousel.Item>
   ))}
 </Carousel>
+
+</list>
 
                     
                     <div className="position-absolute top-0 end-0 m-3">
