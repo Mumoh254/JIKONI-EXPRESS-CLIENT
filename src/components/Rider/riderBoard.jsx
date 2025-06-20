@@ -40,7 +40,7 @@ const RiderDashboard = () => {
         phone: '0740045355',
         rating: 4.8,
         vehicleType: 'Motorcycle',
-        photo: '/images/rider.png',
+        photo: '/images/delivery.png',
         available: true
     });
 
@@ -483,7 +483,7 @@ const RiderDashboard = () => {
     useEffect(() => {
         const fetchOrders = async () => {
             try {
-                const response = await fetch('http://localhost:8000/apiV1/smartcity-ke/orders');
+                const response = await fetch('https://neuro-apps-api-express-js-production-redy.onrender.com/apiV1/smartcity-ke/orders');
                 if (!response.ok) throw new Error("Failed to fetch orders");
                 const data = await response.json();
                 const formattedOrders = data.orders.map(formatOrder);
@@ -529,7 +529,7 @@ const RiderDashboard = () => {
         }
 
         try {
-            const response = await fetch(`http://localhost:8000/apiV1/smartcity-ke/order/${orderId}/assign-rider`, {
+            const response = await fetch(`https://neuro-apps-api-express-js-production-redy.onrender.com/apiV1/smartcity-ke/order/${orderId}/assign-rider`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -1200,7 +1200,11 @@ const RiderDashboard = () => {
 
             {/* Dashboard Header */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
-                <h1 style={{ color: colors.darkText, fontSize: '28px', margin: 0 }}>Jikoni Rider</h1>
+                <h1 style={{ color: colors.darkText, fontSize: '28px', margin: 0 }}>Jikoni <span
+                    style={{
+                       color: colors.primary,
+                       fontWeight: 500,
+                    }} > Rider !!</span> </h1>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                     <span style={{ fontSize: '14px', color: colors.darkText, fontWeight: '500' }}>{profile.name}</span>
                     <img src={profile.photo} alt="Rider" style={{ width: '40px', height: '40px', borderRadius: '50%', border: `2px solid ${colors.primary}` }} />
@@ -1254,16 +1258,26 @@ const RiderDashboard = () => {
                 marginBottom: '30px'
             }}>
                 <div style={summaryCardStyle}>
-                    <p style={summaryCardLabelStyle}>Balance</p>
-                    <p style={summaryCardValueStyle}>Ksh {earnings.balance.toFixed(2)}</p>
+                    <p style={{
+                        color:  "#FF4532"
+                    }}>Balance</p>
+                    <p style={{
+                        color:  "#FF4532",
+                        fontWeight:  'bold'
+                    }}>Ksh {earnings.balance.toFixed(2)}</p>
                 </div>
                 <div style={summaryCardStyle}>
-                    <p style={summaryCardLabelStyle}>Total Deliveries</p>
+                    <p style={summaryCardLabelStyle}
+                    >Total Deliveries</p>
                     <p style={summaryCardValueStyle}>{earnings.totalDeliveries}</p>
                 </div>
                 <div style={summaryCardStyle}>
                     <p style={summaryCardLabelStyle}>Weekly Earnings</p>
-                    <p style={summaryCardValueStyle}>Ksh {earnings.weeklyEarnings.toFixed(2)}</p>
+                    <p
+                    style={{
+                        color:  "#FF4532",
+                        fontWeight:   "bold"
+                    }} >Ksh {earnings.weeklyEarnings.toFixed(2)}</p>
                 </div>
             </div>
 
