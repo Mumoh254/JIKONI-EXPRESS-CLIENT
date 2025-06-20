@@ -30,10 +30,6 @@ import { GiKenya } from 'react-icons/gi';
 import { RiMotorbikeFill } from 'react-icons/ri';
 import { FaCartPlus } from "react-icons/fa";
 import { SiCodechef } from "react-icons/si";
-import { FixedSizeList as List } from 'react-window';
-
-
-
 const theme = {
   primary: '#2563eb',
   secondary: '#c3e703',
@@ -244,7 +240,6 @@ const getTimeUntilClosing = (openingHours) => {
     new Audio(popSound).play();
   };
 
-  
   useEffect(() => {
     const getUserIdFromToken = () => {
       const token = localStorage.getItem("token");
@@ -367,8 +362,6 @@ const getTimeUntilClosing = (openingHours) => {
       return { ...prev, cart: newCart };
     });
   };
-
-  
 const onClose = () => setShowModal(false);
   const handlePreOrder = (food) => {
     setSelectedFood(food);
@@ -385,8 +378,6 @@ const onClose = () => setShowModal(false);
   const handleSubmit = () => {
     const preOrderItem = {
       ...selectedFood,
-
-      
       isPreOrder: true,
       preOrderDate: preOrderForm.date,
       preOrderTime: preOrderForm.time,
@@ -1097,22 +1088,25 @@ const onClose = () => setShowModal(false);
                   transition: 'all 0.3s ease'
                 }}>
                   <div className="position-relative" style={{ overflow: 'hidden' }}>
-
-                    <list>
-          <Carousel interval={3000} indicators={photoUrls?.length > 1} controls={false} pause={false}>
-      <List
-        height={ItemHeight}
-        itemCount={photoUrls.length}
-        itemSize={ItemHeight}
-        layout="horizontal"
-        width="100%"
-        style={{ overflow: 'hidden' }}
-      >
-        {renderImage}
-      </List>
-    </Carousel>
-
-</list>
+                  <Carousel 
+  interval={3000} // Auto-play every 3 seconds
+  indicators={food.photoUrls?.length > 1}
+  controls={false}
+  pause={false} 
+>
+  {food.photoUrls?.map((img, i) => (
+    <Carousel.Item key={i}>
+      <div className="ratio ratio-4x3">
+        <img
+          src={img}
+          alt={`${food.title} - Photo ${i + 1}`}
+          className="card-img-top object-fit-cover"
+          style={{ transition: 'transform 0.5s ease' }}
+        />
+      </div>
+    </Carousel.Item>
+  ))}
+</Carousel>
 
                     
                     <div className="position-absolute top-0 end-0 m-3">
