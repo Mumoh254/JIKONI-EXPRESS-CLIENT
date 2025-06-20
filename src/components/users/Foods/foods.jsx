@@ -29,7 +29,8 @@ import { GiKenya } from 'react-icons/gi';
 
 import { RiMotorbikeFill } from 'react-icons/ri';
 import { FaCartPlus } from "react-icons/fa";
-import { SiCodechef } from "react-icons/si';
+import { SiCodechef } from "react-icons/si";
+
 import { FixedSizeList as List } from 'react-window';
 
 
