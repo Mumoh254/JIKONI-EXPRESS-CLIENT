@@ -1296,9 +1296,9 @@ const FoodPlatform = () => {
                         ) : (
                             <Row className="g-4 py-3">
                                 <List
-                                    height={800} // You'll need to set an appropriate height for your list container
+                                    height={1200} // You'll need to set an appropriate height for your list container
                                     itemCount={filteredFoods.length}
-                                    itemSize={670} // This is a crucial value. You need to accurately measure the height of a single food card with its margins/paddings. Adjust this value!
+                                    itemSize={800} // This is a crucial value. You need to accurately measure the height of a single food card with its margins/paddings. Adjust this value!
                                     width="100%"
                                     itemData={{
                                         foods: filteredFoods,
