@@ -27,6 +27,9 @@ const colors = {
     disabledButton: '#CBD5E1', // Gray for disabled buttons
     purple: '#6B46C1', // Example for a badge color
     danger: '#EF4444', // Example for a badge color
+    starGold: '#FFD700', // Gold for star ratings
+    lightGray: '#E2E8F0', // General light gray for borders/dividers
+    textMuted: '#6B7280', // Muted text color
 };
 
 const ChefProfile = () => {
@@ -57,7 +60,7 @@ const ChefProfile = () => {
 
     const [isLiqour, setIsLiqour] = useState(false); // Not used in this snippet's logic
     const navigate = useNavigate();
-    const BASE_URL = "http://localhost:8000/apiV1/smartcity-ke";
+    const BASE_URL = "https://neuro-apps-api-express-js-production-redy.onrender.com/apiV1/smartcity-ke";
     const [userId, setUserId] = useState(null);
     const [showPreOrderModal, setShowPreOrderModal] = useState(false);
     const [selectedFood, setSelectedFood] = useState(null);
@@ -177,22 +180,19 @@ const fetchedChef = chefData?.data ?? {}; // ✅ correct key
 setChef(fetchedChef);
 
 if (typeof fetchedChef.openingHours === 'string') {
-  updateOpeningStatus(fetchedChef.openingHours);
+    updateOpeningStatus(fetchedChef.openingHours);
 } else {
-  updateOpeningStatus('08:00 - 18:00'); // fallback default
-  console.warn('Chef is missing openingHours:', fetchedChef);
+    updateOpeningStatus('08:00 - 18:00'); // fallback default
+    console.warn('Chef is missing openingHours:', fetchedChef);
 }
- // fallback to empty object
-
-setChef(fetchedChef);
 
 // Only update if openingHours exists and is a string
 if (typeof fetchedChef.openingHours === 'string') {
-  updateOpeningStatus(fetchedChef.openingHours);
+    updateOpeningStatus(fetchedChef.openingHours);
 } else {
-  // Optional: use default or log warning
-  updateOpeningStatus('08:00 - 18:00'); // fallback default
-  console.warn("Missing or invalid openingHours from chef data:", fetchedChef);
+    // Optional: use default or log warning
+    updateOpeningStatus('08:00 - 18:00'); // fallback default
+    console.warn("Missing or invalid openingHours from chef data:", fetchedChef);
 }
 
                 // Fetch Foods for this Chef
@@ -460,8 +460,8 @@ if (typeof fetchedChef.openingHours === 'string') {
                                 <div className="d-flex gap-1 gap-md-2">
                                     <Button
                                         variant="success"
-                                        className="px-3 px-md-4 py-1 d-flex align-items-center"
-                                        style={{ backgroundColor: colors.secondary, border: 'none' }}
+                                        className="px-3 px-md-4 py-1 d-flex align-items-center rounded-pill"
+                                        style={{ backgroundColor: colors.secondary, border: 'none', fontSize: '0.9rem', fontWeight: '500' }}
                                         onClick={() => setState(s => ({ ...s, showRiderReg: true }))}
                                     >
                                         <RiMotorbikeFill className="me-2" />
@@ -470,15 +470,15 @@ if (typeof fetchedChef.openingHours === 'string') {
                                 </div>
                             )}
                             <Button
-                                className="px-3 me-2 mt-1 px-md-2 py-1 position-relative d-flex align-items-center text-white border-0"
-                                style={{ backgroundColor: '#FFC107' }} // Using a distinct color for cart
+                                className="px-3 me-2 mt-1 px-md-2 py-1 position-relative d-flex align-items-center text-white border-0 rounded-pill"
+                                style={{ backgroundColor: '#FFC107', fontSize: '0.9rem', fontWeight: '500' }} // Using a distinct color for cart
                                 onClick={() => setState(s => ({ ...s, showCart: true }))}
                             >
                                 <FaCartPlus className="me-2" />
                                 <span className="d-none d-md-inline">Cart</span>
                                 <span
-                                    className="position-absolute top-0 start-100 translate-middle badge rounded-pill text-white"
-                                    style={{ backgroundColor: colors.secondary }}
+                                    className="position-absolute top-0 start-100 translate-middle badge rounded-pill"
+                                    style={{ backgroundColor: colors.secondary, fontSize: '0.7rem', padding: '0.4em 0.6em' }}
                                 >
                                     {state.cart.reduce((sum, i) => sum + i.quantity, 0)}
                                     <span className="visually-hidden">items in cart</span>
@@ -492,21 +492,21 @@ if (typeof fetchedChef.openingHours === 'string') {
             {/* Chef Header - Compact & Modern */}
             <div style={{
                 backgroundColor: '#ffffff',
-                padding: '1.25rem 0',
-                boxShadow: '0 2px 10px rgba(0, 0, 0, 0.05)',
-                borderBottom: '1px solid #f0f0f0'
+                padding: '1.5rem 0',
+                boxShadow: '0 4px 15px rgba(0, 0, 0, 0.08)',
+                borderBottom: `1px solid ${colors.lightGray}`
             }}>
                 <div className="container">
                     <div className="d-flex flex-column flex-md-row align-items-start justify-content-between gap-4">
                         <div className="d-flex align-items-start gap-3">
                             <div className="position-relative" style={{ flexShrink: 0 }}>
                                 <div style={{
-                                    width: '90px',
-                                    height: '90px',
+                                    width: '100px',
+                                    height: '100px',
                                     borderRadius: '50%',
                                     overflow: 'hidden',
-                                    border: '2px solid #f8f9fa',
-                                    boxShadow: '0 3px 8px rgba(0,0,0,0.08)'
+                                    border: `3px solid ${colors.lightBackground}`,
+                                    boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
                                 }}>
                                     <img
                                         src={chef.profilePictureUrl || '/images/chef.png'} // Use actual profile picture or a default
@@ -521,55 +521,57 @@ if (typeof fetchedChef.openingHours === 'string') {
                                 </div>
                                 <div style={{
                                     position: 'absolute',
-                                    bottom: '0',
-                                    right: '0',
-                                    backgroundColor: '#2ECC71', // Green for verified/pro
-                                    width: '24px',
-                                    height: '24px',
+                                    bottom: '5px',
+                                    right: '5px',
+                                    backgroundColor: colors.secondary, // Green for verified/pro
+                                    width: '28px',
+                                    height: '28px',
                                     borderRadius: '50%',
                                     display: 'flex',
                                     alignItems: 'center',
                                     justifyContent: 'center',
-                                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-                                    border: '2px solid #ffffff'
+                                    boxShadow: '0 2px 6px rgba(0,0,0,0.1)',
+                                    border: '3px solid #ffffff'
                                 }}>
-                                    <BsAwardFill style={{ color: 'white', fontSize: '0.7rem' }} /> {/* Award fill for pro/verified */}
+                                    <BsAwardFill style={{ color: 'white', fontSize: '0.9rem' }} /> {/* Award fill for pro/verified */}
                                 </div>
                             </div>
 
                             <div>
-                                <div style={{ marginBottom: '0.25rem' }}>
+                                <div style={{ marginBottom: '0.5rem' }}>
                                     <h1 style={{
-                                        fontSize: '1.5rem',
-                                        fontWeight: 700,
-                                        marginBottom: '0.15rem',
-                                        color: '#333'
+                                        fontSize: '2rem',
+                                        fontWeight: 800,
+                                        marginBottom: '0.25rem',
+                                        color: colors.darkText,
+                                        lineHeight: '1.2'
                                     }}>
                                         {chef.user?.Name || 'Chef Name Not Available'}
                                     </h1>
                                     <div style={{
                                         display: 'flex',
-                                        gap: '0.3rem',
+                                        gap: '0.5rem',
                                         alignItems: 'center',
-                                        color: '#666',
-                                        fontSize: '0.9rem'
+                                        color: colors.textMuted,
+                                        fontSize: '0.95rem',
+                                        fontWeight: '500'
                                     }}>
-                                        <PinMapFill style={{ fontSize: '0.9rem', color: colors.primary }} />
+                                        <PinMapFill style={{ fontSize: '1rem', color: colors.primary }} />
                                         <span>{chef?.location || 'N/A'} • {chef.area || 'N/A'}</span>
                                     </div>
                                 </div>
 
                                 {/* Opening Hours Display */}
-                                <div className="d-flex align-items-center gap-1 mt-2">
-                                    <Clock style={{ fontSize: '0.85rem', color: '#666' }} />
-                                    <span style={{ fontSize: '0.85rem', fontWeight: 500, color: '#666' }}>
+                                <div className="d-flex align-items-center gap-2 mt-2">
+                                    <Clock style={{ fontSize: '0.9rem', color: colors.textMuted }} />
+                                    <span style={{ fontSize: '0.9rem', fontWeight: 600, color: colors.darkText }}>
                                         {chef.openingHours || 'Hours not specified'}
                                     </span>
                                     {chef.openingHours && (
                                         <Badge
                                             bg={openingStatus.isOpen ? "success" : "danger"}
-                                            className="ms-2"
-                                            style={{ fontSize: '0.75rem' }}
+                                            className="ms-2 py-1 px-2 rounded-pill"
+                                            style={{ fontSize: '0.75rem', fontWeight: 'bold' }}
                                         >
                                             {openingStatus.isOpen ?
                                                 `Open${openingStatus.closingIn ? ` (Closes in ${openingStatus.closingIn})` : ''}` :
@@ -578,55 +580,57 @@ if (typeof fetchedChef.openingHours === 'string') {
                                     )}
                                 </div>
 
-                                <div className="d-flex gap-2 mt-2">
+                                <div className="d-flex gap-2 mt-3">
                                     <div style={{
-                                        backgroundColor: '#f0f9ff',
-                                        color: '#0ea5e9',
-                                        padding: '0.25rem 0.75rem',
-                                        borderRadius: '16px',
-                                        fontSize: '0.8rem',
+                                        backgroundColor: '#eff6ff',
+                                        color: '#3b82f6',
+                                        padding: '0.4rem 1rem',
+                                        borderRadius: '20px',
+                                        fontSize: '0.85rem',
                                         fontWeight: 600,
                                         display: 'flex',
                                         alignItems: 'center',
-                                        gap: '0.3rem',
-                                        border: '1px solid #e0f2fe'
+                                        gap: '0.4rem',
+                                        border: '1px solid #dbeafe'
                                     }}>
-                                        <StarFill style={{ fontSize: '0.7rem' }} />
+                                        <StarFill style={{ fontSize: '0.75rem', color: colors.starGold }} />
                                         <span>PRO CHEF</span>
                                     </div>
                                     <div style={{
-                                        backgroundColor: '#f0fdf4',
-                                        color: '#16a34a',
-                                        padding: '0.25rem 0.75rem',
-                                        borderRadius: '16px',
-                                        fontSize: '0.8rem',
+                                        backgroundColor: '#ecfdf5',
+                                        color: '#10b981',
+                                        padding: '0.4rem 1rem',
+                                        borderRadius: '20px',
+                                        fontSize: '0.85rem',
                                         fontWeight: 600,
                                         display: 'flex',
                                         alignItems: 'center',
-                                        gap: '0.3rem',
-                                        border: '1px solid #dcfce7'
+                                        gap: '0.4rem',
+                                        border: '1px solid #d1fae5'
                                     }}>
-                                        <CheckCircleFill style={{ fontSize: '0.7rem' }} />
+                                        <CheckCircleFill style={{ fontSize: '0.75rem' }} />
                                         <span>VERIFIED</span>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        <div className="d-flex flex-wrap align-items-center gap-4" style={{ minWidth: '280px' }}>
+                        <div className="d-flex flex-wrap align-items-center gap-5 pe-4">
                             <div className="text-center">
                                 <div style={{
-                                    fontSize: '1.25rem',
+                                    fontSize: '1.6rem',
                                     fontWeight: 700,
                                     color: colors.primary,
+                                    lineHeight: '1.2'
                                 }}>
-                                    {chef.views || 0} {/* Changed from followers to views as per common chef profiles */}
+                                    {chef.views || 0}
                                 </div>
                                 <div style={{
-                                    fontSize: '0.75rem',
+                                    fontSize: '0.8rem',
                                     fontWeight: 500,
-                                    color: '#777',
-                                    textTransform: 'uppercase'
+                                    color: colors.textMuted,
+                                    textTransform: 'uppercase',
+                                    marginTop: '0.25rem'
                                 }}>
                                     Views
                                 </div>
@@ -634,17 +638,19 @@ if (typeof fetchedChef.openingHours === 'string') {
 
                             <div className="text-center">
                                 <div style={{
-                                    fontSize: '1.25rem',
+                                    fontSize: '1.6rem',
                                     fontWeight: 700,
                                     color: colors.primary,
+                                    lineHeight: '1.2'
                                 }}>
                                     {chef.likes || 0}
                                 </div>
                                 <div style={{
-                                    fontSize: '0.75rem',
+                                    fontSize: '0.8rem',
                                     fontWeight: 500,
-                                    color: '#777',
-                                    textTransform: 'uppercase'
+                                    color: colors.textMuted,
+                                    textTransform: 'uppercase',
+                                    marginTop: '0.25rem'
                                 }}>
                                     Likes
                                 </div>
@@ -652,73 +658,77 @@ if (typeof fetchedChef.openingHours === 'string') {
 
                             <div className="text-center">
                                 <div style={{
-                                    fontSize: '1.25rem',
+                                    fontSize: '1.6rem',
                                     fontWeight: 700,
                                     color: colors.primary,
+                                    lineHeight: '1.2'
                                 }}>
                                     {chef.experienceYears || 0}
                                 </div>
                                 <div style={{
-                                    fontSize: '0.75rem',
+                                    fontSize: '0.8rem',
                                     fontWeight: 500,
-                                    color: '#777',
-                                    textTransform: 'uppercase'
+                                    color: colors.textMuted,
+                                    textTransform: 'uppercase',
+                                    marginTop: '0.25rem'
                                 }}>
                                     Years Exp
                                 </div>
                             </div>
 
                             <div style={{
-                                backgroundColor: '#f0fdf4',
-                                color: '#16a34a',
-                                padding: '0.35rem 1rem',
-                                borderRadius: '20px',
-                                fontSize: '0.85rem',
-                                fontWeight: 500,
+                                backgroundColor: '#fffbeb',
+                                color: '#d97706',
+                                padding: '0.5rem 1.2rem',
+                                borderRadius: '25px',
+                                fontSize: '0.9rem',
+                                fontWeight: 600,
                                 display: 'flex',
                                 alignItems: 'center',
-                                gap: '0.4rem'
+                                gap: '0.5rem',
+                                border: '1px solid #fde68a',
+                                flexShrink: 0
                             }}>
-                                <EggFried style={{ fontSize: '0.85rem' }} />
-                                <span>{chef.cuisineType || 'Continental'}</span>
+                                <EggFried style={{ fontSize: '0.95rem' }} />
+                                <span>{chef.cuisineType || 'Continental Cuisine'}</span>
                             </div>
                         </div>
 
-                        <div className="d-flex flex-wrap align-items-center gap-2">
+                        <div className="d-flex flex-wrap align-items-center gap-3">
                             <Button
-                                className="d-flex align-items-center px-5 py-2 custom-outline-green"
+                                className="d-flex align-items-center px-4 py-2 rounded-pill"
                                 onClick={() => setShowBioModal(true)}
                                 style={{
-                                    fontWeight: 500,
-                                    fontSize: '0.85rem',
-                                    borderColor: colors.secondary,
+                                    fontWeight: 600,
+                                    fontSize: '0.95rem',
+                                    backgroundColor: 'transparent',
                                     color: colors.secondary,
-                                    background: 'transparent',
-                                    transition: 'all 0.2s ease',
+                                    border: `2px solid ${colors.secondary}`,
                                     '&:hover': {
-                                        background: colors.secondary,
-                                        color: 'white'
+                                        backgroundColor: colors.secondary,
+                                        color: colors.cardBackground
                                     }
                                 }}
                             >
-                                <PersonLinesFill className="me-1" /> View Bio
+                                <PersonLinesFill className="me-2" style={{ fontSize: '1.1rem' }} />
+                                Full Bio
                             </Button>
-
                             <Button
-                                className=' px-5 py-2 d-flex align-items-center'
+                                className="d-flex align-items-center px-4 py-2 rounded-pill"
                                 onClick={() => setShowHireModal(true)}
                                 style={{
-                                    background: colors.primary,
-                                    color: 'white',
-                                    border: 'none',
                                     fontWeight: 600,
-                                    fontSize: '0.85rem',
-                                    transition: 'background-color 0.2s ease',
+                                    fontSize: '0.95rem',
+                                    backgroundColor: colors.primary,
+                                    color: 'white',
+                                    border: `2px solid ${colors.primary}`,
                                     '&:hover': {
-                                        backgroundColor: colors.buttonHover
+                                        backgroundColor: colors.buttonHover,
+                                        borderColor: colors.buttonHover
                                     }
                                 }}
                             >
+                                <CheckCircleFill className="me-2" style={{ fontSize: '1.1rem' }} />
                                 Hire Chef
                             </Button>
                         </div>
@@ -726,203 +736,372 @@ if (typeof fetchedChef.openingHours === 'string') {
                 </div>
             </div>
 
-            {/* Main Content */}
+            {/* Main Content Area */}
             <div className="container py-5">
-                <Row className="g-4">
-                    {/* Compact Auto-Scroll Foods Section - Signature Creations */}
-                    <Col xs={12}>
-                        <div className="py-3" style={{ backgroundColor: '#f8f9fa', borderRadius: '10px' }}>
-                            <div className="container">
-                                <div className="d-flex justify-content-between align-items-center mb-3">
-                                    <h5 className="fw-bold mb-0" style={{
-                                        color: colors.primary,
-                                        fontSize: '1.1rem',
-                                        display: 'flex',
-                                        alignItems: 'center'
-                                    }}>
-                                        <StarHalf className="me-2" style={{ width: '18px', height: '18px' }} />
-                                        Signature Creations
-                                    </h5>
-
-                                    {/* You can add a link here to a full menu page if "View All" is desired */}
-                                    <Button className="btn btn-sm px-3 py-1" style={{ background: colors.primary, color: '#fff', border: 'none' }} >
-                                        View All
-                                    </Button>
-                                </div>
-
-                                <div className="foods-scroll-container position-relative overflow-auto" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
-                                    <style>{`
-                                        .foods-scroll-container::-webkit-scrollbar {
-                                            display: none;
-                                        }
-                                    `}</style>
-                                    <div className="foods-scroll d-flex pb-2 gap-3">
-                                        {state.foods.length > 0 ? (
-                                            state.foods.map(food => (
-                                                <div key={food._id || food.id} className="food-scroll-item" style={{ flexShrink: 0, width: '200px' }}>
-                                                    <Card className="h-100 shadow-sm border-0" style={{
-                                                        borderRadius: '10px',
-                                                        overflow: 'hidden',
-                                                        transition: 'all 0.2s ease',
-                                                        cursor: 'pointer'
-                                                    }}>
-                                                        <div className="position-relative">
-                                                            <div className="ratio ratio-1x1">
-                                                                <img
-                                                                    src={food.photoUrls?.[0] || '/placeholder-food.jpg'}
-                                                                    alt={food.title}
-                                                                    className="card-img-top object-fit-cover"
-                                                                    onError={(e) => (e.target.src = '/placeholder-food.jpg')}
-                                                                />
-                                                            </div>
-                                                            {food.isPreOrder && (
-                                                                <Badge bg="info" className="position-absolute top-0 start-0 m-2">Pre-Order</Badge>
-                                                            )}
-                                                        </div>
-                                                        <Card.Body className="d-flex flex-column p-3">
-                                                            <Card.Title className="mb-1" style={{ fontSize: '1rem', fontWeight: 600, color: colors.darkText, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                                                {food.title}
-                                                            </Card.Title>
-                                                            <Card.Text className="text-muted mb-2 flex-grow-1" style={{ fontSize: '0.85rem', minHeight: '3em', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                                                {food.description?.substring(0, 50)}...
-                                                            </Card.Text>
-                                                            <div className="d-flex justify-content-between align-items-center mt-auto">
-                                                                <div className="price-tag" style={{ fontSize: '1.1rem', fontWeight: 700, color: colors.primary }}>
-                                                                    KSh {food.price?.toFixed(2)}
-                                                                </div>
-                                                                {food.isPreOrder ? (
-                                                                    <Button
-                                                                        variant="outline-primary"
-                                                                        size="sm"
-                                                                        onClick={() => handlePreOrder(food)}
-                                                                        style={{ borderColor: colors.primary, color: colors.primary }}
-                                                                    >
-                                                                        <Clock className="me-1" /> Pre-Order
-                                                                    </Button>
-                                                                ) : (
-                                                                    <Button
-                                                                        variant="primary"
-                                                                        size="sm"
-                                                                        onClick={() => updateCart(food, 1)}
-                                                                        style={{ backgroundColor: colors.primary, border: 'none' }}
-                                                                    >
-                                                                        <CartPlus className="me-1" /> Add
-                                                                    </Button>
-                                                                )}
-                                                            </div>
-                                                        </Card.Body>
-                                                    </Card>
-                                                </div>
-                                            ))
-                                        ) : (
-                                            <p className="text-center text-muted col-12">No signature dishes available at the moment.</p>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </Col>
-
-                    {/* Chef's Menu Section (with Tabs) */}
-                    <Col xs={12}>
-                        <Card className="shadow-sm border-0" style={{ borderRadius: '10px' }}>
-                            <Card.Body>
-                                <h4 className="mb-4" style={{ color: colors.darkText }}>Chef's Menu</h4>
+                <Row>
+                    <Col lg={9}>
+                        {/* Food Categories / Tabs */}
+                        <Card className="shadow-sm border-0 mb-4" style={{ borderRadius: '12px' }}>
+                            <Card.Body className="p-3">
                                 <Tabs
                                     activeKey={selectedMealType}
                                     onSelect={(k) => setSelectedMealType(k)}
-                                    className="mb-4 jikoni-tabs"
+                                    className="mb-3 jikoni-tabs"
                                     fill
+                                    style={{
+                                        '--bs-nav-tabs-link-active-color': colors.primary,
+                                        '--bs-nav-tabs-link-active-border-color': `${colors.lightGray} ${colors.lightGray} ${colors.primary}`,
+                                        '--bs-nav-tabs-link-hover-border-color': `${colors.lightGray} ${colors.lightGray} ${colors.primary}`,
+                                        '--bs-nav-tabs-border-color': colors.lightGray,
+                                        '--bs-nav-tabs-border-radius': '8px',
+                                        fontSize: '1rem',
+                                        fontWeight: 600
+                                    }}
                                 >
-                                    <Tab eventKey="all" title="All">
-                                        {/* Content handled by filteredFoods below */}
-                                    </Tab>
-                                    <Tab eventKey="Breakfast" title="Breakfast">
-                                        {/* Content handled by filteredFoods below */}
-                                    </Tab>
-                                    <Tab eventKey="Lunch" title="Lunch">
-                                        {/* Content handled by filteredFoods below */}
-                                    </Tab>
-                                    <Tab eventKey="Dinner" title="Dinner">
-                                        {/* Content handled by filteredFoods below */}
-                                    </Tab>
-                                    <Tab eventKey="Snacks" title="Snacks">
-                                        {/* Content handled by filteredFoods below */}
-                                    </Tab>
-                                    <Tab eventKey="Drinks" title="Drinks">
-                                        {/* Content handled by filteredFoods below */}
-                                    </Tab>
-                                    <Tab eventKey="Desserts" title="Desserts">
-                                        {/* Content handled by filteredFoods below */}
-                                    </Tab>
+                                    <Tab eventKey="all" title="All Meals" />
+                                    <Tab eventKey="breakfast" title="Breakfast" />
+                                    <Tab eventKey="lunch" title="Lunch" />
+                                    <Tab eventKey="dinner" title="Dinner" />
+                                    <Tab eventKey="dessert" title="Dessert" />
+                                    <Tab eventKey="drinks" title="Drinks" />
                                 </Tabs>
+                            </Card.Body>
+                        </Card>
 
-                                <Row xs={1} md={2} lg={3} className="g-4">
-                                    {filteredFoods.length > 0 ? (
-                                        filteredFoods.map(food => (
-                                            <Col key={food._id || food.id}>
-                                                <Card className="h-100 shadow-sm border-0" style={{ borderRadius: '10px', overflow: 'hidden' }}>
-                                                    <div className="position-relative">
-                                                        <div className="ratio ratio-4x3"> {/* Maintain aspect ratio */}
-                                                            <img
-                                                                src={food.photoUrls?.[0] || '/placeholder-food.jpg'}
-                                                                alt={food.title}
-                                                                className="card-img-top object-fit-cover"
-                                                                onError={(e) => (e.target.src = '/placeholder-food.jpg')}
-                                                            />
-                                                        </div>
-                                                        {food.isPreOrder && (
-                                                            <Badge bg="info" className="position-absolute top-0 start-0 m-2">Pre-Order</Badge>
-                                                        )}
+                        {/* Food Menu Items */}
+                        <Row xs={1} md={2} className="g-4">
+                            {filteredFoods.length > 0 ? (
+                                filteredFoods.map(food => (
+                                    <Col key={food.id}>
+                                        <Card className="h-100 shadow-sm border-0 food-card" style={{ borderRadius: '12px', overflow: 'hidden' }}>
+                                            <Row className="g-0">
+                                                <Col xs={4}>
+                                                    <div style={{ height: '100%', minHeight: '150px', overflow: 'hidden' }}>
+                                                        <Card.Img
+                                                            variant="top"
+                                                            src={food.image || '/images/default-food.jpg'}
+                                                            alt={food.title}
+                                                            style={{ objectFit: 'cover', width: '100%', height: '100%', transition: 'transform 0.3s ease-in-out' }}
+                                                            className="food-card-img"
+                                                        />
                                                     </div>
-                                                    <Card.Body className="d-flex flex-column p-3">
-                                                        <Card.Title className="mb-1" style={{ fontSize: '1rem', fontWeight: 600, color: colors.darkText }}>
-                                                            {food.title}
-                                                        </Card.Title>
-                                                        <Card.Text className="text-muted mb-2 flex-grow-1" style={{ fontSize: '0.85rem' }}>
-                                                            {food.description?.substring(0, 100)}...
-                                                        </Card.Text>
-                                                        <div className="d-flex justify-content-between align-items-center mt-auto">
-                                                            <div className="price-tag" style={{ fontSize: '1.1rem', fontWeight: 700, color: colors.primary }}>
-                                                                KSh {food.price?.toFixed(2)}
+                                                </Col>
+                                                <Col xs={8}>
+                                                    <Card.Body className="d-flex flex-column justify-content-between p-3">
+                                                        <div>
+                                                            <Card.Title className="mb-1" style={{ fontSize: '1.25rem', fontWeight: 700, color: colors.darkText }}>
+                                                                {food.title}
+                                                            </Card.Title>
+                                                            <Card.Text className="mb-2" style={{ fontSize: '0.9rem', color: colors.textMuted }}>
+                                                                {food.description?.substring(0, 70)}...
+                                                            </Card.Text>
+                                                            <div className="d-flex align-items-center mb-2">
+                                                                <StarFill className="text-warning me-1" style={{ fontSize: '0.9rem', color: colors.starGold }} />
+                                                                <span style={{ fontSize: '0.9rem', fontWeight: 600, color: colors.darkText }}>
+                                                                    {food.rating?.toFixed(1) || 'N/A'}
+                                                                </span>
+                                                                <span className="ms-2" style={{ fontSize: '0.85rem', color: colors.textMuted }}>
+                                                                    ({food.reviews || 0} reviews)
+                                                                </span>
                                                             </div>
-                                                            {food.isPreOrder ? (
+                                                        </div>
+                                                        <div className="d-flex justify-content-between align-items-center mt-3">
+                                                            <div className="price-tag" style={{ fontSize: '1.4rem', fontWeight: 700, color: colors.primary }}>
+                                                                Ksh {food.price?.toFixed(2) || '0.00'}
+                                                            </div>
+                                                            <div className="d-flex gap-2">
                                                                 <Button
-                                                                    variant="outline-primary"
+                                                                    variant="outline-secondary"
                                                                     size="sm"
+                                                                    className="rounded-pill"
                                                                     onClick={() => handlePreOrder(food)}
-                                                                    style={{ borderColor: colors.primary, color: colors.primary }}
+                                                                    style={{
+                                                                        fontWeight: 500,
+                                                                        fontSize: '0.85rem',
+                                                                        borderColor: colors.secondary,
+                                                                        color: colors.secondary,
+                                                                        '&:hover': {
+                                                                            backgroundColor: colors.secondary,
+                                                                            color: 'white'
+                                                                        }
+                                                                    }}
                                                                 >
                                                                     <Clock className="me-1" /> Pre-Order
                                                                 </Button>
-                                                            ) : (
                                                                 <Button
                                                                     variant="primary"
                                                                     size="sm"
                                                                     onClick={() => updateCart(food, 1)}
-                                                                    style={{ backgroundColor: colors.primary, border: 'none' }}
+                                                                    className="rounded-pill"
+                                                                    style={{
+                                                                        backgroundColor: colors.primary,
+                                                                        borderColor: colors.primary,
+                                                                        fontWeight: 500,
+                                                                        fontSize: '0.85rem',
+                                                                        '&:hover': {
+                                                                            backgroundColor: colors.buttonHover,
+                                                                            borderColor: colors.buttonHover
+                                                                        }
+                                                                    }}
                                                                 >
-                                                                    <CartPlus className="me-1" /> Add to Cart
+                                                                    <CartPlus className="me-1" /> Add
                                                                 </Button>
-                                                            )}
+                                                            </div>
                                                         </div>
                                                     </Card.Body>
-                                                </Card>
-                                            </Col>
-                                        ))
-                                    ) : (
-                                        <Col xs={12} className="text-center text-muted py-4">
-                                            <p>No menu items found for this category.</p>
-                                        </Col>
-                                    )}
-                                </Row>
-                            </Card.Body>
-                        </Card>
+                                                </Col>
+                                            </Row>
+                                        </Card>
+                                    </Col>
+                                ))
+                            ) : (
+                                <Col xs={12}>
+                                    <Card className="text-center py-5 shadow-sm border-0" style={{ borderRadius: '12px' }}>
+                                        <Card.Body>
+                                            <p className="text-muted fs-5">No food items found for this chef or selected meal type.</p>
+                                            <Button
+                                                variant="outline-primary"
+                                                onClick={() => setSelectedMealType('all')}
+                                                style={{ color: colors.primary, borderColor: colors.primary }}
+                                            >
+                                                Show All Meals
+                                            </Button>
+                                        </Card.Body>
+                                    </Card>
+                                </Col>
+                            )}
+                        </Row>
+                    </Col>
+
+                    <Col lg={3}>
+                        {/* Right Sidebar - Dynamic Content */}
+                        <div className="d-flex flex-column gap-4 sticky-top" style={{ top: '100px' }}>
+                            {/* Chef's Top Selling Items Carousel (Placeholder) */}
+                            <Card className="shadow-sm border-0" style={{ borderRadius: '12px' }}>
+                                <Card.Body>
+                                    <h5 className="mb-3" style={{ color: colors.darkText, fontWeight: 700 }}>Chef's Top Picks</h5>
+                                    <Carousel indicators={false} controls={true} interval={3000} className="chef-carousel">
+                                        {state.foods.slice(0, 3).map((food, idx) => ( // Show first 3 foods as top picks
+                                            <Carousel.Item key={idx}>
+                                                <img
+                                                    className="d-block w-100 rounded"
+                                                    src={food.image || '/images/carousel-food.jpg'}
+                                                    alt={food.title}
+                                                    style={{ height: '180px', objectFit: 'cover' }}
+                                                />
+                                                <Carousel.Caption className="bg-dark bg-opacity-75 py-2 rounded-bottom" style={{ bottom: '0' }}>
+                                                    <h5 style={{ fontSize: '1.1rem', fontWeight: 600 }}>{food.title}</h5>
+                                                    <p className="mb-0" style={{ fontSize: '0.9rem' }}>Ksh {food.price?.toFixed(2)}</p>
+                                                </Carousel.Caption>
+                                            </Carousel.Item>
+                                        ))}
+                                        {state.foods.length === 0 && (
+                                            <Carousel.Item>
+                                                <div className="d-flex justify-content-center align-items-center rounded" style={{ height: '180px', backgroundColor: colors.lightGray, color: colors.textMuted }}>
+                                                    No Top Picks Yet
+                                                </div>
+                                            </Carousel.Item>
+                                        )}
+                                    </Carousel>
+                                </Card.Body>
+                            </Card>
+
+                            {/* Promotional Banner/Card */}
+                            <Card className="shadow-sm border-0 text-center p-3" style={{ borderRadius: '12px', background: `linear-gradient(45deg, ${colors.primary}, ${colors.buttonHover})`, color: 'white' }}>
+                                <Card.Body>
+                                    <h4 className="fw-bold mb-2">Exclusive Offer!</h4>
+                                    <p className="mb-3">Get 15% off your first pre-order from {chef.user?.Name}!</p>
+                                    <Button
+                                        variant="light"
+                                        className="rounded-pill fw-bold"
+                                        onClick={() => Swal.fire('Offer Details', 'Use code JIKONI15 at checkout for 15% off!', 'info')}
+                                        style={{ color: colors.primary }}
+                                    >
+                                        Claim Offer
+                                    </Button>
+                                </Card.Body>
+                            </Card>
+
+                            {/* Quick Links / CTAs */}
+                            <Card className="shadow-sm border-0" style={{ borderRadius: '12px' }}>
+                                <Card.Body>
+                                    <h5 className="mb-3" style={{ color: colors.darkText, fontWeight: 700 }}>Quick Actions</h5>
+                                    <div className="d-grid gap-2">
+                                        <Button
+                                            variant="outline-primary"
+                                            className="d-flex align-items-center justify-content-center py-2 rounded-pill"
+                                            onClick={goToLiquor}
+                                            style={{
+                                                color: colors.primary,
+                                                borderColor: colors.primary,
+                                                fontWeight: 500,
+                                                '&:hover': {
+                                                    backgroundColor: colors.primary,
+                                                    color: 'white'
+                                                }
+                                            }}
+                                        >
+                                            <FaCartPlus className="me-2" /> Explore Liquor Shots
+                                        </Button>
+                                        <Button
+                                            variant="outline-success"
+                                            className="d-flex align-items-center justify-content-center py-2 rounded-pill"
+                                            onClick={() => navigate('/jikoni-express/contact')} // Example navigation
+                                            style={{
+                                                color: colors.secondary,
+                                                borderColor: colors.secondary,
+                                                fontWeight: 500,
+                                                '&:hover': {
+                                                    backgroundColor: colors.secondary,
+                                                    color: 'white'
+                                                }
+                                            }}
+                                        >
+                                            <PersonLinesFill className="me-2" /> Contact Support
+                                        </Button>
+                                    </div>
+                                </Card.Body>
+                            </Card>
+                        </div>
                     </Col>
                 </Row>
             </div>
 
-            {/* Cart Sidebar */}
+            {/* Modals */}
+            <Modal show={showBioModal} onHide={() => setShowBioModal(false)} centered size="lg">
+                <Modal.Header closeButton style={{ borderBottom: `1px solid ${colors.lightGray}` }}>
+                    <Modal.Title style={{ color: colors.darkText, fontWeight: 700 }}>{chef.user?.Name}'s Full Biography</Modal.Title>
+                </Modal.Header>
+                <Modal.Body className="py-4">
+                    <p style={{ fontSize: '1.05rem', lineHeight: '1.7', color: colors.darkText }}>
+                        {chef.bio || "This chef has not provided a detailed biography yet. Check back soon for more information!"}
+                    </p>
+                    <hr />
+                    <div className="d-flex justify-content-between align-items-center flex-wrap gap-3 mt-4">
+                        <div className="d-flex align-items-center gap-2">
+                            <Clock style={{ color: colors.primary, fontSize: '1.2rem' }} />
+                            <span className="fw-bold" style={{ color: colors.darkText }}>Joined:</span>
+                            <span style={{ color: colors.textMuted }}>
+                                {chef.createdAt ? formatDistanceToNow(new Date(chef.createdAt), { addSuffix: true }) : 'N/A'}
+                            </span>
+                        </div>
+                        <div className="d-flex align-items-center gap-2">
+                            <EggFried style={{ color: colors.secondary, fontSize: '1.2rem' }} />
+                            <span className="fw-bold" style={{ color: colors.darkText }}>Specialty:</span>
+                            <span style={{ color: colors.textMuted }}>
+                                {chef.speciality || 'Diverse Cuisine'}
+                            </span>
+                        </div>
+                        <div className="d-flex align-items-center gap-2">
+                            <PinMapFill style={{ color: colors.primary, fontSize: '1.2rem' }} />
+                            <span className="fw-bold" style={{ color: colors.darkText }}>Area:</span>
+                            <span style={{ color: colors.textMuted }}>
+                                {chef.area || 'Various'}
+                            </span>
+                        </div>
+                    </div>
+                </Modal.Body>
+                <Modal.Footer style={{ borderTop: `1px solid ${colors.lightGray}` }}>
+                    <Button
+                        variant="secondary"
+                        onClick={() => setShowBioModal(false)}
+                        style={{
+                            backgroundColor: colors.lightGray,
+                            color: colors.darkText,
+                            border: 'none',
+                            fontWeight: 600,
+                            '&:hover': {
+                                backgroundColor: colors.borderColor
+                            }
+                        }}
+                    >
+                        Close
+                    </Button>
+                </Modal.Footer>
+            </Modal>
+
+            <Modal show={showHireModal} onHide={() => setShowHireModal(false)} centered size="md">
+                <Modal.Header closeButton style={{ borderBottom: `1px solid ${colors.lightGray}` }}>
+                    <Modal.Title style={{ color: colors.darkText, fontWeight: 700 }}>Hire {chef.user?.Name} for an Event</Modal.Title>
+                </Modal.Header>
+                <Modal.Body className="py-4">
+                    <Form onSubmit={handleHireChef}>
+                        <Form.Group className="mb-3" controlId="hireName">
+                            <Form.Label style={{ fontWeight: 600, color: colors.darkText }}>Your Name</Form.Label>
+                            <Form.Control
+                                type="text"
+                                placeholder="Enter your name"
+                                value={hireForm.name}
+                                onChange={(e) => setHireForm({ ...hireForm, name: e.target.value })}
+                                required
+                                style={{ borderColor: colors.borderColor, '&:focus': { borderColor: colors.primary, boxShadow: `0 0 0 0.25rem ${colors.primary}40` } }}
+                            />
+                        </Form.Group>
+                        <Form.Group className="mb-3" controlId="hireEmail">
+                            <Form.Label style={{ fontWeight: 600, color: colors.darkText }}>Your Email</Form.Label>
+                            <Form.Control
+                                type="email"
+                                placeholder="Enter your email"
+                                value={hireForm.email}
+                                onChange={(e) => setHireForm({ ...hireForm, email: e.target.value })}
+                                required
+                                style={{ borderColor: colors.borderColor, '&:focus': { borderColor: colors.primary, boxShadow: `0 0 0 0.25rem ${colors.primary}40` } }}
+                            />
+                        </Form.Group>
+                        <Form.Group className="mb-3" controlId="hireEventDate">
+                            <Form.Label style={{ fontWeight: 600, color: colors.darkText }}>Event Date</Form.Label>
+                            <Form.Control
+                                type="date"
+                                value={hireForm.eventDate}
+                                onChange={(e) => setHireForm({ ...hireForm, eventDate: e.target.value })}
+                                required
+                                style={{ borderColor: colors.borderColor, '&:focus': { borderColor: colors.primary, boxShadow: `0 0 0 0.25rem ${colors.primary}40` } }}
+                            />
+                        </Form.Group>
+                        <Form.Group className="mb-3" controlId="hireGuests">
+                            <Form.Label style={{ fontWeight: 600, color: colors.darkText }}>Number of Guests</Form.Label>
+                            <Form.Control
+                                type="number"
+                                min="1"
+                                value={hireForm.guests}
+                                onChange={(e) => setHireForm({ ...hireForm, guests: parseInt(e.target.value) || 1 })}
+                                required
+                                style={{ borderColor: colors.borderColor, '&:focus': { borderColor: colors.primary, boxShadow: `0 0 0 0.25rem ${colors.primary}40` } }}
+                            />
+                        </Form.Group>
+                        <Form.Group className="mb-4" controlId="hireMessage">
+                            <Form.Label style={{ fontWeight: 600, color: colors.darkText }}>Message / Event Details</Form.Label>
+                            <Form.Control
+                                as="textarea"
+                                rows={4}
+                                placeholder="Tell us more about your event (e.g., type of event, specific cuisine requests, budget)"
+                                value={hireForm.message}
+                                onChange={(e) => setHireForm({ ...hireForm, message: e.target.value })}
+                                style={{ borderColor: colors.borderColor, '&:focus': { borderColor: colors.primary, boxShadow: `0 0 0 0.25rem ${colors.primary}40` } }}
+                            />
+                        </Form.Group>
+                        <Button
+                            variant="primary"
+                            type="submit"
+                            className="w-100 py-2 rounded-pill"
+                            style={{
+                                backgroundColor: colors.primary,
+                                borderColor: colors.primary,
+                                fontWeight: 600,
+                                fontSize: '1.1rem',
+                                '&:hover': {
+                                    backgroundColor: colors.buttonHover,
+                                    borderColor: colors.buttonHover
+                                }
+                            }}
+                        >
+                            Send Hire Request
+                        </Button>
+                    </Form>
+                </Modal.Body>
+            </Modal>
+
+            {/* Cart Sidebar, Pre-order Modal, and Order Confirmation - Assuming these are styled internally */}
             <CartSidebar
                 show={state.showCart}
                 handleClose={() => setState(s => ({ ...s, showCart: false }))}
@@ -931,17 +1110,15 @@ if (typeof fetchedChef.openingHours === 'string') {
                 handleCheckout={handleCheckout}
             />
 
-            {/* Pre-Order Modal */}
             <PreOrderModal
                 show={showPreOrderModal}
                 handleClose={() => setShowPreOrderModal(false)}
                 food={selectedFood}
                 preOrderForm={preOrderForm}
                 setPreOrderForm={setPreOrderForm}
-                handlePreOrderSubmit={handlePreOrderSubmit}
+                handleSubmit={handlePreOrderSubmit}
             />
 
-            {/* Order Confirmation Modal */}
             <OrderConfirmation
                 show={state.showOrderConfirmation}
                 handleClose={() => setState(s => ({ ...s, showOrderConfirmation: false }))}
@@ -951,96 +1128,62 @@ if (typeof fetchedChef.openingHours === 'string') {
                 handleConfirmOrder={handleConfirmOrder}
             />
 
-            {/* Chef Bio Modal */}
-            <Modal show={showBioModal} onHide={() => setShowBioModal(false)} centered>
-                <Modal.Header closeButton>
-                    <Modal.Title style={{ color: colors.darkText }}>About {chef.user?.Name || 'This Chef'}</Modal.Title>
-                </Modal.Header>
-                <Modal.Body>
-                    <p>{chef.bio || "No detailed biography available yet."}</p>
-                    <p><strong>Cuisine Type:</strong> {chef.cuisineType || 'N/A'}</p>
-                    <p><strong>Years of Experience:</strong> {chef.experienceYears || 0} years</p>
-                 <p>
-  <strong>Specialties:</strong>{' '}
-  {Array.isArray(chef.speciality)
-    ? chef.speciality.join(', ')
-    : chef.speciality || 'N/A'}
-</p>
-
-                    {/* Add more chef details as available */}
-                </Modal.Body>
-                <Modal.Footer>
-                    <Button variant="secondary" onClick={() => setShowBioModal(false)}>
-                        Close
-                    </Button>
-                </Modal.Footer>
-            </Modal>
-
-            {/* Hire Chef Modal */}
-            <Modal show={showHireModal} onHide={() => setShowHireModal(false)} centered>
-                <Modal.Header closeButton>
-                    <Modal.Title style={{ color: colors.darkText }}>Hire {chef.user?.Name || 'This Chef'} for an Event</Modal.Title>
-                </Modal.Header>
-                <Form onSubmit={handleHireChef}>
-                    <Modal.Body>
-                        <Form.Group className="mb-3">
-                            <Form.Label>Your Name</Form.Label>
-                            <Form.Control
-                                type="text"
-                                value={hireForm.name}
-                                onChange={(e) => setHireForm({ ...hireForm, name: e.target.value })}
-                                required
-                            />
-                        </Form.Group>
-                        <Form.Group className="mb-3">
-                            <Form.Label>Your Email</Form.Label>
-                            <Form.Control
-                                type="email"
-                                value={hireForm.email}
-                                onChange={(e) => setHireForm({ ...hireForm, email: e.target.value })}
-                                required
-                            />
-                        </Form.Group>
-                        <Form.Group className="mb-3">
-                            <Form.Label>Event Date</Form.Label>
-                            <Form.Control
-                                type="date"
-                                value={hireForm.eventDate}
-                                onChange={(e) => setHireForm({ ...hireForm, eventDate: e.target.value })}
-                                required
-                            />
-                        </Form.Group>
-                        <Form.Group className="mb-3">
-                            <Form.Label>Number of Guests</Form.Label>
-                            <Form.Control
-                                type="number"
-                                value={hireForm.guests}
-                                onChange={(e) => setHireForm({ ...hireForm, guests: parseInt(e.target.value) || 1 })}
-                                min="1"
-                                required
-                            />
-                        </Form.Group>
-                        <Form.Group className="mb-3">
-                            <Form.Label>Message / Event Details</Form.Label>
-                            <Form.Control
-                                as="textarea"
-                                rows={3}
-                                value={hireForm.message}
-                                onChange={(e) => setHireForm({ ...hireForm, message: e.target.value })}
-                            />
-                        </Form.Group>
-                    </Modal.Body>
-                    <Modal.Footer>
-                        <Button variant="secondary" onClick={() => setShowHireModal(false)}>
-                            Cancel
-                        </Button>
-                        <Button type="submit" style={{ backgroundColor: colors.primary, border: 'none' }}>
-                            Send Request
-                        </Button>
-                    </Modal.Footer>
-                </Form>
-            </Modal>
-
+            {/* Custom CSS for finer control and hover effects */}
+            <style jsx>{`
+                .jikoni-tabs .nav-link {
+                    color: ${colors.darkText};
+                    border: none;
+                    border-bottom: 2px solid transparent;
+                    transition: all 0.3s ease;
+                    padding: 0.75rem 1.25rem;
+                }
+                .jikoni-tabs .nav-link:hover {
+                    color: ${colors.primary};
+                    border-bottom-color: ${colors.primary};
+                }
+                .jikoni-tabs .nav-link.active {
+                    color: ${colors.primary};
+                    background-color: ${colors.cardBackground};
+                    border-bottom: 3px solid ${colors.primary};
+                    font-weight: 700;
+                }
+                .jikoni-tabs .nav-item {
+                    margin-bottom: 0; /* Remove default margin */
+                }
+                .food-card {
+                    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+                }
+                .food-card:hover {
+                    transform: translateY(-5px);
+                    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+                }
+                .food-card-img {
+                    transition: transform 0.3s ease-in-out;
+                }
+                .food-card:hover .food-card-img {
+                    transform: scale(1.05);
+                }
+                .chef-carousel .carousel-control-prev-icon,
+                .chef-carousel .carousel-control-next-icon {
+                    background-color: ${colors.darkText};
+                    border-radius: 50%;
+                    padding: 10px;
+                }
+                .chef-carousel .carousel-indicators [data-bs-target] {
+                    background-color: ${colors.primary};
+                }
+                .custom-outline-green {
+                    border-color: ${colors.secondary};
+                    color: ${colors.secondary};
+                    background-color: transparent;
+                    transition: all 0.3s ease;
+                }
+                .custom-outline-green:hover {
+                    background-color: ${colors.secondary};
+                    color: white;
+                    border-color: ${colors.secondary};
+                }
+            `}</style>
         </div>
     );
 };

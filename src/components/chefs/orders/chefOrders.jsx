@@ -835,7 +835,7 @@ const ChefOrders = () => {
     try {
       // Use your actual backend API endpoint for fetching orders
       // Make sure this endpoint filters orders by chefId if necessary, or your backend handles authorization
-      const response = await fetch(`http://localhost:8000/apiV1/smartcity-ke/orders`);
+      const response = await fetch(`https://neuro-apps-api-express-js-production-redy.onrender.com/apiV1/smartcity-ke/orders`);
 
       if (!response.ok) throw new Error('Failed to fetch orders');
 

@@ -29,7 +29,7 @@ import NotificationsPanel from '../src/components/chefs/orders/notificationPanel
 import UserOrderDetails from './components/cartAndOrder/userOrderDetails';
 import AudioCall from './components/calls/audioCalls';
 import VendorDashboard from './Liqour/vendorDashbord';
-
+import   AdminRegister   from     './components/admin/adminRegistration'
 // Firebase
 import { app, VAPID_KEY } from './utilities/firebaseUtilities';
 import { getMessaging, getToken, onMessage, isSupported } from "firebase/messaging";
@@ -425,22 +425,8 @@ const unsubscribeOnMessage = onMessage(messaging, (payload) => {
     }, [navigate]);
                  
     // Handle user logout
-    const handleLogout = useCallback(() => {
-        console.log("Logging out...");
-        logout();
-        setFcmToken(null);
-        setUserId(null);
-        setIsChefMode(false);
-        setIsRiderMode(false);
-        setIsVendorMode(false);
-        localStorage.removeItem('chefId');
-        localStorage.removeItem('riderId');
-        localStorage.removeItem('vendorId');
-        localStorage.removeItem('isChef');
-        localStorage.removeItem('isRider');
-        localStorage.removeItem('isVendor');
-        navigate('/login');
-    }, [logout, navigate]);
+    
+
 
     return (
         <AppContainer>
@@ -452,13 +438,15 @@ const unsubscribeOnMessage = onMessage(messaging, (payload) => {
                     <Route path="/register" element={<Register />} />
                     <Route path="/verify-otp" element={<VerifyOtp />} />
                     <Route path="/login" element={<Login />} />
-                    <Route path="/logout" element={<Logout onLogout={handleLogout} />} />
+                
                     <Route path="/audio/calls" element={<AudioCall />} />
                     <Route path="/forgot-password" element={<ForgotPassword />} />
                     <Route path="/jikoni-express/liqour-shots" element={<Liqour />} />
                     <Route path="/culture/foods" element={<FoodPlatform />} />
                     <Route path="/chef/:id" element={<ChefProfile />} />
                      <Route path="/foods/:id" element={<ChefProfile />} />
+                      <Route path="/admin/register" element={<AdminRegister  />} />
+                      
                      
                     <Route path="/liqour/:id" element={<LiqourProfile />} />
                     <Route path="/jikoni/express/download" element={<Download />} />
