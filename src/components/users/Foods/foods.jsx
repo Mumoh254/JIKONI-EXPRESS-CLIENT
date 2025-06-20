@@ -246,27 +246,6 @@ const FoodPlatform = () => {
     };
 
 
-    //    handle  food  height  accordingly
-    function FoodsList({ filteredFoods, playSound, navigate, handleLike, updateCart, handlePreOrder, isChefOpen, getTimeUntilClosing, colors }) {
-  const [itemSize, setItemSize] = useState(800);
-
-  useEffect(() => {
-    function handleResize() {
-      const width = window.innerWidth;
-      if (width < 576) {
-        setItemSize(400); // small phones
-      } else if (width < 992) {
-        setItemSize(600); // tablets or medium screens
-      } else {
-        setItemSize(800); // desktop or large screens
-      }
-    }
-    handleResize(); // set initially
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-
     useEffect(() => {
         const getUserIdFromToken = () => {
             const token = localStorage.getItem("token");
@@ -1316,10 +1295,10 @@ const FoodPlatform = () => {
                             </Alert>
                         ) : (
                             <Row className="g-4 py-3">
-                                <List
-      height={Math.min(itemSize * filteredFoods.length, window.innerHeight)} // max height to viewport height
+                               <List
+      height={window.innerHeight}  // or fixed height container you want
       itemCount={filteredFoods.length}
-      itemSize={itemSize}
+
       width="100%"
       itemData={{
         foods: filteredFoods,
