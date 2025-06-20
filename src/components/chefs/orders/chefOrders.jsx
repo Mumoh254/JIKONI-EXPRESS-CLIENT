@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Card, Badge, Button, ListGroup, ProgressBar, Modal, Spinner, Alert } from 'react-bootstrap';
 import {
-    Clock, CheckCircle, Person, XCircle, Fire, Truck, Phone, Printer, Calendar, Mic, MicMute, QuestionCircle, EggFried, GeoAlt, InfoCircle
+  Clock, CheckCircle, Person, XCircle, Fire, Truck, Phone, Printer, Calendar, Mic, MicMute, QuestionCircle, EggFried, GeoAlt, InfoCircle, Coin
 } from 'react-bootstrap-icons';
 import { useNavigate } from 'react-router-dom';
 import { io } from 'socket.io-client';
@@ -9,68 +9,67 @@ import Peer from 'peerjs';
 import styled, { keyframes } from 'styled-components';
 import moment from 'moment'; // For date/time formatting and comparison
 
-// Jikoni Express Color Palette
+// --- Jikoni Express Color Palette ---
 const colors = {
-    primary: '#FF4532', // Jikoni Red
-    secondary: '#00C853', // Jikoni Green
-    accent: '#FFC107', // Amber (for call buttons, etc.)
-    darkText: '#1A202C', // Dark text for headings
-    lightBackground: '#F0F2F5', // Light background for the page
-    cardBackground: '#FFFFFF', // White for the form card
-    borderColor: '#D1D9E6', // Light border for inputs
-    errorText: '#EF4444', // Red for errors
-    placeholderText: '#A0AEC0', // Muted text for placeholders
-    buttonHover: '#E6392B', // Darker red on button hover
-    disabledButton: '#CBD5E1', // Gray for disabled buttons
-    gradientStart: '#FF6F59', // Lighter red for gradient
-    successGreen: '#28A745', // Specific green for success
+  primary: '#FF4532', // Jikoni Red
+  secondary: '#00C853', // Jikoni Green
+  accent: '#FFC107', // Amber (for call buttons, etc.)
+  darkText: '#1A202C', // Dark text for headings
+  lightBackground: '#F0F2F5', // Light background for the page
+  cardBackground: '#FFFFFF', // White for the form card
+  borderColor: '#D1D9E6', // Light border for inputs
+  errorText: '#EF4444', // Red for errors
+  placeholderText: '#A0AEC0', // Muted text for placeholders
+  buttonHover: '#E6392B', // Darker red on button hover
+  disabledButton: '#CBD5E1', // Gray for disabled buttons
+  gradientStart: '#FF6F59', // Lighter red for gradient
+  successGreen: '#28A745', // Specific green for success
 };
 
 // --- Helper Functions ---
 const getStatusColor = (status) => {
-    switch (status) {
-        case 'pending': return 'warning';
-        case 'accepted': return 'info';
-        case 'preparing': return 'primary';
-        case 'ready': return 'success';
-        case 'assigned': return 'info';
-        case 'picked_up': return 'success';
-        case 'delivered': return 'success';
-        case 'cancelled': return 'danger';
-        default: return 'secondary';
-    }
+  switch (status?.toLowerCase()) {
+    case 'pending': return 'warning';
+    case 'accepted': return 'info';
+    case 'preparing': return 'primary';
+    case 'ready': return 'success';
+    case 'assigned': return 'info';
+    case 'picked_up': return 'success';
+    case 'delivered': return 'success';
+    case 'cancelled': return 'danger';
+    default: return 'secondary';
+  }
 };
 
 const getStatusIcon = (status) => {
-    switch (status) {
-        case 'pending': return <Clock className="me-1" />;
-        case 'accepted': return <CheckCircle className="me-1" />;
-        case 'preparing': return <Fire className="me-1" />;
-        case 'ready': return <CheckCircle className="me-1" />;
-        case 'assigned': return <Truck className="me-1" />;
-        case 'picked_up': return <Truck className="me-1" />;
-        case 'delivered': return <CheckCircle className="me-1" />;
-        case 'cancelled': return <XCircle className="me-1" />;
-        default: return <QuestionCircle className="me-1" />;
-    }
+  switch (status?.toLowerCase()) {
+    case 'pending': return <Clock className="me-1" />;
+    case 'accepted': return <CheckCircle className="me-1" />;
+    case 'preparing': return <Fire className="me-1" />;
+    case 'ready': return <CheckCircle className="me-1" />;
+    case 'assigned': return <Truck className="me-1" />;
+    case 'picked_up': return <Truck className="me-1" />;
+    case 'delivered': return <CheckCircle className="me-1" />;
+    case 'cancelled': return <XCircle className="me-1" />;
+    default: return <QuestionCircle className="me-1" />;
+  }
 };
 
 const getProgress = (status) => {
-    switch (status) {
-        case 'pending': return 10;
-        case 'accepted': return 25;
-        case 'preparing': return 50;
-        case 'ready': return 75;
-        case 'assigned': return 80;
-        case 'picked_up': return 90;
-        case 'delivered': return 100;
-        case 'cancelled': return 0; // Or adjust for cancelled state visual
-        default: return 0;
-    }
+  switch (status?.toLowerCase()) {
+    case 'pending': return 10;
+    case 'accepted': return 25;
+    case 'preparing': return 50;
+    case 'ready': return 75;
+    case 'assigned': return 80;
+    case 'picked_up': return 90;
+    case 'delivered': return 100;
+    case 'cancelled': return 0;
+    default: return 0;
+  }
 };
 
-// --- Styled Components (as provided, with minor adjustments) ---
-
+// --- Styled Components (omitted for brevity, assume they are correct as per your previous request) ---
 const fadeIn = keyframes`
   from { opacity: 0; }
   to { opacity: 1; }
@@ -416,7 +415,7 @@ const ActionButtons = styled.div`
     }
   }
 
-  .action-button.btn-accent {
+  .action-button.btn-warning {
     background-color: ${colors.accent};
     border-color: ${colors.accent};
     color: ${colors.darkText};
@@ -559,905 +558,878 @@ const CallModalButton = styled(Button)`
     }
 `;
 
-// New styled component for progress bar in modal for better visibility
 const ModalProgressBar = styled(ProgressBar)`
   height: 12px;
   border-radius: 6px;
   .progress-bar {
-    background-color: ${colors.secondary}; /* Use Jikoni Green for progress */
+    background-color: ${colors.secondary};
   }
 `;
 
+// --- OrderDetailModal Component ---
+const OrderDetailModal = ({ show, onHide, order, onUpdateOrderStatus, onCallUser, onCallRider }) => {
+  if (!order) return null;
 
+  const isPreorder = order.deliveryDate ? moment(order.deliveryDate).isAfter(moment()) : false;
+
+  // Derived disabled states based on the specific status transitions and preorder status
+  const isAcceptActionDisabled = order.status.toLowerCase() !== 'pending' || isPreorder;
+  const isPreparingOrReadyActionDisabled = (order.status.toLowerCase() !== 'accepted' && order.status.toLowerCase() !== 'preparing') || isPreorder;
+  const isRequestRiderDisabled = order.status.toLowerCase() !== 'ready' || isPreorder;
+  const isPickedUpActionDisabled = (order.status.toLowerCase() !== 'assigned' && order.status.toLowerCase() !== 'ready') || isPreorder;
+  const isDeliveredActionDisabled = order.status.toLowerCase() !== 'picked_up' || isPreorder;
+
+  const showCallButtons = order.user?.phoneNumber || order.rider?.phone;
+
+  return (
+    <Modal show={show} onHide={onHide} size="lg" centered>
+      <StyledModalHeader closeButton>
+        <Modal.Title>Order Details: #{order.id}</Modal.Title>
+      </StyledModalHeader>
+      <StyledModalBody>
+        {isPreorder && (
+          <PreorderAlert variant="warning" className="mb-4">
+            <Calendar size={24} />
+            This is a **pre-order** scheduled for delivery on **{moment(order.deliveryDate).format('MMMM Do, hh:mm A')}**. Actions are disabled until the delivery date.
+          </PreorderAlert>
+        )}
+
+        <ModalSection>
+          <h5><InfoCircle size={20} /> Order Summary</h5>
+          <div className="info-row">
+            <div>
+              <span className="info-label">Customer</span>
+              <p className="info-value"><Person className="me-1" />{order.user?.Name || 'N/A'}</p>
+            </div>
+            <div>
+              <span className="info-label">Order Date</span>
+              <p className="info-value"><Calendar className="me-1" />{moment(order.createdAt).format('MMMM Do, h:mm A')}</p>
+            </div>
+          </div>
+          <div className="info-row">
+            <div>
+              <span className="info-label">Delivery Address</span>
+              <p className="info-value"><GeoAlt className="me-1" />{order.deliveryAddress || 'N/A'}</p>
+            </div>
+            <div>
+              <span className="info-label">Total Amount</span>
+              <p className="info-value"><Coin className="me-1" />KES {order.totalPrice?.toFixed(2) || '0.00'}</p>
+            </div>
+          </div>
+          <div className="info-row">
+            <div>
+              <span className="info-label">Current Status</span>
+              <Badge bg={getStatusColor(order.status)} className="status-badge">
+                {getStatusIcon(order.status)} {order.status}
+              </Badge>
+            </div>
+          </div>
+        </ModalSection>
+
+        <ModalSection>
+          <h5><EggFried size={20} /> Items Ordered</h5>
+          <ListGroup variant="flush">
+            {order.items?.map((item, index) => (
+              <ListGroup.Item key={index} className="item-list-item">
+                <div>
+                  <span className="fw-bold">{item.quantity}x {item.name}</span>
+                  {item.notes && <small className="text-muted d-block">{item.notes}</small>}
+                </div>
+                <span>KES {(item.price * item.quantity).toFixed(2)}</span>
+              </ListGroup.Item>
+            ))}
+          </ListGroup>
+          {order.foodItem?.image && order.foodItem?.description && (
+            <FoodItemDetails>
+              <img src={order.foodItem.image} alt={order.foodItem.name} />
+              <div className="food-content">
+                <h6>{order.foodItem.name}</h6>
+                <p className="food-description">{order.foodItem.description}</p>
+              </div>
+            </FoodItemDetails>
+          )}
+        </ModalSection>
+
+        {order.rider && (
+          <ModalSection>
+            <h5><Truck size={20} /> Assigned Rider</h5>
+            <div className="d-flex align-items-center mb-2">
+              <div className="rider-avatar">
+                <Person size={20} color={colors.primary} />
+              </div>
+              <div>
+                <p className="info-value mb-0">{order.rider.Name}</p>
+                <small>{order.rider.phone}</small>
+              </div>
+            </div>
+            {onCallRider && (
+              <Button variant="outline-primary" size="sm" onClick={() => onCallRider(order.rider.id, order.rider.Name)} className="mt-2">
+                <Phone className="me-1" /> Call Rider
+              </Button>
+            )}
+          </ModalSection>
+        )}
+
+        <ModalSection>
+          <h5><ProgressBar className="me-1" /> Order Progress</h5>
+          <ModalProgressBar now={getProgress(order.status)} variant={getStatusColor(order.status)} />
+          <div className="progress-labels mt-2">
+            <span>Pending</span>
+            <span>Accepted</span>
+            <span>Preparing</span>
+            <span>Ready</span>
+            
+            <span>Picked Up</span>
+            <span>Delivered</span>
+            <span>Cancelled</span>
+          </div>
+        </ModalSection>
+
+        <div className="d-flex justify-content-around mt-4 flex-wrap gap-2">
+          {/* Accept Order Button */}
+          {order.status.toLowerCase() === 'pending' && (
+            <Button
+              variant="success"
+              className="action-button"
+              onClick={() => onUpdateOrderStatus(order.id, 'ACCEPTED')}
+              disabled={isAcceptActionDisabled}
+            >
+              <CheckCircle /> Accept Order
+            </Button>
+          )}
+
+          {/* Mark as Preparing / Mark as Ready Button */}
+          {(order.status.toLowerCase() === 'accepted' || order.status.toLowerCase() === 'preparing') && (
+            <Button
+              variant="primary"
+              className="action-button"
+              onClick={() => {
+                let nextStatus;
+                if (order.status.toLowerCase() === 'accepted') {
+                  nextStatus = 'PREPARING';
+                } else if (order.status.toLowerCase() === 'preparing') {
+                  nextStatus = 'READY';
+                }
+                onUpdateOrderStatus(order.id, nextStatus);
+              }}
+              disabled={isPreparingOrReadyActionDisabled}
+            >
+              {order.status.toLowerCase() === 'accepted' ? <Fire /> : <EggFried />}
+              {order.status.toLowerCase() === 'accepted' ? 'Mark as PREPARING' : 'Mark as READY'}
+            </Button>
+          )}
+
+          {/* Request Rider Button */}
+          {order.status.toLowerCase() === 'ready' && !order.rider && (
+            <Button
+              variant="warning"
+              className="action-button"
+              onClick={() => console.log('Request Rider logic for:', order.id)}
+              disabled={isRequestRiderDisabled}
+            >
+              <Truck /> Connecting to Rider
+            </Button>
+          )}
+
+          {/* Mark as Picked Up Button */}
+          {order.rider && (order.status.toLowerCase() === 'assigned' || order.status.toLowerCase() === 'ready') && (
+            <Button
+              variant="info"
+              className="action-button"
+              onClick={() => onUpdateOrderStatus(order.id, 'ON_THE_WAY')}
+              disabled={isPickedUpActionDisabled}
+            >
+              <Truck /> Mark as Picked Up
+            </Button>
+          )}
+
+          {/* Mark as Delivered Button */}
+          {order.rider && order.status.toLowerCase() === 'picked_up' && (
+            <Button
+              variant="success"
+              className="action-button"
+              onClick={() => onUpdateOrderStatus(order.id, 'DELIVERED')}
+              disabled={isDeliveredActionDisabled}
+            >
+              <CheckCircle /> Mark as Delivered
+            </Button>
+          )}
+
+          {/* Call Customer Button */}
+          {showCallButtons && order.user?.phoneNumber && (
+            <Button
+              variant="outline-secondary"
+              className="action-button"
+              onClick={() => onCallUser(order.user.id, order.user.Name)}
+            >
+              <Phone /> Call Customer
+            </Button>
+          )}
+          <Button variant="outline-dark" className="action-button" onClick={() => window.print()}>
+            <Printer /> Print Receipt
+          </Button>
+        </div>
+      </StyledModalBody>
+    </Modal>
+  );
+};
+
+
+// --- ChefOrders Component ---
 const ChefOrders = () => {
-    const navigate = useNavigate();
-    const [orders, setOrders] = useState([]);
-    const [orderDetails, setOrderDetails] = useState(null);
-    const [showDetails, setShowDetails] = useState(false);
-    const [loading, setLoading] = useState(true);
-    const [chefId, setChefId] = useState('');
-    const [socket, setSocket] = useState(null);
+  const navigate = useNavigate();
+  const [orders, setOrders] = useState([]);
+  const [orderDetails, setOrderDetails] = useState(null);
+  const [showDetails, setShowDetails] = useState(false);
+  const [loading, setLoading] = useState(true); // Start loading true
+  const [chefId, setChefId] = useState(null); // Initialize as null
+  const socketRef = useRef(null); // Use useRef to store the socket instance
+  const peerRef = useRef(null); // Use useRef for PeerJS instance
+  const localStreamRef = useRef(null); // Use useRef for local media stream
+  const remoteAudioRef = useRef(null); // Ref for audio element to play remote stream
 
-    // WebRTC state
-    const [callActive, setCallActive] = useState(false);
-    const [callingTo, setCallingTo] = useState(null); // 'Rider' or 'Customer' for display
-    const [remoteUserId, setRemoteUserId] = useState(null); // ID of the person being called (customer or rider)
-    const [callStatus, setCallStatus] = useState('idle'); // 'idle', 'calling', 'ringing', 'connected'
-    const audioRef = useRef(null); // Ref for the remote audio stream
-    const currentPeer = useRef(null); // Use ref to hold mutable Peer object
-    const localStreamRef = useRef(null); // To store the local audio stream
-    const [isMuted, setIsMuted] = useState(false); // Local mute state
+  // WebRTC state
+  const [callActive, setCallActive] = useState(false);
+  const [callingTo, setCallingTo] = useState(null);
+  const [remoteUserId, setRemoteUserId] = useState(null);
+  const [callStatus, setCallStatus] = useState('idle'); // idle, calling, ringing, connected, ended
+  const [isMuted, setIsMuted] = useState(false);
 
-    // Notification sound
-    const notificationSoundRef = useRef(null);
+  // Notification sound
+  const notificationSoundRef = useRef(null);
+  useEffect(() => {
+    notificationSoundRef.current = new Audio('/audio/cliks.mp3');
+  }, []);
 
-    useEffect(() => {
-        // Request notification permission on component mount
-        if (!("Notification" in window)) {
-            console.log("This browser does not support desktop notification");
-        } else if (Notification.permission !== "granted") {
-            Notification.requestPermission();
+  const playNotificationSound = useCallback(() => {
+    if (notificationSoundRef.current) {
+      notificationSoundRef.current.play().catch(e => console.log('Audio play failed:', e));
+    }
+  }, []);
+
+  // Effect to load chefId from localStorage once on component mount
+  useEffect(() => {
+    const storedChefId = localStorage.getItem("chefId");
+    if (storedChefId) {
+      setChefId(parseInt(storedChefId, 10));
+    } else {
+      console.warn("No chefId found in localStorage. Redirecting to login or showing error.");
+      // Potentially redirect to login: navigate('/login');
+      setLoading(false); // Stop loading if no chefId is found
+    }
+
+    if (!("Notification" in window)) {
+      console.log("This browser does not support desktop notification");
+    } else if (Notification.permission !== "granted") {
+      Notification.requestPermission();
+    }
+  }, []); // Empty dependency array means this runs once on mount
+
+  // Memoize fetchOrders to avoid unnecessary re-creations
+  const fetchOrders = useCallback(async () => {
+    if (!chefId) {
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    try {
+      // Use your actual backend API endpoint for fetching orders
+      // Make sure this endpoint filters orders by chefId if necessary, or your backend handles authorization
+      const response = await fetch(`http://localhost:8000/apiV1/smartcity-ke/orders`);
+
+      if (!response.ok) throw new Error('Failed to fetch orders');
+
+      const data = await response.json();
+      setOrders(data.orders || []);
+    } catch (error) {
+      console.error("Error fetching orders:", error);
+      // Optionally show an error message to the user
+    } finally {
+      setLoading(false);
+    }
+  }, [chefId]); // Depend on chefId
+
+  // Effect to fetch orders when chefId becomes available
+  useEffect(() => {
+    fetchOrders();
+  }, [fetchOrders]); // Dependency on fetchOrders memoized function
+
+  // --- Socket.IO Connection and Event Handling ---
+  useEffect(() => {
+    if (!chefId) return; // Don't connect if chefId is not yet available
+
+    // Initialize socket only once
+    if (!socketRef.current) {
+      console.log('Initializing new socket connection...');
+      socketRef.current = io('https://neuro-apps-api-express-js-production-redy.onrender.com', {
+        path: '/apiV1/smartcity-ke/socket.io', // Ensure this matches your server
+        query: { userId: chefId, userType: 'chef' },
+        transports: ['websocket', 'polling'], // Prefer websocket, fallback to polling
+        reconnectionAttempts: 5, // Attempt to reconnect 5 times
+        reconnectionDelay: 1000, // Wait 1 second before first reconnect attempt
+      });
+
+      socketRef.current.on('connect', () => {
+        console.log('Connected to socket.io as chef:', chefId);
+        socketRef.current.emit('chef:join', chefId);
+      });
+
+      socketRef.current.on('connect_error', (err) => {
+        console.error('Socket.IO connection error:', err);
+      });
+
+      socketRef.current.on('disconnect', (reason) => {
+        console.log('Socket.IO disconnected:', reason);
+      });
+    }
+
+    const currentSocket = socketRef.current; // Use the ref for listeners
+
+    // --- Order related events ---
+    const handleNewOrder = (newOrder) => {
+      console.log('Received new order via socket:', newOrder);
+      if (newOrder.chefId === chefId) {
+        setOrders(prev => [newOrder, ...prev]);
+        playNotificationSound();
+        if (Notification.permission === 'granted') {
+          new Notification('New Order Received!', {
+            body: `Order #${newOrder.id} from ${newOrder.user?.Name || 'a customer'} has been placed.`,
+            icon: '/images/logo.png',
+            vibrate: [200, 100, 200],
+          });
         }
-
-        const storedChef = localStorage.getItem('chefId'); // Assuming chefId is stored here
-        if (storedChef) {
-            setChefId(storedChef);
-        } else {
-            console.error("Chef ID not found in localStorage. Please log in.");
-            // navigate('/login'); // Uncomment to redirect
-        }
-    }, [navigate]);
-
-    const fetchOrders = async () => {
-        if (!chefId) {
-            setLoading(false);
-            return;
-        }
-        setLoading(true);
-        try {
-            const response = await fetch(`http://localhost:8000/apiV1/smartcity-ke/chef/orders/${chefId}`);
-            if (!response.ok) {
-                throw new Error("Failed to fetch orders");
-            }
-            const data = await response.json();
-            setOrders(data.orders || []);
-        } catch (error) {
-            console.error("Error fetching orders:", error);
-            alert("Failed to fetch orders. Please try again.");
-            setOrders([]);
-        } finally {
-            setLoading(false);
-        }
+      }
     };
 
-    useEffect(() => {
-        if (chefId) {
-            fetchOrders();
-        }
-    }, [chefId]); // Refetch when chefId becomes available
-
-    // Socket.IO and WebRTC Setup
-    useEffect(() => {
-        if (!chefId) return;
-
-        // Ensure socket is only created once per chefId
-        let newSocket = socket;
-        if (!newSocket) {
-            newSocket = io('https://neuro-apps-api-express-js-production-redy.onrender.com/apiV1/smartcity-ke', {
-                query: { userId: chefId, userType: 'chef' } // Identify client to server
-            });
-            setSocket(newSocket);
-
-            newSocket.on('connect', () => {
-                console.log('Connected to socket.io as chef:', chefId);
-                // Join chef's specific room
-                newSocket.emit('chef:join', chefId);
-            });
-             newSocket.on('connect_error', (err) => {
-                console.error('Socket.IO connection error:', err);
-            });
-        }
-       
-
-        // --- Order related events ---
-        newSocket.on('order:new', (newOrder) => {
-            if (newOrder.chefId === chefId) {
-                setOrders(prev => [newOrder, ...prev]);
-                playNotificationSound();
-                if (Notification.permission === 'granted') {
-                    new Notification('New Order Received!', {
-                        body: `Order #${newOrder.id} from ${newOrder.customerName} has been placed.`,
-                        icon: '/images/logo.png', // Ensure this path is correct
-                        vibrate: [200, 100, 200],
-                    });
-                }
-            }
-        });
-
-        newSocket.on('order:updated', (updatedOrder) => {
-            setOrders(prev => prev.map(order =>
-                order.id === updatedOrder.id ? updatedOrder : order
-            ));
-            // You might want to play a sound or show a notification for significant updates too
-        });
-
-        newSocket.on('rider:assigned', ({ orderId, rider }) => {
-            setOrders(prev => prev.map(order =>
-                order.id === orderId ? { ...order, rider, status: 'assigned' } : order
-            ));
-            playNotificationSound();
-             if (Notification.permission === 'granted') {
-                    new Notification('Rider Assigned!', {
-                        body: `Rider ${rider.name} assigned to order #${orderId}.`,
-                        icon: '/jikoni-logo.png',
-                        vibrate: [200, 100, 200],
-                    });
-                }
-        });
-
-        newSocket.on('order:delivered', (deliveredOrder) => {
-            setOrders(prev => prev.map(order =>
-                order.id === deliveredOrder.id ? deliveredOrder : order
-            ));
-            playNotificationSound();
-             if (Notification.permission === 'granted') {
-                    new Notification('Order Delivered!', {
-                        body: `Order #${deliveredOrder.id} has been delivered.`,
-                        icon: '/jikoni-logo.png',
-                        vibrate: [200, 100, 200],
-                    });
-                }
-        });
-
-        newSocket.on('order:deleted', ({ orderId }) => {
-            setOrders(prev => prev.filter(order => order.id !== orderId));
-        });
-
-        // --- WebRTC Signaling for Chef (Recipient Logic) ---
-        newSocket.on('call:incoming', async ({ from, signalData, type }) => {
-            console.log('Incoming call from:', from, 'Type:', type);
-            // Prevent multiple incoming call UIs if already in a call or ringing
-            if (callActive && callStatus !== 'idle') {
-                 newSocket.emit('call:busy', { to: from, from: chefId }); // Inform caller that chef is busy
-                 return;
-            }
-
-            setRemoteUserId(from);
-            setCallingTo(type === 'rider' ? 'Rider' : 'Customer'); // Determine who is calling for display
-            setCallStatus('ringing');
-            setCallActive(true); // Show call UI
-            playNotificationSound(); // Ringing sound
-
-            try {
-                // Request local audio stream
-                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                localStreamRef.current = stream; // Store local stream
-
-                // Create a new Peer object for the incoming call
-                const peer = new Peer({
-                    initiator: false, // Chef is not the initiator for incoming calls
-                    trickle: false, // Send all ICE candidates at once
-                    stream: stream // Add local audio stream to the peer connection
-                });
-
-                peer.on('signal', (data) => {
-                    // Send the answer signal back to the caller
-                    newSocket.emit('call:accept', { to: from, from: chefId, signalData: data, type: 'chef' });
-                    console.log(`Emitted call:accept to ${from}`);
-                });
-
-                peer.on('stream', (remoteStream) => {
-                    // When the remote stream is received, play it
-                    console.log('Received remote stream:', remoteStream);
-                    if (audioRef.current) {
-                        audioRef.current.srcObject = remoteStream;
-                        audioRef.current.play().catch(e => console.error("Audio playback error:", e));
-                    }
-                });
-
-                peer.on('connect', () => {
-                    console.log('WebRTC connected!');
-                    setCallStatus('connected');
-                });
-
-                peer.on('close', () => {
-                    console.log('WebRTC connection closed by remote peer or automatically.');
-                    endCall();
-                });
-
-                peer.on('error', (err) => {
-                    console.error('WebRTC error during incoming call:', err);
-                    alert('WebRTC error during incoming call: ' + err.message);
-                    endCall();
-                });
-
-                // Process the initial offer signal from the caller
-                peer.signal(signalData);
-                currentPeer.current = peer; // Store the peer object
-            } catch (err) {
-                console.error('Error handling incoming call:', err);
-                alert('Could not handle incoming call. Please check microphone permissions and try again.');
-                endCall(); // Ensure call UI is hidden
-            }
-        });
-
-        // --- WebRTC Signaling for Chef (Initiator Logic - when chef calls customer/rider) ---
-        newSocket.on('call:accepted', ({ from, signalData, type }) => {
-            // This event is received by the chef (initiator) when the other party accepts
-            console.log('Call accepted by remote peer:', from, 'Type:', type);
-            if (currentPeer.current && currentPeer.current.initiator && remoteUserId === from) {
-                currentPeer.current.signal(signalData); // Process the answer signal
-                setCallStatus('connected');
-            } else {
-                console.warn('Received call:accepted for an unknown or non-initiator call.');
-            }
-        });
-
-        newSocket.on('call:signal', (signalData) => {
-            // Exchange ICE candidates
-            if (currentPeer.current) {
-                currentPeer.current.signal(signalData);
-            }
-        });
-
-        newSocket.on('call:ended', () => {
-            console.log('Call ended by other party');
-            endCall();
-        });
-
-        newSocket.on('call:busy', ({from}) => {
-             console.log(`Call to ${from} failed: Busy.`);
-             alert(`${callingTo} is currently on another call. Please try again later.`);
-             endCall(); // Terminate local call attempt UI
-        });
-
-
-        return () => {
-            // Clean up all socket listeners and WebRTC resources on unmount or chefId change
-            if (newSocket) {
-                newSocket.off('order:new');
-                newSocket.off('order:updated');
-                newSocket.off('rider:assigned');
-                newSocket.off('order:delivered');
-                newSocket.off('order:deleted');
-                newSocket.off('call:incoming');
-                newSocket.off('call:accepted');
-                newSocket.off('call:signal');
-                newSocket.off('call:ended');
-                newSocket.off('call:busy');
-                // Don't disconnect if socket is potentially reused.
-                // For simplicity here, we disconnect if we created it.
-                // In a larger app, you might have a global socket or context.
-                newSocket.disconnect();
-                setSocket(null); // Clear socket state
-            }
-            if (currentPeer.current) {
-                currentPeer.current.destroy();
-                currentPeer.current = null;
-            }
-            if (localStreamRef.current) {
-                localStreamRef.current.getTracks().forEach(track => track.stop());
-                localStreamRef.current = null;
-            }
-            if (audioRef.current && audioRef.current.srcObject) {
-                audioRef.current.srcObject.getTracks().forEach(track => track.stop());
-                audioRef.current.srcObject = null;
-            }
-            setCallActive(false); // Hide call UI on unmount
-            setCallStatus('idle');
-        };
-    }, [chefId, remoteUserId, callActive, callStatus]); // Added callActive and callStatus to dependency for robust state
-    // ^^^ IMPORTANT: This dependency array ensures socket setup reacts to chefId.
-    // However, if your socket instance is managed by a context (e.g., `SocketProvider`),
-    // you'd typically manage the socket in that context and only use `useSocket()` here.
-    // For this self-contained component, `chefId` as a dependency is okay.
-
-
-    const playNotificationSound = () => {
-        try {
-            const audio = new Audio('/audio/cliks.mp3'); // Ensure this path is correct relative to public/
-            audio.play().catch(e => console.log('Audio play failed:', e));
-        } catch (e) {
-            console.log('Audio constructor failed:', e);
-        }
+    const handleOrderUpdate = (updatedOrder) => {
+      console.log('Received order update via socket:', updatedOrder);
+      setOrders(prev => prev.map(order =>
+        order.id === updatedOrder.id ? updatedOrder : order
+      ));
+      if (orderDetails && orderDetails.id === updatedOrder.id) {
+        setOrderDetails(updatedOrder); // Update modal details immediately
+      }
     };
 
-    const updateOrderStatus = async (orderId, status) => {
-        // Prevent status updates for pre-orders until their time
-        const order = orders.find(o => o.id === orderId);
-        if (order && order.orderType === 'pre_order') {
-            const deliveryDateTime = moment(`${order.deliveryDate} ${order.deliveryTime}`, 'YYYY-MM-DD HH:mm');
-            if (moment().isBefore(deliveryDateTime)) {
-                alert(`This is a pre-order. Actions are disabled until ${deliveryDateTime.format('MMMM Do YYYY, h:mm a')}.`);
-                return;
-            }
-        }
+    const handleRiderAssigned = ({ orderId, rider }) => {
+      setOrders(prev => prev.map(order =>
+        order.id === orderId ? { ...order, rider, status: 'ASSIGNED' } : order // Status to uppercase
+      ));
+      // Update orderDetails if the modal for this order is open
+      if (orderDetails && orderDetails.id === orderId) {
+        setOrderDetails(prev => ({ ...prev, rider, status: 'ASSIGNED' }));
+      }
 
-        setOrders(prev => prev.map(order =>
-            order.id === orderId ? { ...order, status: status } : order
-        ));
-
-        try {
-            const response = await fetch(`http://localhost:8000/apiV1/smartcity-ke/order/${orderId}/status`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ status })
-            });
-
-            if (!response.ok) {
-                alert('Failed to update order status. Re-fetching orders.');
-                fetchOrders(); // Revert optimistic update
-                throw new Error('Failed to update order status');
-            }
-        } catch (error) {
-            console.error('Error updating order status:', error);
-        }
+      playNotificationSound();
+      if (Notification.permission === 'granted') {
+        new Notification('Rider Assigned!', {
+          body: `Rider ${rider.Name} assigned to order #${orderId}.`,
+          icon: '/jikoni-logo.png',
+          vibrate: [200, 100, 200],
+        });
+      }
     };
 
-    const handleDeleteOrder = async (orderId) => {
-        try {
-            const response = await fetch(`http://localhost:8000/apiV1/smartcity-ke/order/${orderId}`, {
-                method: 'DELETE'
-            });
-
-            if (!response.ok) {
-                throw new Error('Failed to delete order');
-            }
-            // Socket.io will handle UI update via 'order:deleted' event
-        } catch (error) {
-            console.error('Error deleting order:', error);
-            alert('Failed to delete order');
-        }
+    const handleOrderDelivered = (deliveredOrder) => {
+      setOrders(prev => prev.map(order =>
+        order.id === deliveredOrder.id ? deliveredOrder : order
+      ));
+      if (orderDetails && orderDetails.id === deliveredOrder.id) {
+        setOrderDetails(deliveredOrder);
+      }
+      playNotificationSound();
+      if (Notification.permission === 'granted') {
+        new Notification('Order Delivered!', {
+          body: `Order #${deliveredOrder.id} has been delivered.`,
+          icon: '/jikoni-logo.png',
+          vibrate: [200, 100, 200],
+        });
+      }
     };
 
-    const handleCallPhone = (phone) => {
-        if (phone) {
-            window.location.href = `tel:${phone}`;
-        } else {
-            alert("Phone number not available.");
-        }
-    };
-
-    const handleViewDetails = (order) => {
-        setOrderDetails(order);
-        setShowDetails(true);
-    };
-
-    const handleCloseDetails = () => {
-        setShowDetails(false);
+    const handleOrderDeleted = ({ orderId }) => {
+      setOrders(prev => prev.filter(order => order.id !== orderId));
+      if (orderDetails && orderDetails.id === orderId) {
+        setShowDetails(false); // Close modal if the deleted order was open
         setOrderDetails(null);
+      }
     };
 
-    // WebRTC call functions (Initiator logic)
-    const startCall = async (type, targetUserId) => {
-        if (!socket || !chefId) {
-            alert('Socket not connected or chefId not set. Please refresh.');
-            return;
-        }
-        if (!targetUserId) {
-            alert(`Cannot call. ${type} ID is missing.`);
-            return;
-        }
+    currentSocket.on('order:new', handleNewOrder);
+    currentSocket.on('order:updated', handleOrderUpdate);
+    currentSocket.on('rider:assigned', handleRiderAssigned);
+    currentSocket.on('order:delivered', handleOrderDelivered);
+    currentSocket.on('order:deleted', handleOrderDeleted);
 
-        // Prevent initiating a call if already in one or ringing
-        if (callActive && callStatus !== 'idle') {
-            alert('Already in a call or ringing. Please end current call first.');
-            return;
-        }
+    // --- WebRTC Signaling (Chef Recipient & Initiator) ---
+    const handleIncomingCall = async ({ from, signalData, type }) => {
+      console.log('Incoming call from:', from, 'Type:', type);
+      if (callActive && callStatus !== 'idle') {
+        currentSocket.emit('call:busy', { to: from, from: chefId });
+        return;
+      }
+      setRemoteUserId(from);
+      setCallingTo(type === 'rider' ? 'Rider' : 'Customer');
+      setCallStatus('ringing');
+      setCallActive(true);
+      playNotificationSound(); // Ringing sound
 
-        try {
-            setCallStatus('calling'); // Set status to calling immediately
-            setCallingTo(type === 'rider' ? 'Rider' : 'Customer');
-            setRemoteUserId(targetUserId);
-            setCallActive(true); // Show call UI
-            setIsMuted(false); // Ensure mic is not muted initially
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        localStreamRef.current = stream;
 
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            localStreamRef.current = stream; // Store local stream
+        const peer = new Peer({
+          initiator: false,
+          trickle: false,
+          stream: stream
+        });
 
-            const peer = new Peer({
-                initiator: true, // Chef is the initiator
-                trickle: false, // Send all ICE candidates at once
-                stream: stream // Add local audio stream to the peer connection
-            });
+        peer.on('signal', (data) => {
+          currentSocket.emit('call:accept', { to: from, from: chefId, signalData: data, type: 'chef' });
+          console.log(`Emitted call:accept to ${from}`);
+        });
 
-            peer.on('signal', (data) => {
-                // Send the offer signal to the target user
-                socket.emit('call:initiate', {
-                    to: targetUserId,
-                    from: chefId,
-                    signalData: data,
-                    type: type // 'rider' or 'customer'
-                });
-                console.log(`Emitted call:initiate to ${targetUserId}`);
-            });
+        peer.on('stream', (remoteStream) => {
+          console.log('Received remote stream:', remoteStream);
+          if (remoteAudioRef.current) {
+            remoteAudioRef.current.srcObject = remoteStream;
+            remoteAudioRef.current.play().catch(e => console.error("Audio playback error:", e));
+          }
+        });
 
-            peer.on('stream', (remoteStream) => {
-                // When the remote stream is received, play it
-                console.log('Received remote stream:', remoteStream);
-                if (audioRef.current) {
-                    audioRef.current.srcObject = remoteStream;
-                    audioRef.current.play().catch(e => console.error("Audio playback error:", e));
-                }
-            });
+        peer.on('connect', () => {
+          console.log('WebRTC connected!');
+          setCallStatus('connected');
+        });
 
-            peer.on('connect', () => {
-                console.log('WebRTC connected!');
-                setCallStatus('connected');
-            });
+        peer.on('close', () => {
+          console.log('WebRTC connection closed by remote peer or automatically.');
+          endCall();
+        });
 
-            peer.on('close', () => {
-                console.log('WebRTC connection closed by remote peer or automatically.');
-                endCall();
-            });
+        peer.on('error', (err) => {
+          console.error('WebRTC error during incoming call:', err);
+          alert('WebRTC error during incoming call: ' + err.message);
+          endCall();
+        });
 
-            peer.on('error', (err) => {
-                console.error('WebRTC error during call initiation:', err);
-                alert('WebRTC error during call: ' + err.message);
-                endCall();
-            });
-
-            currentPeer.current = peer; // Store the peer object
-        } catch (err) {
-            console.error('Error starting call:', err);
-            alert('Could not start call. Please check microphone permissions and ensure your browser supports WebRTC.');
-            endCall(); // Ensure call UI is hidden
-        }
+        peer.signal(signalData);
+        peerRef.current = peer;
+      } catch (err) {
+        console.error('Error handling incoming call:', err);
+        alert('Could not handle incoming call. Please check microphone permissions and try again.');
+        endCall();
+      }
     };
 
-    const endCall = () => {
-        console.log('Ending call...');
-        if (currentPeer.current) {
-            currentPeer.current.destroy(); // Properly destroy the peer connection
-            currentPeer.current = null;
-        }
-        if (localStreamRef.current) {
-            localStreamRef.current.getTracks().forEach(track => track.stop()); // Stop all tracks
-            localStreamRef.current = null;
-        }
-        if (audioRef.current && audioRef.current.srcObject) {
-            // If there's a remote stream playing, stop its tracks as well
-            audioRef.current.srcObject.getTracks().forEach(track => track.stop());
-            audioRef.current.srcObject = null;
-        }
-
-        if (socket && remoteUserId) {
-            socket.emit('call:end', { to: remoteUserId, from: chefId }); // Notify other party
-        }
-        setCallActive(false);
-        setCallingTo(null);
-        setRemoteUserId(null);
-        setCallStatus('idle');
-        setIsMuted(false); // Reset mute state
+    const handleCallAccepted = ({ from, signalData, type }) => {
+      console.log('Call accepted by remote peer:', from, 'Type:', type);
+      if (peerRef.current && peerRef.current.initiator && remoteUserId === from) {
+        peerRef.current.signal(signalData);
+        setCallStatus('connected');
+      } else {
+        console.warn('Received call:accepted for an unknown or non-initiator call.');
+      }
     };
 
-    const toggleMute = () => {
-        if (localStreamRef.current) {
-            const audioTrack = localStreamRef.current.getAudioTracks()[0];
-            if (audioTrack) {
-                audioTrack.enabled = !audioTrack.enabled;
-                setIsMuted(!audioTrack.enabled); // Update local mute state
-                console.log('Mic enabled:', audioTrack.enabled);
-            }
-        }
+    const handleCallSignal = (signalData) => {
+      if (peerRef.current) {
+        peerRef.current.signal(signalData);
+      }
     };
 
-    // Pre-order check for enabling/disabling buttons
-    const isPreOrderActive = useMemo(() => {
-        if (!orderDetails || orderDetails.orderType !== 'pre_order') {
-            return true; // If not pre-order, actions are active by default
+    const handleCallEnded = ({ from }) => {
+      console.log(`Call with ${from} ended.`);
+      if (remoteUserId === from) {
+        endCall();
+      }
+    };
+
+    const handleCallBusy = ({ from }) => {
+      console.log(`Call to ${from} is busy.`);
+      alert(`${callingTo} is busy. Please try again later.`);
+      endCall();
+    };
+
+    currentSocket.on('call:incoming', handleIncomingCall);
+    currentSocket.on('call:accepted', handleCallAccepted);
+    currentSocket.on('call:signal', handleCallSignal); // For exchanging ICE candidates
+    currentSocket.on('call:ended', handleCallEnded);
+    currentSocket.on('call:busy', handleCallBusy);
+
+    return () => {
+      console.log('Cleaning up socket listeners and PeerJS...');
+      currentSocket.off('order:new', handleNewOrder);
+      currentSocket.off('order:updated', handleOrderUpdate);
+      currentSocket.off('rider:assigned', handleRiderAssigned);
+      currentSocket.off('order:delivered', handleOrderDelivered);
+      currentSocket.off('order:deleted', handleOrderDeleted);
+      currentSocket.off('call:incoming', handleIncomingCall);
+      currentSocket.off('call:accepted', handleCallAccepted);
+      currentSocket.off('call:signal', handleCallSignal);
+      currentSocket.off('call:ended', handleCallEnded);
+      currentSocket.off('call:busy', handleCallBusy);
+      // We don't disconnect the socket here to allow for re-renders without full disconnections,
+      // but ensure listeners are not duplicated.
+      // If the component unmounts completely, you might want to disconnect.
+      // currentSocket.disconnect();
+      if (peerRef.current) {
+        peerRef.current.destroy();
+        peerRef.current = null;
+      }
+      if (localStreamRef.current) {
+        localStreamRef.current.getTracks().forEach(track => track.stop());
+        localStreamRef.current = null;
+      }
+    };
+  }, [chefId, callActive, remoteUserId, callStatus, callingTo, playNotificationSound, orderDetails]);
+
+
+  const handleShowDetails = (order) => {
+    setOrderDetails(order);
+    setShowDetails(true);
+  };
+
+  const handleCloseDetails = () => {
+    setShowDetails(false);
+    setOrderDetails(null);
+  };
+
+  const updateOrderStatus = async (orderId, newStatus) => {
+    try {
+      // Simulate API call and update via socket
+      // In a real app, you'd send this to your backend, and the backend would emit the update via socket
+      const response = await fetch(`http://localhost:8000/apiV1/smartcity-ke/orders/${orderId}/status`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ status: newStatus }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update order status');
+      }
+
+      const updatedOrder = await response.json();
+      console.log('Order status updated via API:', updatedOrder);
+
+      // The socket.io listener `handleOrderUpdate` will automatically update the UI
+      // no need to manually refresh here due to socket integration.
+      // We explicitly emit the update to ensure other connected clients also see it
+      // if the backend doesn't already re-emit on status change.
+      if (socketRef.current) {
+        socketRef.current.emit('order:updateStatus', updatedOrder);
+      }
+
+      // If the modal is open for this order, update its details
+      setOrders(prevOrders =>
+        prevOrders.map(order =>
+          order.id === orderId ? { ...order, status: newStatus } : order
+        )
+      );
+
+      if (orderDetails && orderDetails.id === orderId) {
+        setOrderDetails(prevDetails => ({ ...prevDetails, status: newStatus }));
+      }
+    } catch (error) {
+      console.error("Error updating order status:", error);
+      alert("Failed to update order status. Please try again.");
+    }
+  };
+
+  const startCall = useCallback(async (targetId, targetName, targetType) => {
+    if (callActive) {
+      alert('A call is already active. Please end the current call first.');
+      return;
+    }
+    setRemoteUserId(targetId);
+    setCallingTo(targetName);
+    setCallStatus('calling');
+    setCallActive(true);
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      localStreamRef.current = stream;
+
+      const peer = new Peer({
+        initiator: true,
+        trickle: false, // Set to true for ICE candidate exchange
+        stream: stream
+      });
+
+      peer.on('signal', (data) => {
+        // Send signal data to the other peer via Socket.IO
+        socketRef.current.emit('call:initiate', { to: targetId, from: chefId, signalData: data, type: 'chef' });
+        console.log(`Emitted call:initiate to ${targetId}`);
+      });
+
+      peer.on('stream', (remoteStream) => {
+        // When remote stream is received, play it
+        console.log('Received remote stream:', remoteStream);
+        if (remoteAudioRef.current) {
+          remoteAudioRef.current.srcObject = remoteStream;
+          remoteAudioRef.current.play().catch(e => console.error("Audio playback error:", e));
         }
-        const deliveryDateTime = moment(`${orderDetails.deliveryDate} ${orderDetails.deliveryTime}`, 'YYYY-MM-DD HH:mm');
-        return moment().isSameOrAfter(deliveryDateTime);
-    }, [orderDetails]);
+      });
 
-    return (
-        <DashboardContainer>
-            {/* Call Interface */}
-            {callActive && (
-                <CallOverlay>
-                    <CallModalContent>
-                        <CallHeader $status={callStatus}>
-                            <h4>{callStatus === 'calling' ? `Calling ${callingTo}...` : callStatus === 'ringing' ? `Incoming Call from ${callingTo}` : `Connected with ${callingTo}`}</h4>
-                            <Badge bg={callStatus === 'connected' ? 'success' : callStatus === 'ringing' ? 'warning' : 'info'} className="call-status-badge">
-                                {callStatus === 'calling' ? 'Connecting...' : callStatus === 'ringing' ? 'Incoming...' : 'Connected'}
-                            </Badge>
-                        </CallHeader>
+      peer.on('connect', () => {
+        console.log('WebRTC connected!');
+        setCallStatus('connected');
+      });
 
-                        <CallActions>
-                            {callStatus === 'ringing' && (
-                                <Button variant="success" onClick={() => {
-                                    // The actual accept logic is handled in socket.on('call:incoming') by `peer.signal(signalData)`
-                                    // This button primarily signifies the user's intent to answer and updates UI.
-                                    setCallStatus('connected');
-                                }}>
-                                    <Phone className="me-1" /> Accept
-                                </Button>
-                            )}
-                            {(callStatus === 'connected' || callStatus === 'calling' || callStatus === 'ringing') && (
-                                <Button
-                                    variant={isMuted ? 'danger' : 'secondary'}
-                                    onClick={toggleMute}
-                                    disabled={callStatus !== 'connected' && callStatus !== 'ringing'} // Disable mute button if not connected or ringing
-                                >
-                                    {isMuted ? <MicMute /> : <Mic />}
-                                    {isMuted ? 'Unmute' : 'Mute'}
-                                </Button>
-                            )}
-                            <Button variant="danger" onClick={endCall}>
-                                <XCircle className="me-1" /> End Call
-                            </Button>
-                        </CallActions>
-                    </CallModalContent>
-                    {/* Audio element for playing remote stream, must be outside CallModalContent */}
-                    <audio ref={audioRef} autoPlay playsInline style={{ display: 'none' }} />
-                </CallOverlay>
-            )}
+      peer.on('close', () => {
+        console.log('WebRTC connection closed.');
+        endCall();
+      });
 
-            <DashboardHeader>
-                <h3 className="dashboard-title">Orders Dashboard</h3>
-                <div className="dashboard-actions">
-                    <Button
-                        variant="outline-secondary"
-                        className="me-2 filter-button"
-                        onClick={() => setOrders(prev => prev.filter(o => o.status === 'pending'))} // Example filter
-                    >
-                        Pending Orders
-                    </Button>
-                    <Button
-                        variant="outline-secondary"
-                        className="filter-button"
-                        onClick={() => { /* Filter logic for today's orders */ }}
-                    >
-                        Today's Orders
-                    </Button>
+      peer.on('error', (err) => {
+        console.error('WebRTC error during outgoing call:', err);
+        alert('WebRTC error during outgoing call: ' + err.message);
+        endCall();
+      });
+
+      peerRef.current = peer;
+    } catch (err) {
+      console.error('Failed to get local stream:', err);
+      alert('Could not start call. Please check microphone permissions and try again.');
+      endCall();
+    }
+  }, [chefId, callActive]);
+
+  const endCall = useCallback(() => {
+    console.log('Ending call...');
+    if (peerRef.current) {
+      peerRef.current.destroy();
+      peerRef.current = null;
+    }
+    if (localStreamRef.current) {
+      localStreamRef.current.getTracks().forEach(track => track.stop());
+      localStreamRef.current = null;
+    }
+    if (remoteAudioRef.current) {
+      remoteAudioRef.current.srcObject = null;
+    }
+    if (socketRef.current && remoteUserId) {
+      socketRef.current.emit('call:end', { to: remoteUserId, from: chefId });
+    }
+    setCallActive(false);
+    setCallingTo(null);
+    setRemoteUserId(null);
+    setCallStatus('ended'); // Or 'idle'
+    setIsMuted(false);
+  }, [chefId, remoteUserId]);
+
+  const toggleMute = () => {
+    if (localStreamRef.current) {
+      localStreamRef.current.getAudioTracks().forEach(track => {
+        track.enabled = !track.enabled;
+        setIsMuted(!track.enabled);
+      });
+    }
+  };
+
+  const handleAcceptCall = () => {
+    setCallStatus('connected');
+    // The peer object should already be initialized in handleIncomingCall
+    // No explicit action needed here beyond setting status, as signal was already sent
+  };
+
+  const handleRejectCall = () => {
+    if (socketRef.current && remoteUserId) {
+      socketRef.current.emit('call:reject', { to: remoteUserId, from: chefId });
+    }
+    endCall();
+  };
+
+  // Filter orders for display (e.g., exclude delivered/cancelled if desired)
+  const displayOrders = orders.filter(order =>
+    order.status.toLowerCase() !== 'delivered' && order.status.toLowerCase() !== 'cancelled'
+  );
+
+  return (
+    <DashboardContainer>
+      <DashboardHeader>
+        <h2 className="dashboard-title">Chef Dashboard</h2>
+        <Button variant="outline-secondary" className="filter-button">
+          Filter Orders
+        </Button>
+      </DashboardHeader>
+
+      {loading ? (
+        <div className="text-center py-5">
+          <Spinner animation="border" role="status">
+            <span className="visually-hidden">Loading Orders...</span>
+          </Spinner>
+          <p className="mt-3">Loading orders, please wait...</p>
+        </div>
+      ) : displayOrders.length === 0 ? (
+        <EmptyState>
+          <QuestionCircle className="empty-state-icon" />
+          <h4 className="empty-state-title">No Active Orders</h4>
+          <p className="empty-state-text">It looks like there are no new or ongoing orders at the moment. You'll see them here when they come in!</p>
+        </EmptyState>
+      ) : (
+        <OrderGrid>
+          {displayOrders.map(order => (
+            <OrderCard key={order.id}>
+              <OrderCardHeader>
+                <div>
+                  <Badge bg={getStatusColor(order.status)} className="status-badge">
+                    {getStatusIcon(order.status)} {order.status}
+                  </Badge>
+                  <span className="order-id">#{order.id}</span>
                 </div>
-            </DashboardHeader>
+                <small><Clock className="m-3" />{moment(order.createdAt).fromNow()}</small>
+              </OrderCardHeader>
+              <CardBodyStyled>
+                <InfoSection>
+                  <div>
+                    <p className="section-title">Customer</p>
+                    <p className="info-text">{order.user?.Name || 'N/A'}</p>
+                    <small>{order.user?.phoneNumber || 'N/A'}</small>
+                  </div>
+                  <div>
+                    <p className="section-title text-end">Total</p>
+                    <p className="total-price text-end">KES {order.totalPrice?.toFixed(2) || '0.00'}</p>
+                  </div>
+                </InfoSection>
 
-            {loading ? (
-                <div className="loading-state text-center py-5">
-                    <Spinner animation="border" role="status" style={{ color: colors.primary }}>
-                        <span className="visually-hidden">Loading...</span>
-                    </Spinner>
-                    <p className="loading-text mt-3 text-muted">Loading orders...</p>
-                </div>
-            ) : orders.length === 0 ? (
-                <EmptyState>
-                    <EggFried className="empty-state-icon" />
-                    <h4 className="empty-state-title">No Orders Yet!</h4>
-                    <p className="empty-state-text">New orders will appear here as customers place them.</p>
-                </EmptyState>
-            ) : (
-                <OrderGrid>
-                    {orders.map(order => (
-                        <OrderCard key={order.id}>
-                            <OrderCardHeader>
-                                <div>
-                                    <Badge bg={getStatusColor(order.status)} className="status-badge">
-                                        {getStatusIcon(order.status)} {order.status.replace(/_/g, ' ')}
-                                    </Badge>
-                                    <span className="order-id">#{order.id}</span>
-                                </div>
-                                <small><Clock className="me-1" /> {moment(order.createdAt).format('MMM Do, h:mm A')}</small>
-                            </OrderCardHeader>
-                            <CardBodyStyled>
-                                <InfoSection>
-                                    <div>
-                                        <div className="section-title">Customer</div>
-                                        <p className="info-text"><Person className="me-1" /> {order.customerName}</p>
-                                        <small><GeoAlt className="me-1" /> {order.deliveryAddress || 'N/A'}</small>
-                                    </div>
-                                    <div>
-                                        <div className="section-title">Total</div>
-                                        <p className="total-price">KES {order.totalPrice ? order.totalPrice.toFixed(2) : '0.00'}</p>
-                                    </div>
-                                </InfoSection>
-
-                                {/* Pre-order alert on the card */}
-                                {order.orderType === 'pre_order' && moment(`${order.deliveryDate} ${order.deliveryTime}`, 'YYYY-MM-DD HH:mm').isAfter(moment()) && (
-                                    <PreorderAlert variant="warning" className="mb-3">
-                                        <Calendar /> <strong>Pre-Order:</strong> Scheduled for <br/>
-                                        {moment(`${order.deliveryDate} ${order.deliveryTime}`, 'YYYY-MM-DD HH:mm').format('MMMM Do YYYY, h:mm A')}
-                                    </PreorderAlert>
-                                )}
-
-                                <ListGroup variant="flush" className="mb-3">
-                                    <div className="section-title">Items</div>
-                                    {order.foodItems && order.foodItems.length > 0 ? (
-                                        order.foodItems.map(item => (
-                                            <ListGroup.Item key={item.foodId} className="item-list-item">
-                                                <span>{item.quantity} x {item.foodName}</span>
-                                                <span>KES {(item.quantity * item.foodPrice).toFixed(2)}</span>
-                                            </ListGroup.Item>
-                                        ))
-                                    ) : (
-                                        <ListGroup.Item className="text-muted">No items found.</ListGroup.Item>
-                                    )}
-                                </ListGroup>
-
-                                {order.rider && (
-                                    <RiderSection>
-                                        <div className="section-title">Assigned Rider</div>
-                                        <div className="d-flex align-items-center">
-                                            <div className="rider-avatar">
-                                                <Person size={20} color={colors.primary} />
-                                            </div>
-                                            <div>
-                                                <p className="info-text">{order.rider.name || 'Unknown Rider'}</p>
-                                                <small>{order.rider.phone || 'N/A'}</small>
-                                            </div>
-                                        </div>
-                                    </RiderSection>
-                                )}
-
-                                <ActionButtons>
-                                    <Button
-                                        variant="outline-secondary"
-                                        className="detail-button"
-                                        onClick={() => handleViewDetails(order)}
-                                    >
-                                        <InfoCircle className="me-1" /> View Details
-                                    </Button>
-
-                                    {order.status === 'pending' && (
-                                        <Button
-                                            variant="primary"
-                                            className="action-button"
-                                            onClick={() => updateOrderStatus(order.id, 'accepted')}
-                                            disabled={order.orderType === 'pre_order' && !isPreOrderActive}
-                                        >
-                                            <CheckCircle className="me-1" /> Accept Order
-                                        </Button>
-                                    )}
-                                    {order.status === 'accepted' && (
-                                        <Button
-                                            variant="primary"
-                                            className="action-button"
-                                            onClick={() => updateOrderStatus(order.id, 'preparing')}
-                                            disabled={order.orderType === 'pre_order' && !isPreOrderActive}
-                                        >
-                                            <Fire className="me-1" /> Start Preparing
-                                        </Button>
-                                    )}
-                                    {order.status === 'preparing' && (
-                                        <Button
-                                            variant="success"
-                                            className="action-button"
-                                            onClick={() => updateOrderStatus(order.id, 'ready')}
-                                            disabled={order.orderType === 'pre_order' && !isPreOrderActive}
-                                        >
-                                            <CheckCircle className="me-1" /> Mark Ready
-                                        </Button>
-                                    )}
-                                    {order.status === 'ready' && (
-                                        <Button
-                                            variant="info"
-                                            className="action-button"
-                                            onClick={() => alert("Order is ready. Awaiting rider assignment.")}
-                                            disabled={order.orderType === 'pre_order' && !isPreOrderActive}
-                                        >
-                                            <Truck className="me-1" /> Awaiting Rider
-                                        </Button>
-                                    )}
-                                </ActionButtons>
-                            </CardBodyStyled>
-                        </OrderCard>
+            <ItemSection>
+                  <p className="section-title">Items</p>
+                  <ListGroup variant="flush">
+                    {order.items?.slice(0, 2).map((item, index) => (
+                      <ListGroup.Item key={index} className="item-list-item">
+                        <span>{item.quantity}x {item.name}</span>
+                        <span>KES {(item.price * item.quantity).toFixed(2)}</span>
+                      </ListGroup.Item>
                     ))}
-                </OrderGrid>
-            )}
+                    {order.items && order.items.length > 2 && ( // Changed here
+                      <ListGroup.Item className="item-list-item text-muted">
+                        <span>...and {order.items.length - 2} more items</span>
+                      </ListGroup.Item>
+                    )}
+                  </ListGroup>
+                </ItemSection>
 
-            {/* Order Details Modal */}
-            {orderDetails && (
-                <Modal show={showDetails} onHide={handleCloseDetails} size="lg" centered>
-                    <StyledModalHeader closeButton>
-                        <Modal.Title>Order Details <span className="text-muted">#{orderDetails.id}</span></Modal.Title>
-                    </StyledModalHeader>
-                    <StyledModalBody>
-                        {/* Pre-order specific alert at the top of the modal */}
-                        {orderDetails.orderType === 'pre_order' && (
-                            <PreorderAlert variant="warning" className="mb-4">
-                                <Calendar size={20} />
-                                <div>
-                                    <strong>This is a Pre-Order!</strong><br/>
-                                    Delivery scheduled for <strong>{moment(`${orderDetails.deliveryDate} ${orderDetails.deliveryTime}`, 'YYYY-MM-DD HH:mm').format('MMMM Do YYYY, h:mm A')}.</strong><br/>
-                                    Actions will be enabled at the scheduled time.
-                                </div>
-                            </PreorderAlert>
-                        )}
+                {order.rider && (
+                  <RiderSection>
+                    <p className="section-title">Rider</p>
+                    <div className="d-flex align-items-center">
+                      <div className="rider-avatar">
+                        <Person size={20} color={colors.primary} />
+                      </div>
+                      <div>
+                        <p className="info-text mb-0">{order.rider.Name}</p>
+                        <small>{order.rider.phone}</small>
+                      </div>
+                    </div>
+                  </RiderSection>
+                )}
 
-                        <ModalSection>
-                            <h5><InfoCircle /> Order Summary</h5>
-                            <div className="info-row">
-                                <span className="info-label">Order Type</span>
-                                <span className="info-value">
-                                    <Badge bg={orderDetails.orderType === 'pre_order' ? 'warning' : 'primary'}>
-                                        {orderDetails.orderType.replace(/_/g, ' ')}
-                                    </Badge>
-                                </span>
-                            </div>
-                             <div className="info-row">
-                                <span className="info-label">Status</span>
-                                <span className="info-value">
-                                    <Badge bg={getStatusColor(orderDetails.status)}>
-                                        {getStatusIcon(orderDetails.status)} {orderDetails.status.replace(/_/g, ' ')}
-                                    </Badge>
-                                </span>
-                            </div>
-                            <div className="info-row">
-                                <span className="info-label">Order Date</span>
-                                <span className="info-value">{moment(orderDetails.createdAt).format('MMMM Do YYYY, h:mm A')}</span>
-                            </div>
-                            <div className="info-row">
-                                <span className="info-label">Total Price</span>
-                                <span className="info-value total-price">KES {orderDetails.totalPrice ? orderDetails.totalPrice.toFixed(2) : '0.00'}</span>
-                            </div>
-                        </ModalSection>
+                <ProgressSection>
+                  <p className="section-title">Progress</p>
+                  <ProgressBar now={getProgress(order.status)} variant={getStatusColor(order.status)} className="order-progress-bar" />
+                  <div className="progress-labels">
+                    <span>{order.status}</span>
+                  </div>
+                </ProgressSection>
 
-                        <ProgressSection>
-                            <h5 className="section-title"><CheckCircle /> Order Progress</h5>
-                            <ModalProgressBar now={getProgress(orderDetails.status)} label={`${getProgress(orderDetails.status)}%`} className="order-progress-bar" />
-                            <div className="progress-labels">
-                                <span>Pending</span>
-                                <span>Accepted</span>
-                                <span>Preparing</span>
-                                <span>Ready</span>
-                                <span>Delivered</span>
-                            </div>
-                        </ProgressSection>
+                <ActionButtons>
+                  {order.status.toLowerCase() === 'pending' && (
+                    <Button variant="success" className="action-button" onClick={() => updateOrderStatus(order.id, 'ACCEPTED')}>
+                      <CheckCircle /> Accept
+                    </Button>
+                  )}
+                  {(order.status.toLowerCase() === 'accepted' || order.status.toLowerCase() === 'preparing') && (
+                    <Button variant="primary" className="action-button" onClick={() => updateOrderStatus(order.id, order.status.toLowerCase() === 'accepted' ? 'PREPARING' : 'READY')}>
+                      {order.status.toLowerCase() === 'accepted' ? <Fire /> : <EggFried />} {order.status.toLowerCase() === 'accepted' ? 'Preparing' : 'Ready'}
+                    </Button>
+                  )}
+                  {order.status.toLowerCase() === 'on_the_way' && !order.rider && (
+                    <Button variant="warning" className="action-button" onClick={() => console.log('Request Rider for:', order.id)}>
+                      <Truck /> Connecting Rider
+                    </Button>
+                  )}
+                  {order.rider && (order.status.toLowerCase() === 'assigned' || order.status.toLowerCase() === 'ready') && (
+                    <Button variant="info" className="action-button" onClick={() => updateOrderStatus(order.id, 'PICKED_UP')}>
+                      <Truck /> Picked Up
+                    </Button>
+                  )}
+                  {order.rider && order.status.toLowerCase() === 'picked_up' && (
+                    <Button variant="success" className="action-button" onClick={() => updateOrderStatus(order.id, 'DELIVERED')}>
+                      <CheckCircle /> Delivered
+                    </Button>
+                  )}
 
-                        <ModalSection>
-                            <h5><Person /> Customer Details</h5>
-                            <div className="info-row">
-                                <span className="info-label">Name</span>
-                                <span className="info-value">{orderDetails.customerName || 'N/A'}</span>
-                            </div>
-                            <div className="info-row">
-                                <span className="info-label">Phone</span>
-                                <span className="info-value">{orderDetails.customerPhone || 'N/A'}</span>
-                            </div>
-                            <div className="info-row">
-                                <span className="info-label">Delivery Address</span>
-                                <span className="info-value">{orderDetails.deliveryAddress || 'N/A'}</span>
-                            </div>
-                            <div className="d-flex justify-content-start gap-3 mt-3">
-                                <Button
-                                    variant="outline-primary"
-                                    onClick={() => handleCallPhone(orderDetails.customerPhone)}
-                                    disabled={!orderDetails.customerPhone}
-                                >
-                                    <Phone /> Call Customer
-                                </Button>
-                                <CallModalButton
-                                    $variant="accent" // Use the custom styled button
-                                    onClick={() => startCall('customer', orderDetails.customerId)}
-                                    disabled={!orderDetails.customerId || (callActive && callStatus !== 'idle') || (orderDetails.orderType === 'pre_order' && !isPreOrderActive)}
-                                >
-                                    <Mic /> Audio Call (App)
-                                </CallModalButton>
-                            </div>
-                        </ModalSection>
+                  <Button variant="outline-dark" className="detail-button" onClick={() => handleShowDetails(order)}>
+                    View Details
+                  </Button>
+                </ActionButtons>
+              </CardBodyStyled>
+            </OrderCard>
+          ))}
+        </OrderGrid>
+      )}
 
-                        <ModalSection>
-                            <h5><EggFried /> Food Items</h5>
-                            <ListGroup variant="flush">
-                                {orderDetails.foodItems && orderDetails.foodItems.length > 0 ? (
-                                    orderDetails.foodItems.map(item => (
-                                        <React.Fragment key={item.foodId}>
-                                            <ListGroup.Item className="py-3">
-                                                <FoodItemDetails>
-                                                    <img src={item.foodImage || '/placeholder-food.png'} alt={item.foodName} />
-                                                    <div className="food-content">
-                                                        <h6>{item.foodName} (x{item.quantity})</h6>
-                                                        <p className="food-description">{item.foodDescription || 'No description provided.'}</p>
-                                                        <div className="d-flex justify-content-between align-items-center">
-                                                            <span>Category: <Badge bg="secondary">{item.foodCategory || 'N/A'}</Badge></span>
-                                                            <span className="info-value">KES {item.foodPrice ? (item.quantity * item.foodPrice).toFixed(2) : '0.00'}</span>
-                                                        </div>
-                                                    </div>
-                                                </FoodItemDetails>
-                                            </ListGroup.Item>
-                                        </React.Fragment>
-                                    ))
-                                ) : (
-                                    <ListGroup.Item className="text-muted">No food items listed for this order.</ListGroup.Item>
-                                )}
-                            </ListGroup>
-                        </ModalSection>
+      <OrderDetailModal
+        show={showDetails}
+        onHide={handleCloseDetails}
+        order={orderDetails}
+        onUpdateOrderStatus={updateOrderStatus}
+        onCallUser={(userId, userName) => startCall(userId, userName, 'customer')}
+        onCallRider={(riderId, riderName) => startCall(riderId, riderName, 'rider')}
+      />
 
-                        {orderDetails.rider && (
-                            <ModalSection>
-                                <h5><Truck /> Rider Details</h5>
-                                <div className="info-row">
-                                    <span className="info-label">Name</span>
-                                    <span className="info-value">{orderDetails.rider.name || 'N/A'}</span>
-                                </div>
-                                <div className="info-row">
-                                    <span className="info-label">Phone</span>
-                                    <span className="info-value">{orderDetails.rider.phone || 'N/A'}</span>
-                                </div>
-                                <div className="d-flex justify-content-start gap-3 mt-3">
-                                    <Button
-                                        variant="outline-primary"
-                                        onClick={() => handleCallPhone(orderDetails.rider.phone)}
-                                        disabled={!orderDetails.rider.phone}
-                                    >
-                                        <Phone /> Call Rider
-                                    </Button>
-                                    <CallModalButton
-                                        $variant="accent"
-                                        onClick={() => startCall('rider', orderDetails.rider.id)}
-                                        disabled={!orderDetails.rider.id || (callActive && callStatus !== 'idle') || (orderDetails.orderType === 'pre_order' && !isPreOrderActive)}
-                                    >
-                                        <Mic /> Audio Call (App)
-                                    </CallModalButton>
-                                </div>
-                            </ModalSection>
-                        )}
-
-                        <ModalSection>
-                            <h5><Printer /> Actions</h5>
-                            <div className="d-flex justify-content-start flex-wrap gap-2">
-                                {/* Only allow actions if not a pre-order or if pre-order is active */}
-                                {orderDetails.status === 'pending' && (
-                                    <Button
-                                        variant="success"
-                                        className="action-button"
-                                        onClick={() => updateOrderStatus(orderDetails.id, 'accepted')}
-                                        disabled={orderDetails.orderType === 'pre_order' && !isPreOrderActive}
-                                    >
-                                        <CheckCircle /> Accept Order
-                                    </Button>
-                                )}
-                                {orderDetails.status === 'accepted' && (
-                                    <Button
-                                        variant="primary"
-                                        className="action-button"
-                                        onClick={() => updateOrderStatus(orderDetails.id, 'preparing')}
-                                        disabled={orderDetails.orderType === 'pre_order' && !isPreOrderActive}
-                                    >
-                                        <Fire /> Start Preparing
-                                    </Button>
-                                )}
-                                {orderDetails.status === 'preparing' && (
-                                    <Button
-                                        variant="success"
-                                        className="action-button"
-                                        onClick={() => updateOrderStatus(orderDetails.id, 'ready')}
-                                        disabled={orderDetails.orderType === 'pre_order' && !isPreOrderActive}
-                                    >
-                                        <CheckCircle /> Mark Ready
-                                    </Button>
-                                )}
-                                {(orderDetails.status === 'pending' || orderDetails.status === 'accepted' || orderDetails.status === 'preparing' || orderDetails.status === 'ready') && (
-                                    <Button
-                                        variant="danger"
-                                        className="action-button"
-                                        onClick={() => {
-                                            if (window.confirm('Are you sure you want to cancel this order?')) {
-                                                updateOrderStatus(orderDetails.id, 'cancelled');
-                                                handleCloseDetails();
-                                            }
-                                        }}
-                                        disabled={orderDetails.orderType === 'pre_order' && !isPreOrderActive}
-                                    >
-                                        <XCircle /> Cancel Order
-                                    </Button>
-                                )}
-                                <Button
-                                    variant="outline-secondary"
-                                    className="action-button"
-                                    onClick={() => alert('Printing invoice (not implemented)')}
-                                >
-                                    <Printer /> Print Invoice
-                                </Button>
-                            </div>
-                        </ModalSection>
-                    </StyledModalBody>
-                </Modal>
-            )}
-            <audio ref={notificationSoundRef} src="/audio/cliks.mp3" preload="auto" />
-        </DashboardContainer>
-    );
+      {/* Call Modal */}
+      {callActive && (
+        <CallOverlay>
+          <CallModalContent>
+            <CallHeader $status={callStatus}>
+              <h4>{callStatus === 'ringing' ? 'Incoming Call' : `Call ${callingTo}`}</h4>
+              <Badge bg={getStatusColor(callStatus === 'connected' ? 'success' : callStatus === 'ringing' ? 'warning' : 'primary')} className="call-status-badge">
+                {callStatus === 'ringing' && <Phone />}
+                {callStatus === 'calling' && <Spinner animation="grow" size="sm" className="me-1" />}
+                {callStatus === 'connected' && <CheckCircle />}
+                {callStatus.toUpperCase()}
+              </Badge>
+              {callStatus === 'connected' && (
+                <p className="mt-2 text-muted">Speaking with {callingTo}</p>
+              )}
+            </CallHeader>
+            <CallActions>
+              {callStatus === 'ringing' && (
+                <>
+                  <Button variant="success" onClick={handleAcceptCall}>
+                    <Phone /> Accept
+                  </Button>
+                  <Button variant="danger" onClick={handleRejectCall}>
+                    <XCircle /> Reject
+                  </Button>
+                </>
+              )}
+              {callStatus === 'calling' && (
+                <Button variant="danger" onClick={endCall}>
+                  <XCircle /> Cancel Call
+                </Button>
+              )}
+              {callStatus === 'connected' && (
+                <>
+                  <Button variant="secondary" onClick={toggleMute}>
+                    {isMuted ? <MicMute /> : <Mic />} {isMuted ? 'Unmute' : 'Mute'}
+                  </Button>
+                  <Button variant="danger" onClick={endCall}>
+                    <XCircle /> End Call
+                  </Button>
+                </>
+              )}
+            </CallActions>
+            <audio ref={remoteAudioRef} autoPlay style={{ display: 'none' }} />
+          </CallModalContent>
+        </CallOverlay>
+      )}
+    </DashboardContainer>
+  );
 };
 
 export default ChefOrders;

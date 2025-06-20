@@ -432,14 +432,7 @@ const LiquorProductsGrid = () => {
       <div className="container">
 
 
-        <div className="text-center mb-5">
-          <h2 className="display-5 fw-bold mb-3" style={{ color: theme.primary }}>
-            Premium Liquor Collection
-          </h2>
-          <p className="lead" style={{ maxWidth: '700px', margin: '0 auto', color: theme.dark }}>
-            Discover our curated selection of premium spirits, carefully selected from the world's finest distilleries
-          </p>
-        </div>
+     
 
   {/* Top Trending Section */}
 <div className="mb-5">

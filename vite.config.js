@@ -1,19 +1,16 @@
-// vite.config.js
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
 export default defineConfig({
   plugins: [react()],
   server: {
-    host: true,         // Allow LAN access (local network)
-    port: 5173,         // Dev port
-    open: true,         // Auto open in browser
-    strictPort: true,   // Fail if port is taken
+    host: true,
+    port: 5173,
+    open: true,
+    strictPort: false,   // <-- change this to false to allow fallback port if 5173 is busy
     watch: {
-      usePolling: true, // Fix for Windows auto-refresh issue
+      usePolling: true,  // Useful in WSL/Docker
     },
-  },
-  build: {
-    outDir: 'dist',      // Folder for production build
+    hmr: true,           // ensure HMR is on
   },
 });

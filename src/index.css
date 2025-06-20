@@ -838,23 +838,6 @@ svg {
 
 
 
-
-
-/* Assume these colors are defined as CSS variables or replaced with their direct values */
-/* For example, in your :root or a global style file:
-:root {
-  --jikoni-red: #FF4532;
-  --jikoni-green: #00C853;
-  --jikoni-dark-text: #1A202C;
-  --jikoni-light-background: #F0F2F5;
-  --jikoni-card-background: #FFFFFF;
-  --jikoni-border-color: #D1D9E6;
-  --jikoni-placeholder-text: #A0AEC0;
-}
-*/
-
-/* If using direct color values, replace the variable names below */
-
 .earnings-card-container {
   background-color: var(--jikoni-card-background, #FFFFFF) !important; /* Fallback color */
   border-radius: 16px  !important;
@@ -1028,3 +1011,5 @@ svg {
   transform-origin: center;
   cursor: pointer; /* optional, if you want pointer on hover */
 }
+
+

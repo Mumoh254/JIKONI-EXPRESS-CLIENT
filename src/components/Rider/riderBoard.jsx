@@ -1,39 +1,34 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-
-
 import io from 'socket.io-client';
 import { formatDistanceToNow, parseISO } from 'date-fns';
-import Peer from 'peerjs'; // Import PeerJS
+import Peer from 'peerjs';
 
 // --- Jikoni Express Color Palette ---
 const colors = {
     primary: '#FF4532', // Jikoni Red
-    secondary: '#00C853', // Jikoni Green (used for success states)
-    darkText: '#1A202C', // Dark text for headings and main content
-    lightBackground: '#F0F2F5', // Light background for the page
-    cardBackground: '#FFFFFF', // White for cards and modals
-    borderColor: '#D1D9E6', // Light border for inputs and separators
-    error: '#EF4444', // Red for errors and destructive actions
-    placeholderText: '#A0AEC0', // Muted text for placeholders
-    buttonHover: '#E6392B', // Darker red on button hover
-    disabledButton: '#CBD5E1', // Gray for disabled buttons
-
-    // Derived/adapted colors for specific UI elements to maintain a sleek and professional look
-    success: '#00C853', // Directly using secondary for success states
-    warning: '#FFC107', // A standard yellow for warning, providing clear visual cues
-    info: '#2196F3', // A standard blue for informational states
-    accent: '#4361EE', // Keeping a distinct accent blue for call buttons for strong contrast and action
-    chefCard: '#FFF8F0', // A very light, warm tint for chef details, complementing primary
-    riderCard: '#F0F5FF', // A very light, cool tint for rider/customer details, complementing the overall palette
+    secondary: '#00C853', // Jikoni Green
+    darkText: '#1A202C',
+    lightBackground: '#F0F2F5',
+    cardBackground: '#FFFFFF',
+    borderColor: '#D1D9E6',
+    error: '#EF4444',
+    placeholderText: '#A0AEC0',
+    buttonHover: '#E6392B',
+    disabledButton: '#CBD5E1',
+    success: '#00C853',
+    warning: '#FFC107',
+    info: '#2196F3',
+    accent: '#4361EE',
+    chefCard: '#FFF8F0',
+    riderCard: '#F0F5FF',
 };
 
 const RiderDashboard = () => {
     // State initialization
-    const [riderId, setRiderId] = useState('cmbnnx2kv0000dk2ag7wrm4au');
-    const [activeOrders, setActiveOrders] = useState([]); // Orders assigned or in-transit
-    const [availableOrders, setAvailableOrders] = useState([]); // New orders waiting for acceptance
-    const [selectedOrder, setSelectedOrder] = useState(null); // Selected order for detail modal
-    const [otpInput, setOtpInput] = useState('');
+    const [riderId, setRiderId] = useState('');
+    const [activeOrders, setActiveOrders] = useState([]);
+    const [availableOrders, setAvailableOrders] = useState([]);
+    const [selectedOrder, setSelectedOrder] = useState(null);
     const [earnings, setEarnings] = useState({
         balance: 3425.75,
         totalDeliveries: 42,
@@ -49,39 +44,54 @@ const RiderDashboard = () => {
         available: true
     });
 
-    // --- PeerJS States & Refs ---
+    // Modal states
+    const [showOrderDetailsModal, setShowOrderDetailsModal] = useState(false);
+    const [detailedOrder, setDetailedOrder] = useState(null);
+    const [otpInput, setOtpInput] = useState('');
+    const [otpVerificationError, setOtpVerificationError] = useState('');
+    const [showDeliverySuccessModal, setShowDeliverySuccessModal] = useState(false);
+    const [showOrderAcceptedModal, setShowOrderAcceptedModal] = useState(false);
+    const [showStartDeliveryConfirmationModal, setShowStartDeliveryConfirmationModal] = useState(false);
+    const [showNavigationOptions, setShowNavigationOptions] = useState(false);
+    const [navigationDestination, setNavigationDestination] = useState(null);
+    const [estimatedTime, setEstimatedTime] = useState(null);
+
+    // PeerJS States & Refs
     const [myPeerId, setMyPeerId] = useState(null);
-    const [callStatus, setCallStatus] = useState('idle'); // 'idle', 'connecting', 'ringing', 'in-call', 'error'
+    const [callStatus, setCallStatus] = useState('idle');
     const [message, setMessage] = useState('Welcome!');
     const [isMuted, setIsMuted] = useState(false);
-    const [isSpeakerOn, setIsSpeakerOn] = useState(true); // Placeholder for speaker control
-    const [incomingCallData, setIncomingCallData] = useState(null); // { call, fromPeerId, contactName, contactType }
-    const [currentContact, setCurrentContact] = useState({ name: '', type: '', phoneNumber: '', peerId: '' }); // The person you are currently calling or are in a call with
+    const [isSpeakerOn, setIsSpeakerOn] = useState(true);
+    const [incomingCallData, setIncomingCallData] = useState(null);
+    const [currentContact, setCurrentContact] = useState({ name: '', type: '', phoneNumber: '', peerId: '' });
 
     const peerRef = useRef(null);
     const localStreamRef = useRef(null);
     const remoteAudioRef = useRef(null);
-    const currentCallRef = useRef(null); // Stores the active PeerJS media connection
-
-
-    const audioRef = useRef(null); // For general audio playback (e.g., ringing)
-    const notificationSoundRef = useRef(null); // For new order notification sound
+    const currentCallRef = useRef(null);
+    const audioRef = useRef(null);
+    const notificationSoundRef = useRef(null);
     const socketRef = useRef(null);
-    const [showSuccessModal, setShowSuccessModal] = useState(false);
-    const [deliveryDetails, setDeliveryDetails] = useState(null);
 
-    // Function to format the order data received from API/Socket
+    // Format order data
     const formatOrder = (order) => ({
         id: order.id,
-        status: order.status,
         createdAt: order.createdAt,
+        status: order.status,
+        riderId: order.riderId,
         assignedAt: order.assignedAt,
         deliveryAddress: order.deliveryAddress,
+        totalPrice: order.totalPrice,
+        riderPay: order.riderPay,
+        estimatedDeliveryTime: order.estimatedDeliveryTime,
+        notes: order.notes,
+        otp: order.otpCode,
+        deliveryDate: order.deliveryDate,
         customer: {
             name: order.user?.Name || 'Customer',
             phone: order.user?.PhoneNumber || 'N/A',
             address: order.deliveryAddress,
-            peerId: order.user?.peerId || null // Assuming user has a peerId
+            peerId: order.user?.peerId || null
         },
         chef: {
             id: order.chef?.id,
@@ -90,7 +100,9 @@ const RiderDashboard = () => {
             location: order.chef?.location,
             rating: order.chef?.rating || 4.5,
             speciality: order.chef?.speciality || 'Grilled Meats',
-            peerId: order.chef?.peerId || null // Assuming chef has a peerId
+            latitude: order.chef?.latitude,
+            longitude: order.chef?.longitude,
+            peerId: order.chef?.peerId || null
         },
         food: {
             id: order.foodListing?.id,
@@ -99,26 +111,53 @@ const RiderDashboard = () => {
             price: order.foodListing?.price || 0,
             images: order.foodListing?.photoUrls || []
         },
-        payment: {
-            method: order.paymentMethod,
-            amount: order.totalPrice,
-            status: 'Paid'
-        },
-        otp: order.otpCode || '123456',
+        paymentMethod: order.paymentMethod,
         coordinates: {
             pickup: [order.chef?.latitude || -1.3007, order.chef?.longitude || 36.8782],
-            dropoff: [-1.2921, 36.8219]
+            dropoff: [order.latitude || -1.2921, order.longitude || 36.8219]
         },
-        riderId: order.riderId || null,
-        riderPeerId: order.rider?.peerId || null // Assuming rider has a peerId in the backend
     });
 
-    // --- PeerJS Call Handling Functions ---
+    // Calculate estimated time based on distance and vehicle type
+    const calculateEstimatedTime = (destination) => {
+        // In a real app, this would use actual distance calculation APIs
+        const baseTime = profile.vehicleType === 'Motorcycle' ? 15 : 25;
+        const randomVariation = Math.floor(Math.random() * 10);
+        return `${baseTime + randomVariation} mins`;
+    };
 
-    /**
-     * Cleans up the current call and resets states.
-     * This is a utility function used by other call-ending functions.
-     */
+    // Open navigation options modal
+    const showNavigationModal = (destination, order) => {
+        setDetailedOrder(order);
+        setNavigationDestination(destination);
+        setEstimatedTime(calculateEstimatedTime(destination));
+        setShowNavigationOptions(true);
+    };
+
+    // Open navigation in selected app
+    const openNavigation = (app) => {
+        if (!detailedOrder) return;
+        
+        let destinationLat, destinationLon;
+        
+        if (navigationDestination === 'chef') {
+            destinationLat = detailedOrder.chef.latitude;
+            destinationLon = detailedOrder.chef.longitude;
+        } else {
+            destinationLat = detailedOrder.coordinates.dropoff[0];
+            destinationLon = detailedOrder.coordinates.dropoff[1];
+        }
+
+        const urls = {
+            google: `https://www.google.com/maps/dir/?api=1&destination=${destinationLat},${destinationLon}&travelmode=driving`,
+            waze: `https://www.waze.com/ul?ll=${destinationLat},${destinationLon}&navigate=yes`
+        };
+
+        window.open(urls[app], '_blank');
+        setShowNavigationOptions(false);
+    };
+
+    // PeerJS Call Handling Functions
     const cleanupCall = useCallback((statusMessage = 'Call ended.') => {
         if (localStreamRef.current) {
             localStreamRef.current.getTracks().forEach(track => track.stop());
@@ -131,6 +170,11 @@ const RiderDashboard = () => {
             currentCallRef.current.close();
             currentCallRef.current = null;
         }
+        if (audioRef.current && !audioRef.current.paused) {
+            audioRef.current.pause();
+            audioRef.current.currentTime = 0;
+            audioRef.current.src = '';
+        }
 
         setCallStatus('idle');
         setMessage(statusMessage);
@@ -139,9 +183,6 @@ const RiderDashboard = () => {
         setCurrentContact({ name: '', type: '', phoneNumber: '', peerId: '' });
     }, []);
 
-    /**
-     * Handles incoming stream (remote audio) from a PeerJS call.
-     */
     const handleStream = useCallback((stream) => {
         if (remoteAudioRef.current) {
             remoteAudioRef.current.srcObject = stream;
@@ -151,12 +192,8 @@ const RiderDashboard = () => {
         }
         setCallStatus('in-call');
         setMessage(`Connected with ${currentContact.name || currentContact.peerId?.substring(0, 8)}`);
-        console.log('Remote stream received.');
     }, [currentContact.name, currentContact.peerId]);
 
-    /**
-     * Initiates an outgoing PeerJS call.
-     */
     const startPeerCall = async (targetPeerId, contactName, contactType, phoneNumber) => {
         if (!peerRef.current || !myPeerId) {
             setMessage('App not ready. Please wait for PeerJS to initialize.');
@@ -170,7 +207,7 @@ const RiderDashboard = () => {
             setMessage('Cannot call yourself!');
             return;
         }
-        if (callStatus !== 'idle' && callStatus !== 'ended') {
+        if (callStatus !== 'idle') {
             setMessage('Already in a call or connecting.');
             return;
         }
@@ -193,7 +230,6 @@ const RiderDashboard = () => {
                 cleanupCall(`Call failed: ${err.message}`);
             });
 
-            console.log('Call initiated to:', targetPeerId);
         } catch (error) {
             console.error('Failed to get local stream or initiate call:', error);
             setMessage(`Microphone access needed to make calls. Please allow access and try again.`);
@@ -202,11 +238,14 @@ const RiderDashboard = () => {
         }
     };
 
-    /**
-     * Answers an incoming PeerJS call.
-     */
     const answerPeerCall = async () => {
         if (!incomingCallData) return;
+
+        if (audioRef.current) {
+            audioRef.current.pause();
+            audioRef.current.currentTime = 0;
+            audioRef.current.src = '';
+        }
 
         setCallStatus('connecting');
         setMessage(`Answering call from ${incomingCallData.contactName || incomingCallData.fromPeerId.substring(0, 8)}...`);
@@ -232,7 +271,6 @@ const RiderDashboard = () => {
             });
 
             setIncomingCallData(null);
-            console.log('Call answered.');
         } catch (error) {
             console.error('Failed to get local stream or answer call:', error);
             setMessage(`Microphone access needed to answer calls. Please allow access and try again.`);
@@ -241,9 +279,6 @@ const RiderDashboard = () => {
         }
     };
 
-    /**
-     * Rejects an incoming call or cancels an outgoing call attempt.
-     */
     const rejectPeerCall = () => {
         if (incomingCallData) {
             setMessage(`Call from ${incomingCallData.contactName || incomingCallData.fromPeerId.substring(0, 8)} rejected.`);
@@ -251,22 +286,20 @@ const RiderDashboard = () => {
             setIncomingCallData(null);
             setCallStatus('idle');
             setCurrentContact({ name: '', type: '', phoneNumber: '', peerId: '' });
+            if (audioRef.current) {
+                audioRef.current.pause();
+                audioRef.current.currentTime = 0;
+                audioRef.current.src = '';
+            }
         } else if (callStatus === 'connecting' && currentCallRef.current) {
             cleanupCall('Call cancelled.');
         }
     };
 
-    /**
-     * Ends the current active PeerJS call.
-     */
     const endPeerCall = () => {
         cleanupCall('Call ended.');
-        console.log('Call ended by user.');
     };
 
-    /**
-     * Toggles the mute status of the local microphone for the PeerJS call.
-     */
     const toggleMute = () => {
         if (localStreamRef.current) {
             const audioTracks = localStreamRef.current.getAudioTracks();
@@ -283,272 +316,383 @@ const RiderDashboard = () => {
         }
     };
 
-    /**
-     * Toggles the conceptual "speaker" mode. (Actual browser control is limited)
-     */
     const toggleSpeaker = () => {
         const newState = !isSpeakerOn;
         setIsSpeakerOn(newState);
         setMessage(newState ? 'Loudspeaker ON.' : 'Loudspeaker OFF (using default output).');
-        // In a real application, you might try to set sinkId on remoteAudioRef.current
-        // remoteAudioRef.current.setSinkId('speakerId') if supported by browser/device
     };
 
-
-    // --- General Dashboard Effects & Functions ---
-
+    // Initialize rider ID from localStorage
     useEffect(() => {
-        // Set rider ID from localStorage or use default
-        const storedRiderId = localStorage.getItem('riderId') || 'cmbnnx2kv0000dk2ag7wrm4au';
-        setRiderId(storedRiderId);
-        localStorage.setItem('riderId', storedRiderId);
-
-        // --- PeerJS Initialization ---
-        if (!peerRef.current) {
-            setMessage('Initializing secure connection...');
-            try {
-                // Initialize PeerJS client instance. The ID should be unique,
-                // and consistent for the rider for signaling.
-                const peer = new Peer(storedRiderId, {
-                    host: 'localhost', // Your PeerJS server host
-                    port: 9000,        // Your PeerJS server port
-                    path: '/jikoni-call',
-                    debug: 2,
-                    config: {
-                        'iceServers': [
-                            { urls: 'stun:stun.l.google.com:19302' },
-                        ]
-                    }
-                });
-
-                peer.on('open', id => {
-                    setMyPeerId(id);
-                    setCallStatus('idle');
-                    setMessage(`Ready! Your Rider ID: ${id}`);
-                    console.log('My Peer ID:', id);
-                    if (!localStorage.getItem('jikoniRiderPeerId') || localStorage.getItem('jikoniRiderPeerId') !== id) {
-                        localStorage.setItem('jikoniRiderPeerId', id);
-                        console.log('Peer ID saved to localStorage:', id);
-                    }
-                });
-
-                // PeerJS listener for incoming calls
-                peer.on('call', call => {
-                    console.log('Incoming call from:', call.peer);
-                    // Determine who is calling based on the order data if possible,
-                    // or just use the peer ID. For now, we'll just use the ID.
-                    // In a real app, you'd match call.peer to an existing order's customer/chef peerId
-                    const callingPartyType = call.peer.includes('chef') ? 'Chef' : (call.peer.includes('user') ? 'Customer' : 'Unknown');
-                    const callingPartyName = callingPartyType !== 'Unknown' ? `${callingPartyType} ${call.peer.substring(0, 8)}` : call.peer;
-
-                    if (callStatus === 'idle' || callStatus === 'ended') {
-                        setIncomingCallData({
-                            call,
-                            fromPeerId: call.peer,
-                            contactName: callingPartyName,
-                            contactType: callingPartyType,
-                            // phoneNumber: 'N/A' // You might fetch this from order details
-                        });
-                        setCallStatus('ringing');
-                        setMessage(`Incoming call from ${callingPartyName}...`);
-                        if (audioRef.current) {
-                            audioRef.current.loop = true;
-                            audioRef.current.src = '/sounds/ringing.mp3'; // Ensure you have this sound
-                            audioRef.current.play().catch(e => console.error("Ringing sound play failed:", e));
-                        }
-                    } else {
-                        console.log(`Rejecting incoming call from ${call.peer} as current status is ${callStatus}`);
-                        call.close(); // Automatically reject if busy
-                    }
-                });
-
-                peer.on('error', err => {
-                    console.error('PeerJS Error:', err);
-                    setMessage(`Connection Error: ${err.message}. Please check your network and PeerJS server setup.`);
-                    setCallStatus('error');
-                    cleanupCall();
-                });
-
-                peerRef.current = peer;
-
-                // Cleanup function for PeerJS
-                return () => {
-                    if (peerRef.current) {
-                        peerRef.current.destroy();
-                        peerRef.current = null;
-                        console.log('PeerJS instance destroyed.');
-                    }
-                    cleanupCall();
-                };
-            } catch (error) {
-                console.error('Failed to initialize PeerJS:', error);
-                setMessage(`Failed to connect to call service: ${error.message}`);
-                setCallStatus('error');
-            }
+        const storedRiderId = localStorage.getItem('riderId');
+        const storedActiveOrders = localStorage.getItem('riderActiveOrders');
+        
+        if (storedRiderId) {
+            setRiderId(storedRiderId);
+        } else {
+            const newRiderId = 'cmbnnx2kv0000dk2ag7wrm4au';
+            localStorage.setItem('riderId', newRiderId);
+            setRiderId(newRiderId);
         }
-    }, [cleanupCall, riderId, callStatus, handleStream]);
+        
+        if (storedActiveOrders) {
+            setActiveOrders(JSON.parse(storedActiveOrders));
+        }
 
-
-    // Fetch orders from the API and Socket.IO setup
-    useEffect(() => {
-        // Fetch orders from the API
-        const fetchOrders = async () => {
-            try {
-                const response = await fetch('http://localhost:8000/apiV1/smartcity-ke/orders');
-                if (!response.ok) {
-                    throw new Error("Failed to fetch orders");
-                }
-                const data = await response.json();
-                const formattedOrders = data.orders.map(formatOrder);
-
-                // Separate orders into available (new/pending) and active (assigned/in-transit)
-                setAvailableOrders(formattedOrders.filter(order => order.status === 'preparing' || order.status === 'new'));
-                setActiveOrders(formattedOrders.filter(order => order.status === 'assigned' || order.status === 'in-transit'));
-            } catch (err) {
-                console.error('Error fetching orders:', err);
-            }
-        };
-
-        fetchOrders();
-
-        // Setup socket connection
-        if (!socketRef.current) {
-            socketRef.current = io('https://neuro-apps-api-express-js-production-redy.onrender.com', {
-                query: { riderId: riderId }
-            });
-
-            // Socket event listeners
-            socketRef.current.on('order:new', (data) => {
-                setAvailableOrders(prev => [formatOrder(data.order), ...prev]);
-                if (notificationSoundRef.current) {
-                    notificationSoundRef.current.play();
+        // Initialize PeerJS
+        setMessage('Initializing secure connection...');
+        try {
+            const peer = new Peer(storedRiderId || 'cmbnnx2kv0000dk2ag7wrm4au', {
+                host: 'localhost',
+                port: 9000,
+                path: '/jikoni-call',
+                debug: 2,
+                config: {
+                    'iceServers': [
+                        { urls: 'stun:stun.l.google.com:19302' },
+                    ]
                 }
             });
 
-            socketRef.current.on('order:assigned', (data) => {
-                const assignedOrder = formatOrder(data.order);
-                if (assignedOrder.riderId === riderId) {
-                    setActiveOrders(prev => [assignedOrder, ...prev.filter(o => o.id !== assignedOrder.id)]);
-                    setAvailableOrders(prev => prev.filter(o => o.id !== assignedOrder.id)); // Remove from available
+            peer.on('open', id => {
+                setMyPeerId(id);
+                setCallStatus('idle');
+                setMessage(`Ready! Your Rider ID: ${id}`);
+                if (!localStorage.getItem('jikoniRiderPeerId') || localStorage.getItem('jikoniRiderPeerId') !== id) {
+                    localStorage.setItem('jikoniRiderPeerId', id);
+                }
+            });
+
+            peer.on('call', call => {
+                const callingPartyType = call.metadata?.type || (call.peer.includes('chef') ? 'Chef' : (call.peer.includes('user') ? 'Customer' : 'Unknown'));
+                const callingPartyName = call.metadata?.name || (callingPartyType !== 'Unknown' ? `${callingPartyType} ${call.peer.substring(0, 8)}` : call.peer);
+                const callingPartyPhone = call.metadata?.phoneNumber || 'N/A';
+
+                if (callStatus === 'idle' || callStatus === 'ended') {
+                    setIncomingCallData({
+                        call,
+                        fromPeerId: call.peer,
+                        contactName: callingPartyName,
+                        contactType: callingPartyType,
+                        phoneNumber: callingPartyPhone
+                    });
+                    setCallStatus('ringing');
+                    setMessage(`Incoming call from ${callingPartyName}...`);
+                    if (audioRef.current) {
+                        audioRef.current.loop = true;
+                        audioRef.current.src = '/sounds/ringing.mp3';
+                        audioRef.current.play().catch(e => console.error("Ringing sound play failed:", e));
+                    }
                 } else {
-                    setAvailableOrders(prev => prev.filter(o => o.id !== assignedOrder.id));
-                }
-                if (notificationSoundRef.current) {
-                    notificationSoundRef.current.play();
+                    call.close();
                 }
             });
 
-            socketRef.current.on('order:updated', (data) => {
-                setActiveOrders(prev => prev.map(order =>
-                    order.id === data.order.id ? formatOrder(data.order) : order
-                ));
-                setAvailableOrders(prev => prev.map(order =>
-                    order.id === data.order.id ? formatOrder(data.order) : order
-                ));
+            peer.on('error', err => {
+                console.error('PeerJS Error:', err);
+                setMessage(`Connection Error: ${err.message}.`);
+                setCallStatus('error');
+                cleanupCall();
             });
+
+            peerRef.current = peer;
+
+            return () => {
+                if (peerRef.current) {
+                    peerRef.current.destroy();
+                    peerRef.current = null;
+                }
+                cleanupCall();
+            };
+        } catch (error) {
+            console.error('Failed to initialize PeerJS:', error);
+            setMessage(`Failed to connect to call service: ${error.message}`);
+            setCallStatus('error');
         }
+    }, [cleanupCall, handleStream]);
 
-        // Cleanup socket connection
+    // Save active orders to localStorage whenever they change
+    useEffect(() => {
+        localStorage.setItem('riderActiveOrders', JSON.stringify(activeOrders));
+    }, [activeOrders]);
+
+    // Socket.IO connection
+    useEffect(() => {
+        socketRef.current = io('http://localhost:8000');
+
+        socketRef.current.on('connect', () => {
+            socketRef.current.emit('rider:online', riderId);
+        });
+
+        socketRef.current.on('new:order:available', (order) => {
+            const formattedOrder = formatOrder(order);
+            setAvailableOrders(prev => [formattedOrder, ...prev]);
+            if (notificationSoundRef.current) {
+                notificationSoundRef.current.play().catch(e => console.error("Notification sound play failed:", e));
+            }
+            setMessage(`New order ${formattedOrder.id} available!`);
+        });
+
+        socketRef.current.on('order:assigned:to:rider', (order) => {
+            const formattedOrder = formatOrder(order);
+            setActiveOrders(prev => {
+                if (!prev.some(o => o.id === formattedOrder.id)) {
+                    return [formattedOrder, ...prev];
+                }
+                return prev.map(o => o.id === formattedOrder.id ? formattedOrder : o);
+            });
+            setAvailableOrders(prev => prev.filter(o => o.id !== formattedOrder.id));
+            setMessage(`Order ${formattedOrder.id} has been assigned to you!`);
+        });
+
+        socketRef.current.on('order:status:updated', (updatedOrder) => {
+            const formattedOrder = formatOrder(updatedOrder);
+            setActiveOrders(prev => prev.map(order =>
+                order.id === formattedOrder.id ? formattedOrder : order
+            ));
+            setAvailableOrders(prev => prev.filter(order => order.id !== formattedOrder.id));
+            setMessage(`Order ${formattedOrder.id} status updated to ${formattedOrder.status}`);
+        });
+
+        socketRef.current.on('order:cancelled', (orderId) => {
+            setActiveOrders(prev => prev.filter(order => order.id !== orderId));
+            setAvailableOrders(prev => prev.filter(order => order.id !== orderId));
+            if (selectedOrder && selectedOrder.id === orderId) {
+                setSelectedOrder(null);
+            }
+            setMessage(`Order ${orderId} has been cancelled.`);
+        });
+
+        socketRef.current.on('disconnect', () => {
+            setMessage('Disconnected from server. Reconnecting...');
+        });
+
+        socketRef.current.on('error', (err) => {
+            console.error('Socket.IO Error:', err);
+            setMessage(`Socket Error: ${err.message}`);
+        });
+
         return () => {
-            if (socketRef.current) socketRef.current.disconnect();
+            if (socketRef.current) {
+                socketRef.current.disconnect();
+            }
         };
     }, [riderId]);
 
-    const acceptOrder = (orderId) => {
+    // Initial fetch of orders
+    useEffect(() => {
+        const fetchOrders = async () => {
+            try {
+                const response = await fetch('http://localhost:8000/apiV1/smartcity-ke/orders');
+                if (!response.ok) throw new Error("Failed to fetch orders");
+                const data = await response.json();
+                const formattedOrders = data.orders.map(formatOrder);
+
+                const riderSpecificOrders = formattedOrders.filter(order =>
+                    order.riderId === riderId || (order.riderId === null && order.status === 'READY')
+                );
+
+                setAvailableOrders(riderSpecificOrders.filter(order => order.status === 'READY' && order.riderId === null));
+                
+                // Merge localStorage orders with server data
+                setActiveOrders(prev => {
+                    const serverActiveOrders = riderSpecificOrders.filter(order =>
+                        (order.status === 'ASSIGNED' || order.status === 'OUT_FOR_DELIVERY') && order.riderId === riderId
+                    );
+                    
+                    // Create a map of order IDs from server for quick lookup
+                    const serverOrderIds = new Set(serverActiveOrders.map(o => o.id));
+                    
+                    // Preserve orders from localStorage that are not in server response
+                    const preservedOrders = prev.filter(order => 
+                        !serverOrderIds.has(order.id) && 
+                        (order.status === 'ASSIGNED' || order.status === 'OUT_FOR_DELIVERY')
+                    );
+                    
+                    return [...serverActiveOrders, ...preservedOrders];
+                });
+            } catch (err) {
+                console.error('Error fetching orders:', err);
+                setMessage('Error fetching orders. Please try again later.');
+            }
+        };
+
+        if (riderId) fetchOrders();
+    }, [riderId]);
+
+    // Handle order acceptance
+    const handleAcceptOrder = async (orderId) => {
         const orderToAccept = availableOrders.find(order => order.id === orderId);
-        if (orderToAccept) {
-            const updatedOrder = { ...orderToAccept, status: 'assigned', assignedAt: new Date().toISOString(), riderId: riderId };
-            setActiveOrders(prev => [updatedOrder, ...prev]);
+        if (!orderToAccept) {
+            setMessage("Order not found or already accepted.");
+            return;
+        }
+
+        try {
+            const response = await fetch(`http://localhost:8000/apiV1/smartcity-ke/order/${orderId}/assign-rider`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ riderId: riderId }),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || `Failed to assign rider to order ${orderId}`);
+            }
+
+            const updatedOrderData = await response.json();
+            const updatedOrder = formatOrder(updatedOrderData.order);
+
+            setActiveOrders(prev => {
+                const existingIndex = prev.findIndex(o => o.id === updatedOrder.id);
+                if (existingIndex > -1) {
+                    return prev.map((o, idx) => idx === existingIndex ? updatedOrder : o);
+                }
+                return [updatedOrder, ...prev];
+            });
             setAvailableOrders(prev => prev.filter(order => order.id !== orderId));
             setSelectedOrder(updatedOrder);
 
-            socketRef.current.emit('order:accept', { orderId: orderId, riderId: riderId });
+            setShowOrderAcceptedModal(true);
+            setMessage(`Order ${orderId} accepted and assigned!`);
+
+            socketRef.current.emit('order:assign:rider', {
+                orderId: updatedOrder.id,
+                riderId: riderId,
+                status: updatedOrder.status,
+                assignedAt: updatedOrder.assignedAt
+            });
+
+        } catch (error) {
+            console.error('Error accepting order:', error);
+            setMessage(`Error accepting order: ${error.message}`);
         }
     };
 
     const declineOrder = (orderId) => {
         setAvailableOrders(prev => prev.filter(order => order.id !== orderId));
         socketRef.current.emit('order:decline', { orderId: orderId, riderId: riderId });
+        setMessage(`Order ${orderId} declined.`);
     };
 
-    const startDelivery = (id) => {
-        setActiveOrders(prev => prev.map(order =>
-            order.id === id ? { ...order, status: 'in-transit' } : order
-        ));
-        socketRef.current.emit('order:status:update', { orderId: id, status: 'in-transit', riderId });
+    const handleStartDeliveryClick = (order) => {
+        setSelectedOrder(order);
+        setShowStartDeliveryConfirmationModal(true);
     };
 
-    const completeDelivery = () => {
+    const confirmStartDelivery = () => {
         if (!selectedOrder) return;
 
-        if (otpInput !== selectedOrder.otp) {
-            alert("Incorrect OTP. Please try again.");
-            return;
-        }
-
-        const deliveryTime = Math.floor(Math.random() * 15) + 15;
-        const riderFee = Math.floor(selectedOrder.food.price * 0.15) + 50;
-
-        setDeliveryDetails({
-            orderId: selectedOrder.id,
-            deliveryTime,
-            riderFee,
-            customer: selectedOrder.customer.name,
-            food: selectedOrder.food.title
-        });
-
-        setShowSuccessModal(true);
+        const id = selectedOrder.id;
         setActiveOrders(prev => prev.map(order =>
-            order.id === selectedOrder.id ? { ...order, status: 'delivered' } : order
+            order.id === id ? { ...order, status: 'OUT_FOR_DELIVERY' } : order
         ));
-        socketRef.current.emit('order:status:update', { orderId: selectedOrder.id, status: 'delivered', riderId });
+        socketRef.current.emit('order:status:update', { orderId: id, status: 'OUT_FOR_DELIVERY', riderId });
+        setShowStartDeliveryConfirmationModal(false);
         setSelectedOrder(null);
-        setOtpInput('');
+        setMessage(`Order ${id} is now out for delivery!`);
     };
 
-    const openNavigation = (order, app = 'google') => {
-        const origin = `${order.coordinates.pickup[0]},${order.coordinates.pickup[1]}`;
-        const destination = `${order.coordinates.dropoff[0]},${order.coordinates.dropoff[1]}`;
+    // Function to open detailed order view
+    const openOrderDetails = (order) => {
+        setDetailedOrder(order);
+        setOtpInput('');
+        setOtpVerificationError('');
+        setShowOrderDetailsModal(true);
+    };
 
-        const urls = {
-            google: `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${destination}&travelmode=driving`,
-            waze: `https://www.waze.com/ul?ll=${destination}&navigate=yes`
-        };
+    // Verify delivery OTP
+    const verifyDeliveryOTP = async () => {
+        if (!detailedOrder) return;
+        
+        if (otpInput !== detailedOrder.otp) {
+            setOtpVerificationError("Incorrect OTP. Please try again.");
+            return;
+        }
+        
+        try {
+            // Send delivery confirmation to API
+            const response = await fetch(`http://localhost:8000/apiV1/smartcity-ke/order/${detailedOrder.id}/complete`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ 
+                    riderId: riderId,
+                    otp: otpInput
+                }),
+            });
 
-        window.open(urls[app], '_blank');
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || `Failed to confirm delivery for order ${detailedOrder.id}`);
+            }
+
+            const result = await response.json();
+            
+            // Update earnings
+            setEarnings(prev => ({
+                ...prev,
+                balance: prev.balance + detailedOrder.riderPay,
+                totalDeliveries: prev.totalDeliveries + 1
+            }));
+            
+            // Remove from active orders
+            setActiveOrders(prev => prev.filter(order => order.id !== detailedOrder.id));
+            setShowDeliverySuccessModal(true);
+            
+            // Emit socket event
+            socketRef.current.emit('order:status:update', { 
+                orderId: detailedOrder.id, 
+                status: 'DELIVERED', 
+                riderId, 
+                otpVerified: true 
+            });
+            
+            setMessage(`Delivery for order ${detailedOrder.id} completed!`);
+            setOtpInput('');
+            setOtpVerificationError('');
+            setShowOrderDetailsModal(false);
+        } catch (error) {
+            console.error('Delivery confirmation error:', error);
+            setOtpVerificationError(error.message || "Failed to confirm delivery. Please try again.");
+        }
     };
 
     const toggleAvailability = () => {
-        setProfile(prev => ({ ...prev, available: !prev.available }));
-        socketRef.current.emit('rider:availability:update', { riderId, available: !profile.available });
+        const newAvailability = !profile.available;
+        setProfile(prev => ({ ...prev, available: newAvailability }));
+        socketRef.current.emit('rider:availability:update', { riderId, available: newAvailability });
     };
 
     const getTimeSinceAssignment = (assignedAt) => {
-        if (!assignedAt) return 'Just now';
+        if (!assignedAt) return 'N/A';
         return formatDistanceToNow(parseISO(assignedAt), { addSuffix: true });
     };
 
-    // Button styles - updated to use the new color palette and more modern look
+    // Button styles
     const buttonStyles = {
         base: {
             padding: '12px 20px',
-            borderRadius: '10px', // Slightly more rounded
+            borderRadius: '10px',
             border: 'none',
             cursor: 'pointer',
             fontSize: '16px',
             fontWeight: '600',
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'center', // Center content
+            justifyContent: 'center',
             gap: '8px',
-            transition: 'all 0.2s ease-in-out', // Smooth transition
-            boxShadow: '0 2px 4px rgba(0,0,0,0.1)' // Subtle shadow
+            transition: 'all 0.2s ease-in-out',
+            boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
         },
         primary: {
             backgroundColor: colors.primary,
             color: 'white',
             '&:hover': {
-                backgroundColor: colors.buttonHover, // Use defined buttonHover
+                backgroundColor: colors.buttonHover,
             },
             '&:disabled': {
                 backgroundColor: colors.disabledButton,
@@ -560,14 +704,14 @@ const RiderDashboard = () => {
             backgroundColor: colors.secondary,
             color: 'white',
             '&:hover': {
-                backgroundColor: '#00B080', // Darker green for hover
+                backgroundColor: '#00B080',
             }
         },
         accent: {
-            backgroundColor: colors.accent, // Using the accent blue
+            backgroundColor: colors.accent,
             color: 'white',
             '&:hover': {
-                backgroundColor: '#3A54D0', // Darker accent for hover
+                backgroundColor: '#3A54D0',
             }
         },
         outline: {
@@ -592,14 +736,17 @@ const RiderDashboard = () => {
                 backgroundColor: '#2A72B0',
             }
         },
-        success: { // Added success button style
+        success: {
             backgroundColor: colors.success,
             color: 'white',
             '&:hover': {
-                backgroundColor: '#00A040', // Darker green for hover
+                backgroundColor: '#00A040',
             }
         }
     };
+
+    // Inline style function for dynamic button styles
+    const getButtonStyle = (type) => ({ ...buttonStyles.base, ...buttonStyles[type] });
 
     return (
         <div style={{
@@ -610,786 +757,846 @@ const RiderDashboard = () => {
             maxWidth: '500px',
             margin: '0 auto',
             position: 'relative',
-            boxShadow: '0 0 20px rgba(0,0,0,0.05)' // Overall app shadow for a sleek look
+            boxShadow: '0 0 20px rgba(0,0,0,0.05)'
         }}>
-            {/* Audio elements for notifications and calls */}
-            <audio ref={remoteAudioRef} autoPlay /> {/* For remote peer's audio */}
-            <audio ref={audioRef} /> {/* For local ringing/notification sounds */}
+            {/* Audio elements */}
+            <audio ref={remoteAudioRef} autoPlay />
+            <audio ref={audioRef} />
             <audio ref={notificationSoundRef} src="/sounds/notification.mp3" preload="auto" />
 
-            {/* PeerJS Call Modal */}
-            {(callStatus === 'connecting' || callStatus === 'in-call' || callStatus === 'ringing') && (
-                <div style={{
-                    position: 'fixed',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    backgroundColor: 'rgba(0,0,0,0.8)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    zIndex: 1000
-                }}>
-                    <div style={{
-                        backgroundColor: colors.cardBackground,
-                        padding: '30px',
-                        borderRadius: '20px',
-                        textAlign: 'center',
-                        width: '85%',
-                        maxWidth: '400px',
-                        boxShadow: '0 10px 30px rgba(0,0,0,0.3)'
-                    }}>
-                        <h2 style={{ color: colors.darkText, marginBottom: '20px', fontSize: '24px' }}>
-                            {callStatus === 'ringing' ? 'Incoming Call' : `Call with ${currentContact.type}`}
-                        </h2>
-                        <p style={{ fontSize: '28px', fontWeight: 'bold', color: colors.primary, marginBottom: '30px' }}>
-                            {currentContact.name || currentContact.peerId?.substring(0, 8)}
-                        </p>
-                        <div style={{
-                            width: '100px',
-                            height: '100px',
-                            backgroundColor: colors.primary + '20',
-                            borderRadius: '50%',
-                            margin: '0 auto 30px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center'
+            {/* Navigation Options Modal */}
+            {showNavigationOptions && detailedOrder && (
+                <div style={modalOverlayStyle}>
+                    <div style={modalContentStyle}>
+                        <h2 style={{ 
+                            color: colors.primary, 
+                            marginBottom: '15px',
+                            textAlign: 'center'
                         }}>
-                            <span style={{ fontSize: '48px', color: colors.primary }}>📞</span>
-                        </div>
-                        <div style={{ display: 'flex', justifyContent: 'center', gap: '20px', marginBottom: '30px' }}>
-                            {callStatus === 'in-call' && (
-                                <>
-                                    <button
-                                        onClick={toggleMute}
-                                        style={{
-                                            ...buttonStyles.base,
-                                            backgroundColor: isMuted ? colors.accent : colors.lightBackground,
-                                            color: isMuted ? 'white' : colors.darkText,
-                                            width: '60px',
-                                            height: '60px',
-                                            borderRadius: '50%',
-                                            boxShadow: '0 2px 5px rgba(0,0,0,0.1)',
-                                            fontSize: '24px'
-                                        }}
-                                    >
-                                        {isMuted ? '🔇' : '🎤'}
-                                    </button>
-                                    <button
-                                        onClick={toggleSpeaker}
-                                        style={{
-                                            ...buttonStyles.base,
-                                            backgroundColor: isSpeakerOn ? colors.accent : colors.lightBackground,
-                                            color: isSpeakerOn ? 'white' : colors.darkText,
-                                            width: '60px',
-                                            height: '60px',
-                                            borderRadius: '50%',
-                                            boxShadow: '0 2px 5px rgba(0,0,0,0.1)',
-                                            fontSize: '24px'
-                                        }}
-                                    >
-                                        {isSpeakerOn ? '🔊' : '🔈'}
-                                    </button>
-                                </>
-                            )}
-                            {callStatus === 'ringing' && (
-                                <button
-                                    onClick={answerPeerCall}
-                                    style={{
-                                        ...buttonStyles.base,
-                                        ...buttonStyles.success,
-                                        width: '80px',
-                                        height: '80px',
-                                        borderRadius: '50%',
-                                        fontSize: '36px'
-                                    }}
-                                >
-                                    ✅
-                                </button>
-                            )}
-                            <button
-                                onClick={callStatus === 'ringing' ? rejectPeerCall : endPeerCall}
-                                style={{
-                                    ...buttonStyles.base,
-                                    backgroundColor: colors.error,
-                                    color: 'white',
-                                    width: '80px',
-                                    height: '80px',
-                                    borderRadius: '50%',
-                                    boxShadow: '0 2px 5px rgba(0,0,0,0.1)',
-                                    fontSize: '36px'
-                                }}
-                            >
-                                📞
-                            </button>
-                        </div>
-                        {callStatus === 'connecting' && <p style={{ color: colors.placeholderText, fontSize: '16px' }}>Connecting...</p>}
-                    </div>
-                </div>
-            )}
-
-            {/* Success Modal - Clean and celebratory design */}
-            {showSuccessModal && deliveryDetails && (
-                <div style={{
-                    position: 'fixed',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    backgroundColor: 'rgba(0,0,0,0.8)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    zIndex: 1000
-                }}>
-                    <div style={{
-                        backgroundColor: colors.cardBackground,
-                        padding: '30px',
-                        borderRadius: '20px',
-                        textAlign: 'center',
-                        width: '85%',
-                        maxWidth: '400px',
-                        boxShadow: '0 10px 30px rgba(0,0,0,0.3)'
-                    }}>
-                        <div style={{
-                            width: '100px',
-                            height: '100px',
-                            backgroundColor: colors.success + '20',
-                            borderRadius: '50%',
-                            margin: '0 auto 20px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center'
-                        }}>
-                            <span style={{ fontSize: '50px', color: colors.success }}>🎉</span>
-                        </div>
-
-                        <h2 style={{ color: colors.success, marginBottom: '15px', fontSize: '24px' }}>
-                            Delivery Completed!
+                            Navigate to {navigationDestination === 'chef' ? 'Chef' : 'Customer'}
                         </h2>
-
-                        <p style={{ fontSize: '18px', marginBottom: '25px', color: colors.darkText }}>
-                            You delivered <strong>{deliveryDetails.food}</strong> to {deliveryDetails.customer} in {deliveryDetails.deliveryTime} minutes.
-                        </p>
-
-                        <div style={{
-                            backgroundColor: colors.lightBackground,
-                            padding: '15px',
-                            borderRadius: '12px',
+                        
+                        <div style={{ 
+                            backgroundColor: colors.lightBackground, 
+                            padding: '15px', 
+                            borderRadius: '10px',
+                            marginBottom: '20px',
+                            textAlign: 'center'
+                        }}>
+                            <p style={{ 
+                                fontSize: '18px', 
+                                fontWeight: 'bold',
+                                color: colors.darkText,
+                                marginBottom: '5px'
+                            }}>
+                                Estimated Time: 
+                            </p>
+                            <p style={{ 
+                                fontSize: '24px', 
+                                color: colors.primary,
+                                margin: 0
+                            }}>
+                                {estimatedTime}
+                            </p>
+                        </div>
+                        
+                        <div style={{ 
+                            display: 'grid', 
+                            gridTemplateColumns: '1fr 1fr', 
+                            gap: '15px',
                             marginBottom: '25px'
                         }}>
-                            <p style={{ margin: '5px 0', fontSize: '16px', color: colors.darkText }}>
-                                <span style={{ color: colors.darkText, fontWeight: '500' }}>Order ID:</span> {deliveryDetails.orderId.substring(0, 8)}
-                            </p>
-                            <p style={{ margin: '5px 0', fontSize: '20px', fontWeight: 'bold', color: colors.primary }}>
-                                Earned: KSH {deliveryDetails.riderFee.toFixed(2)}
-                            </p>
+                            <button 
+                                onClick={() => openNavigation('google')}
+                                style={{ 
+                                    ...getButtonStyle('info'),
+                                    padding: '15px',
+                                    flexDirection: 'column'
+                                }}
+                            >
+                                <span style={{ fontSize: '24px' }}>🗺️</span>
+                                Google Maps
+                            </button>
+                            <button 
+                                onClick={() => openNavigation('waze')}
+                                style={{ 
+                                    ...getButtonStyle('accent'),
+                                    padding: '15px',
+                                    flexDirection: 'column'
+                                }}
+                            >
+                                <span style={{ fontSize: '24px' }}>🚗</span>
+                                Waze
+                            </button>
                         </div>
-
-                        <p style={{ fontSize: '16px', marginBottom: '25px', fontStyle: 'italic', color: colors.darkText, opacity: 0.8 }}>
-                            "Great job! Your efficiency makes our customers happy. Keep up the excellent work!"
-                        </p>
-
+                        
                         <button
-                            onClick={() => setShowSuccessModal(false)}
-                            style={{
-                                ...buttonStyles.base,
-                                ...buttonStyles.success,
-                                width: '100%',
-                                backgroundColor: colors.success
-                            }}
+                            onClick={() => setShowNavigationOptions(false)}
+                            style={{ ...getButtonStyle('outline'), width: '100%' }}
                         >
-                            Continue Delivering
+                            Cancel Navigation
                         </button>
                     </div>
                 </div>
             )}
 
-            {/* Header - Sleek and Professional for Jikoni Express */}
-            <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                marginBottom: '10px',
-                paddingBottom: '10px',
-                borderBottom: `1px solid ${colors.borderColor}`,
-                backgroundColor: colors.background,
-                paddingTop: '12px',
-                borderRadius: '10px',
-                boxShadow: '0 3px 6px rgba(0, 0, 0, 0.1)',
-                padding: '0 15px',
-            }}>
-
-                {/* Left Section: Greeting and Brand Name */}
-                <div>
-                    <h1 style={{
-                        color: colors.darkText,
-                        margin: 0,
-                        fontSize: '24px',
-                        fontWeight: '700',
-                        fontFamily: '"Segoe UI", Tahoma, Geneva, Verdana, sans-serif',
-                        letterSpacing: '0.5px'
-                    }}>
-                        Hello, {profile.name.split(' ')[0]}!
-                    </h1>
-
-                    {/* Display "Jikoni Express" Brand Name */}
-                    <p style={{
-                        color: colors.primary,
-                        fontSize: '14px',
-                        fontWeight: '600',
-                        fontFamily: '"Segoe UI", Tahoma, Geneva, Verdana, sans-serif',
-                        marginTop: '5px',
-                    }}>
-                        Jikoni Express
-                    </p>
-
-                    <p style={{
-                        color: profile.available ? colors.primary : colors.error,
-                        marginTop: '4px',
-                        fontWeight: '600',
-                        fontSize: '14px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '6px',
-                    }}>
-                        <span style={{ fontSize: '16px' }}>●</span>
-                        {profile.available ? 'Online' : 'Offline'}
-                    </p>
-                    {myPeerId && (
-                        <p style={{ fontSize: '10px', color: colors.placeholderText, marginTop: '5px' }}>
-                            My Peer ID: {myPeerId.substring(0, 8)}...
-                        </p>
-                    )}
-                    {message && (
-                        <p style={{ fontSize: '12px', color: (callStatus === 'error' ? colors.error : colors.darkText), marginTop: '5px' }}>
-                            Status: {message}
-                        </p>
-                    )}
-                </div>
-
-                {/* Right Section: Profile Image & Availability Toggle */}
-                <div style={{ display: 'flex', alignItems: 'center' }}>
-                    <img
-                        src={profile.photo}
-                        alt="Profile"
-                        style={{
-                            width: '50px',
-                            height: '50px',
-                            borderRadius: '50%',
-                            marginRight: '12px',
-                            border: `3px solid ${profile.available ? colors.primary : colors.error}`,
-                            objectFit: 'cover',
-                            boxShadow: '0 3px 10px rgba(0, 0, 0, 0.1)',
-                            transition: 'border 0.3s ease',
-                        }}
-                    />
-                    <div style={{ display: 'flex', alignItems: 'center' }}>
-                        <div style={{
-                            position: 'relative',
-                            width: '48px',
-                            height: '26px',
-                            marginRight: '10px',
-                        }}>
-                            <input
-                                type="checkbox"
-                                checked={profile.available}
-                                onChange={toggleAvailability}
-                                style={{
-                                    opacity: 0,
-                                    width: 0,
-                                    height: 0,
-                                    position: 'absolute',
-                                    cursor: 'pointer',
-                                }}
-                            />
-                            <span style={{
-                                position: 'absolute',
-                                top: 0,
-                                left: 0,
-                                right: 0,
-                                bottom: 0,
-                                backgroundColor: profile.available ? colors.primary : colors.disabledButton,
-                                borderRadius: '50px',
-                                transition: '0.3s ease-in-out',
-                            }}>
-                                <span style={{
-                                    position: 'absolute',
-                                    height: '20px',
-                                    width: '20px',
-                                    left: '3px',
-                                    bottom: '3px',
-                                    backgroundColor: 'white',
-                                    borderRadius: '50%',
-                                    transition: '0.3s ease-in-out',
-                                    transform: profile.available ? 'translateX(20px)' : 'translateX(0)',
-                                    boxShadow: '0 2px 5px rgba(0,0,0,0.2)',
-                                }} />
-                            </span>
-                        </div>
-                        <div style={{
-                            fontSize: '12px',
-                            color: colors.darkText,
-                            fontWeight: '600',
-                            fontFamily: '"Segoe UI", Tahoma, Geneva, Verdana, sans-serif',
-                        }}>
-                            {profile.available ? 'Available' : 'Busy'}
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-
-            {/* Earnings Summary - Structured and clear */}
-            <div style={{
-                backgroundColor: colors.cardBackground,
-                borderRadius: '18px',
-                padding: '25px',
-                marginBottom: '25px',
-                boxShadow: '0 6px 12px rgba(0,0,0,0.08)'
-            }}>
-                <div style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    marginBottom: '20px'
-                }}>
-                    <h2 style={{
-                        color: colors.darkText,
-                        margin: 0,
-                        fontSize: '20px',
-                        fontWeight: '600'
-                    }}>
-                        Total Earnings
-                    </h2>
-                    <span style={{
-                        backgroundColor: colors.primary + '20',
-                        color: colors.primary,
-                        borderRadius: '14px',
-                        padding: '6px 12px',
-                        fontSize: '15px',
-                        fontWeight: '600'
-                    }}>
-                        {earnings.paymentStatus}
-                    </span>
-                </div>
-
-                <div style={{
-                    fontSize: '36px',
-                    fontWeight: '700',
-                    color: colors.primary,
-                    marginBottom: '20px'
-                }}>
-                    KSH {earnings.balance.toFixed(2)}
-                </div>
-
-                <div style={{
-                    display: 'grid',
-                    gridTemplateColumns: '1fr 1fr',
-                    gap: '15px'
-                }}>
-                    <div style={{
-                        backgroundColor: colors.lightBackground,
-                        borderRadius: '14px',
-                        padding: '18px',
-                        textAlign: 'center'
-                    }}>
-                        <div style={{
-                            fontSize: '22px',
-                            fontWeight: '700',
-                            color: colors.darkText,
-                            marginBottom: '5px'
-                        }}>
-                            {earnings.totalDeliveries}
-                        </div>
-                        <div style={{ color: colors.darkText, fontSize: '15px' }}>
-                            Deliveries
-                        </div>
-                    </div>
-
-                    <div style={{
-                        backgroundColor: colors.lightBackground,
-                        borderRadius: '14px',
-                        padding: '18px',
-                        textAlign: 'center'
-                    }}>
-                        <div style={{
-                            fontSize: '22px',
-                            fontWeight: '700',
-                            color: colors.secondary,
-                            marginBottom: '5px'
-                        }}>
-                            KSH {earnings.weeklyEarnings.toFixed(2)}
-                        </div>
-                        <div style={{ color: colors.darkText, fontSize: '15px' }}>
-                            This Week
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {/* Available Orders Section - Prominent and actionable */}
-            {availableOrders.length > 0 && (
-                <div style={{ marginBottom: '25px' }}>
-                    <h2 style={{
-                        color: colors.darkText,
-                        margin: '0 0 15px 0',
-                        fontSize: '20px',
-                        fontWeight: '600'
-                    }}>
-                        New Order Available!
-                    </h2>
-                    {availableOrders.map((order) => (
-                        <div
-                            key={order.id}
-                            style={{
-                                backgroundColor: colors.cardBackground,
-                                borderRadius: '16px',
-                                padding: '20px',
-                                marginBottom: '15px',
-                                boxShadow: '0 4px 6px rgba(0,0,0,0.05)',
-                                borderLeft: `4px solid ${colors.primary}`,
-                                animation: 'pulse 1.5s infinite' // Simple pulse animation for new orders
-                            }}
+            {/* Order Accepted Success Modal */}
+            {showOrderAcceptedModal && (
+                <div style={modalOverlayStyle}>
+                    <div style={modalContentStyle}>
+                        <svg className="checkmark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52">
+                            <circle className="checkmark__circle" cx="26" cy="26" r="25" fill="none"/>
+                            <path className="checkmark__check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
+                        </svg>
+                        <h3 style={{ color: colors.darkText, marginTop: '25px', fontSize: '24px' }}>Order Accepted!</h3>
+                        <p style={{ color: colors.placeholderText, marginBottom: '25px' }}>You've successfully taken order <strong style={{color: colors.primary}}>{selectedOrder?.id}</strong>.</p>
+                        <button
+                            onClick={() => setShowOrderAcceptedModal(false)}
+                            style={{ ...getButtonStyle('primary'), width: '100%', maxWidth: '200px' }}
                         >
-                            <style>{`
-                                @keyframes pulse {
-                                    0% { transform: scale(1); box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-                                    50% { transform: scale(1.01); box-shadow: 0 6px 10px rgba(0,0,0,0.1); }
-                                    100% { transform: scale(1); box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-                                }
-                            `}</style>
-                            <div style={{
-                                display: 'flex',
-                                justifyContent: 'space-between',
-                                alignItems: 'center',
+                            Got It!
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {/* Start Delivery Confirmation Modal */}
+            {showStartDeliveryConfirmationModal && selectedOrder && (
+                <div style={modalOverlayStyle}>
+                    <div style={modalContentStyle}>
+                        <h3 style={{ color: colors.darkText, fontSize: '24px', marginBottom: '15px' }}>Confirm Delivery Start?</h3>
+                        <p style={{ color: colors.placeholderText, marginBottom: '25px', textAlign: 'center' }}>
+                            Are you sure you want to mark order <strong style={{color: colors.primary}}>{selectedOrder.id}</strong> as `OUT FOR DELIVERY`?
+                        </p>
+                        <div style={{ display: 'flex', justifyContent: 'space-around', gap: '15px', width: '100%' }}>
+                            <button
+                                onClick={() => setShowStartDeliveryConfirmationModal(false)}
+                                style={{ ...getButtonStyle('outline'), flex: 1 }}
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={confirmStartDelivery}
+                                style={{ ...getButtonStyle('primary'), flex: 1 }}
+                            >
+                                Yes, Start Delivery
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Order Details Modal */}
+            {showOrderDetailsModal && detailedOrder && (
+                <div style={modalOverlayStyle}>
+                    <div style={{
+                        ...modalContentStyle,
+                        maxWidth: '90%',
+                        width: '500px',
+                        textAlign: 'left',
+                        maxHeight: '90vh',
+                        overflowY: 'auto'
+                    }}>
+                        <h2 style={{
+                            color: colors.primary,
+                            fontSize: '24px',
+                            marginBottom: '20px',
+                            textAlign: 'center'
+                        }}>
+                            Order #{detailedOrder.id} Details
+                        </h2>
+                        
+                        <div style={{ marginBottom: '25px' }}>
+                            <h3 style={{ color: colors.primary, fontSize: '18px', marginBottom: '10px' }}>
+                                <span role="img" aria-label="chef">👨‍🍳</span> Chef Information
+                            </h3>
+                            <div style={{ 
+                                backgroundColor: colors.chefCard, 
+                                padding: '15px', 
+                                borderRadius: '10px',
                                 marginBottom: '15px'
                             }}>
-                                <div>
-                                    <div style={{
-                                        fontSize: '18px',
-                                        fontWeight: '700',
-                                        color: colors.darkText
-                                    }}>
-                                        New Order #{order.id.substring(0, 8)}
-                                    </div>
-                                    <div style={{
-                                        fontSize: '15px',
-                                        color: colors.darkText,
-                                        opacity: 0.8
-                                    }}>
-                                        From {order.chef.name} to {order.customer.name}
+                                <p style={orderDetailStyle}>
+                                    <strong>Name:</strong> {detailedOrder.chef.name}
+                                </p>
+                                <p style={orderDetailStyle}>
+                                    <strong>Speciality:</strong> {detailedOrder.chef.speciality}
+                                </p>
+                                <p style={orderDetailStyle}>
+                                    <strong>Rating:</strong> {detailedOrder.chef.rating} ⭐
+                                </p>
+                                <p style={orderDetailStyle}>
+                                    <strong>Location:</strong> {detailedOrder.chef.location}
+                                </p>
+                                <p style={orderDetailStyle}>
+                                    <strong>Phone:</strong> {detailedOrder.chef.phone}
+                                </p>
+                            </div>
+                            
+                            <h3 style={{ color: colors.primary, fontSize: '18px', marginBottom: '10px' }}>
+                                <span role="img" aria-label="food">🍲</span> Food Information
+                            </h3>
+                            <div style={{ 
+                                backgroundColor: colors.lightBackground, 
+                                padding: '15px', 
+                                borderRadius: '10px',
+                                marginBottom: '15px'
+                            }}>
+                                <p style={orderDetailStyle}>
+                                    <strong>Item:</strong> {detailedOrder.food.title}
+                                </p>
+                                <p style={orderDetailStyle}>
+                                    <strong>Description:</strong> {detailedOrder.food.description}
+                                </p>
+                                <p style={orderDetailStyle}>
+                                    <strong>Price:</strong> Ksh {detailedOrder.food.price.toFixed(2)}
+                                </p>
+                                <div style={{ marginTop: '10px' }}>
+                                    <strong>Images:</strong>
+                                    <div style={{ display: 'flex', gap: '10px', marginTop: '10px', flexWrap: 'wrap' }}>
+                                        {detailedOrder.food.images.map((img, index) => (
+                                            <img 
+                                                key={index} 
+                                                src={img} 
+                                                alt={`Food ${index}`} 
+                                                style={{ width: '80px', height: '80px', borderRadius: '8px', objectFit: 'cover' }}
+                                            />
+                                        ))}
                                     </div>
                                 </div>
-                                <span style={{
-                                    backgroundColor: colors.primary + '20',
-                                    color: colors.primary,
-                                    padding: '5px 10px',
-                                    borderRadius: '12px',
-                                    fontSize: '14px',
-                                    fontWeight: '600'
-                                }}>
-                                    KSH {order.food.price}
-                                </span>
                             </div>
-                            <div style={{ display: 'flex', gap: '10px', marginTop: '15px' }}>
-                                <button
-                                    onClick={() => acceptOrder(order.id)}
-                                    style={{
-                                        ...buttonStyles.base,
-                                        ...buttonStyles.primary,
-                                        flex: 1
+                            
+                            <h3 style={{ color: colors.primary, fontSize: '18px', marginBottom: '10px' }}>
+                                <span role="img" aria-label="customer">👤</span> Customer Information
+                            </h3>
+                            <div style={{ 
+                                backgroundColor: colors.riderCard, 
+                                padding: '15px', 
+                                borderRadius: '10px',
+                                marginBottom: '15px'
+                            }}>
+                                <p style={orderDetailStyle}>
+                                    <strong>Name:</strong> {detailedOrder.customer.name}
+                                </p>
+                                <p style={orderDetailStyle}>
+                                    <strong>Delivery Address:</strong> {detailedOrder.deliveryAddress}
+                                </p>
+                                <p style={orderDetailStyle}>
+                                    <strong>Phone:</strong> {detailedOrder.customer.phone}
+                                </p>
+                            </div>
+                            
+                            <h3 style={{ color: colors.primary, fontSize: '18px', marginBottom: '10px' }}>
+                                <span role="img" aria-label="order">📦</span> Order Information
+                            </h3>
+                            <div style={{ 
+                                backgroundColor: colors.cardBackground, 
+                                padding: '15px', 
+                                borderRadius: '10px',
+                                borderLeft: `3px solid ${colors.primary}`
+                            }}>
+                                <p style={orderDetailStyle}>
+                                    <strong>Status:</strong> 
+                                    <span style={{
+                                        backgroundColor: 
+                                            detailedOrder.status === 'READY' ? colors.info + '30' :
+                                            detailedOrder.status === 'ASSIGNED' ? colors.warning + '30' :
+                                            detailedOrder.status === 'OUT_FOR_DELIVERY' ? colors.accent + '30' :
+                                            colors.success + '30',
+                                        color: 
+                                            detailedOrder.status === 'READY' ? colors.info :
+                                            detailedOrder.status === 'ASSIGNED' ? colors.warning :
+                                            detailedOrder.status === 'OUT_FOR_DELIVERY' ? colors.accent :
+                                            colors.success,
+                                        padding: '3px 10px',
+                                        borderRadius: '20px',
+                                        marginLeft: '10px',
+                                        fontSize: '14px'
+                                    }}>
+                                        {detailedOrder.status.replace(/_/g, ' ')}
+                                    </span>
+                                </p>
+                                <p style={orderDetailStyle}>
+                                    <strong>Created:</strong> {formatDistanceToNow(parseISO(detailedOrder.createdAt), { addSuffix: true })}
+                                </p>
+                                <p style={orderDetailStyle}>
+                                    <strong>Estimated Delivery:</strong> {detailedOrder.estimatedDeliveryTime || 'N/A'}
+                                </p>
+                                <p style={orderDetailStyle}>
+                                    <strong>Payment Method:</strong> {detailedOrder.paymentMethod}
+                                </p>
+                                <p style={orderDetailStyle}>
+                                    <strong>Total Price:</strong> Ksh {detailedOrder.totalPrice.toFixed(2)}
+                                </p>
+                                <p style={orderDetailStyle}>
+                                    <strong>Your Earnings:</strong> Ksh {detailedOrder.riderPay.toFixed(2)}
+                                </p>
+                                {detailedOrder.notes && (
+                                    <p style={orderDetailStyle}>
+                                        <strong>Special Notes:</strong> {detailedOrder.notes}
+                                    </p>
+                                )}
+                            </div>
+                        </div>
+                        
+                        {/* Delivery Verification Section */}
+                        {detailedOrder.status === 'OUT_FOR_DELIVERY' && (
+                            <div style={{ marginTop: '25px' }}>
+                                <h3 style={{ 
+                                    color: colors.primary, 
+                                    fontSize: '18px', 
+                                    marginBottom: '15px',
+                                    textAlign: 'center'
+                                }}>
+                                    Delivery Verification
+                                </h3>
+                                
+                                <div style={{ 
+                                    display: 'flex', 
+                                    justifyContent: 'center', 
+                                    gap: '15px',
+                                    marginBottom: '20px',
+                                    flexWrap: 'wrap'
+                                }}>
+                                    <button 
+                                        onClick={() => showNavigationModal('chef', detailedOrder)}
+                                        style={{ 
+                                            ...getButtonStyle('info'),
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '5px',
+                                            flex: '1 1 45%'
+                                        }}
+                                    >
+                                        <span role="img" aria-label="navigate to chef">👨‍🍳</span> To Chef
+                                    </button>
+                                    <button 
+                                        onClick={() => showNavigationModal('customer', detailedOrder)}
+                                        style={{ 
+                                            ...getButtonStyle('accent'),
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '5px',
+                                            flex: '1 1 45%'
+                                        }}
+                                    >
+                                        <span role="img" aria-label="navigate to customer">👤</span> To Customer
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+                        
+                        {/* OTP Input Section - Always visible for delivery confirmation */}
+                        <div style={{ 
+                            marginTop: '20px',
+                            padding: '20px',
+                            backgroundColor: colors.lightBackground,
+                            borderRadius: '10px',
+                            border: `1px solid ${colors.borderColor}`
+                        }}>
+                            <h3 style={{ 
+                                color: colors.primary, 
+                                fontSize: '18px', 
+                                marginBottom: '15px',
+                                textAlign: 'center'
+                            }}>
+                                Confirm Delivery
+                            </h3>
+                            
+                            <div style={{ 
+                                display: 'flex', 
+                                flexDirection: 'column',
+                                gap: '10px'
+                            }}>
+                                <input
+                                    type="text"
+                                    placeholder="Enter 6-digit OTP from customer"
+                                    value={otpInput}
+                                    onChange={(e) => {
+                                        setOtpInput(e.target.value.replace(/\D/g, '').slice(0, 6));
+                                        setOtpVerificationError('');
                                     }}
+                                    style={{
+                                        padding: '15px',
+                                        borderRadius: '10px',
+                                        border: `2px solid ${otpVerificationError ? colors.error : colors.borderColor}`,
+                                        fontSize: '16px',
+                                        width: '100%',
+                                        textAlign: 'center',
+                                        letterSpacing: '8px',
+                                        fontWeight: 'bold',
+                                        backgroundColor: colors.cardBackground
+                                    }}
+                                    maxLength={6}
+                                />
+                                
+                                {otpVerificationError && (
+                                    <p style={{ 
+                                        color: colors.error, 
+                                        textAlign: 'center',
+                                        margin: '5px 0'
+                                    }}>
+                                        {otpVerificationError}
+                                    </p>
+                                )}
+                                
+                                <button 
+                                    onClick={verifyDeliveryOTP}
+                                    disabled={otpInput.length !== 6}
+                                    style={{ 
+                                        ...getButtonStyle('success'),
+                                        width: '100%',
+                                        padding: '15px',
+                                        opacity: otpInput.length !== 6 ? 0.7 : 1,
+                                        fontSize: '18px'
+                                    }}
+                                >
+                                    <span role="img" aria-label="verify">✅</span> Verify & Complete Delivery
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div style={{ display: 'flex', justifyContent: 'center', marginTop: '20px' }}>
+                            <button
+                                onClick={() => setShowOrderDetailsModal(false)}
+                                style={{ ...getButtonStyle('primary'), width: '100%', maxWidth: '200px' }}
+                            >
+                                Close Details
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Delivery Success Modal */}
+            {showDeliverySuccessModal && (
+                <div style={modalOverlayStyle}>
+                    <div style={modalContentStyle}>
+                        <svg className="checkmark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52">
+                            <circle className="checkmark__circle" cx="26" cy="26" r="25" fill="none"/>
+                            <path className="checkmark__check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
+                        </svg>
+                        <h3 style={{ color: colors.darkText, marginTop: '25px', fontSize: '24px' }}>
+                            Delivery Completed!
+                        </h3>
+                        <p style={{ 
+                            color: colors.placeholderText, 
+                            marginBottom: '25px',
+                            textAlign: 'center',
+                            fontSize: '18px',
+                            lineHeight: '1.5'
+                        }}>
+                            <span style={{ color: colors.success, fontWeight: 'bold' }}>Congrats!</span> You've successfully delivered the order to the customer.
+                        </p>
+                        <button
+                            onClick={() => setShowDeliverySuccessModal(false)}
+                            style={{ ...getButtonStyle('success'), width: '100%', maxWidth: '200px', padding: '12px' }}
+                        >
+                            Got It!
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {/* Dashboard Header */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
+                <h1 style={{ color: colors.darkText, fontSize: '28px', margin: 0 }}>Jikoni Rider</h1>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <span style={{ fontSize: '14px', color: colors.darkText, fontWeight: '500' }}>{profile.name}</span>
+                    <img src={profile.photo} alt="Rider" style={{ width: '40px', height: '40px', borderRadius: '50%', border: `2px solid ${colors.primary}` }} />
+                </div>
+            </div>
+
+            {/* Availability Toggle */}
+            <div style={{
+                display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                backgroundColor: colors.cardBackground, padding: '15px', borderRadius: '15px',
+                marginBottom: '20px', boxShadow: '0 2px 8px rgba(0,0,0,0.05)'
+            }}>
+                <span style={{ color: colors.darkText, fontWeight: '600' }}>
+                    Status: {profile.available ? <span style={{ color: colors.success }}>Online</span> : <span style={{ color: colors.error }}>Offline</span>}
+                </span>
+                <button
+                    onClick={toggleAvailability}
+                    style={{
+                        ...getButtonStyle('base'),
+                        backgroundColor: profile.available ? colors.error : colors.secondary,
+                        color: 'white',
+                        padding: '8px 18px',
+                        fontSize: '14px'
+                    }}
+                >
+                    Go {profile.available ? 'Offline' : 'Online'}
+                </button>
+            </div>
+
+            {/* Call Status Display */}
+            <div style={{
+                backgroundColor: colors.info + '15',
+                color: colors.info,
+                padding: '10px 15px',
+                borderRadius: '10px',
+                marginBottom: '20px',
+                textAlign: 'center',
+                fontWeight: '500',
+                border: `1px solid ${colors.info}`
+            }}>
+                Call Status: <span style={{ fontWeight: 'bold' }}>{callStatus.toUpperCase()}</span> - {message}
+            </div>
+
+
+            {/* Earnings Summary */}
+            <h2 style={{ color: colors.darkText, fontSize: '22px', marginBottom: '15px' }}>Your Earnings</h2>
+            <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
+                gap: '15px',
+                marginBottom: '30px'
+            }}>
+                <div style={summaryCardStyle}>
+                    <p style={summaryCardLabelStyle}>Balance</p>
+                    <p style={summaryCardValueStyle}>Ksh {earnings.balance.toFixed(2)}</p>
+                </div>
+                <div style={summaryCardStyle}>
+                    <p style={summaryCardLabelStyle}>Total Deliveries</p>
+                    <p style={summaryCardValueStyle}>{earnings.totalDeliveries}</p>
+                </div>
+                <div style={summaryCardStyle}>
+                    <p style={summaryCardLabelStyle}>Weekly Earnings</p>
+                    <p style={summaryCardValueStyle}>Ksh {earnings.weeklyEarnings.toFixed(2)}</p>
+                </div>
+            </div>
+
+            {/* Available Orders Section */}
+            <h2 style={{ color: colors.darkText, fontSize: '22px', marginBottom: '15px' }}>Available Orders ({availableOrders.length})</h2>
+            <div style={{ marginBottom: '30px', minHeight: '100px' }}>
+                {availableOrders.length === 0 ? (
+                    <p style={{ textAlign: 'center', color: colors.placeholderText, padding: '20px', backgroundColor: colors.cardBackground, borderRadius: '15px' }}>
+                        No new orders available at the moment.
+                    </p>
+                ) : (
+                    availableOrders.map(order => (
+                        <div key={order.id} style={orderCardStyle}>
+                            <div style={orderHeaderStyle}>
+                                <h3 style={orderTitleStyle}>Order #{order.id}</h3>
+                                <span style={orderPayoutStyle}>Ksh {order.riderPay?.toFixed(2) || 'N/A'}</span>
+                            </div>
+                            <p style={orderDetailStyle}>
+                                <span role="img" aria-label="customer">👤</span> {order.customer.name}
+                            </p>
+                            <p style={orderDetailStyle}>
+                                <span role="img" aria-label="location">📍</span> {order.deliveryAddress}
+                            </p>
+                            <div style={orderBadgeStyle(colors.info)}>
+                                <span role="img" aria-label="time">⏱️</span> Estimated: {order.estimatedDeliveryTime || 'N/A'}
+                            </div>
+                            <div style={orderActionsStyle}>
+                                <button
+                                    onClick={() => handleAcceptOrder(order.id)}
+                                    style={getButtonStyle('primary')}
                                 >
                                     Accept Order
                                 </button>
                                 <button
                                     onClick={() => declineOrder(order.id)}
-                                    style={{
-                                        ...buttonStyles.base,
-                                        ...buttonStyles.outline,
-                                        borderColor: colors.error,
-                                        color: colors.error,
-                                        flex: 1
-                                    }}
+                                    style={getButtonStyle('outline')}
                                 >
                                     Decline
                                 </button>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            )}
-
-            {/* Orders Header - Clear categorization */}
-            <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                marginBottom: '15px'
-            }}>
-                <h2 style={{
-                    color: colors.darkText,
-                    margin: 0,
-                    fontSize: '20px',
-                    fontWeight: '600'
-                }}>
-                    Active Orders
-                </h2>
-                <span style={{
-                    backgroundColor: colors.primary,
-                    color: 'white',
-                    borderRadius: '16px',
-                    padding: '5px 12px',
-                    fontSize: '14px',
-                    fontWeight: '600'
-                }}>
-                    {activeOrders.filter(o => o.status !== 'delivered').length} pending
-                </span>
-            </div>
-
-            {/* Orders List - Visually distinct statuses */}
-            <div style={{ marginBottom: '100px' }}>
-                {activeOrders.length === 0 && availableOrders.length === 0 ? (
-                    <div style={{
-                        backgroundColor: colors.cardBackground,
-                        borderRadius: '16px',
-                        padding: '40px 20px',
-                        textAlign: 'center',
-                        color: colors.darkText,
-                        boxShadow: '0 4px 6px rgba(0,0,0,0.05)'
-                    }}>
-                        <div style={{ fontSize: '60px', marginBottom: '20px' }}>🛵</div>
-                        <p style={{ fontSize: '18px', fontWeight: '600', marginBottom: '10px' }}>
-                            No active orders
-                        </p>
-                        <p style={{ color: colors.darkText, opacity: 0.7 }}>
-                            You'll be notified when new orders arrive
-                        </p>
-                    </div>
-                ) : (
-                    activeOrders.map((order) => (
-                        <div
-                            key={order.id}
-                            style={{
-                                backgroundColor: colors.cardBackground,
-                                borderRadius: '16px',
-                                padding: '20px',
-                                marginBottom: '15px',
-                                boxShadow: '0 4px 6px rgba(0,0,0,0.05)',
-                                borderLeft: `4px solid ${
-                                    order.status === 'in-transit' ? colors.warning :
-                                        order.status === 'assigned' ? colors.info :
-                                            order.status === 'delivered' ? colors.success : colors.primary
-                                    }`,
-                                cursor: 'pointer'
-                            }}
-                            onClick={() => setSelectedOrder(order)}
-                        >
-                            <div style={{
-                                display: 'flex',
-                                justifyContent: 'space-between',
-                                alignItems: 'center',
-                                marginBottom: '15px'
-                            }}>
-                                <div>
-                                    <div style={{
-                                        fontSize: '16px',
-                                        fontWeight: '600',
-                                        color: colors.darkText
-                                    }}>
-                                        Order #{order.id.substring(0, 8)}
-                                    </div>
-                                    <div style={{
-                                        fontSize: '15px',
-                                        color: colors.darkText,
-                                        opacity: 0.8
-                                    }}>
-                                        From {order.chef.name} to {order.customer.name}
-                                    </div>
-                                </div>
-                                <span style={{
-                                    backgroundColor: colors.primary + '20',
-                                    color: colors.primary,
-                                    padding: '5px 10px',
-                                    borderRadius: '12px',
-                                    fontSize: '14px',
-                                    fontWeight: '600'
-                                }}>
-                                    KSH {order.food.price}
-                                </span>
-                            </div>
-                            <div style={{
-                                display: 'flex',
-                                justifyContent: 'space-between',
-                                fontSize: '14px',
-                                color: colors.darkText,
-                                opacity: 0.7,
-                                marginBottom: '10px'
-                            }}>
-                                <span>Status: <strong style={{ color: colors.primary }}>{order.status.replace('-', ' ')}</strong></span>
-                                {order.assignedAt && <span>{getTimeSinceAssignment(order.assignedAt)}</span>}
                             </div>
                         </div>
                     ))
                 )}
             </div>
 
-            {/* Order Details Modal - Comprehensive and actionable */}
-            {selectedOrder && (
-                <div style={{
-                    position: 'fixed',
-                    bottom: 0,
-                    left: 0,
-                    right: 0,
-                    backgroundColor: colors.cardBackground,
-                    borderTopLeftRadius: '25px',
-                    borderTopRightRadius: '25px',
-                    padding: '30px',
-                    paddingBottom: 'calc(30px + env(safe-area-inset-bottom))', // For notched phones
-                    boxShadow: '0 -8px 20px rgba(0,0,0,0.15)',
-                    zIndex: 999,
-                    maxHeight: '80%',
-                    overflowY: 'auto'
-                }}>
-                    <button
-                        onClick={() => setSelectedOrder(null)}
-                        style={{
-                            position: 'absolute',
-                            top: '15px',
-                            right: '15px',
-                            backgroundColor: 'transparent',
-                            border: 'none',
-                            fontSize: '24px',
-                            cursor: 'pointer',
-                            color: colors.placeholderText
-                        }}
-                    >
-                        &times;
-                    </button>
+            {/* Active Orders Section */}
+            <h2 style={{ color: colors.darkText, fontSize: '22px', marginBottom: '15px' }}>
+                Active Orders ({activeOrders.length})
+            </h2>
+            <div style={{ minHeight: '100px' }}>
+                {activeOrders.length === 0 ? (
+                    <p style={{ textAlign: 'center', color: colors.placeholderText, padding: '20px', backgroundColor: colors.cardBackground, borderRadius: '15px' }}>
+                        No active deliveries.
+                    </p>
+                ) : (
+                    activeOrders.map(order => (
+                        <div key={order.id} style={orderCardStyle}>
+                            <div style={orderHeaderStyle}>
+                                <h3 style={orderTitleStyle}>Order #{order.id}</h3>
+                                <span style={orderPayoutStyle}>Ksh {order.riderPay?.toFixed(2) || 'N/A'}</span>
+                            </div>
+                            <p style={orderDetailStyle}>
+                                <span role="img" aria-label="customer">👤</span> {order.customer.name}
+                            </p>
+                            <p style={orderDetailStyle}>
+                                <span role="img" aria-label="location">📍</span> {order.deliveryAddress}
+                            </p>
+                            <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', marginTop: '10px'}}>
+                                <span style={orderBadgeStyle(colors.info)}>
+                                    <span role="img" aria-label="time">⏱️</span> Estimated: {order.estimatedDeliveryTime || 'N/A'}
+                                </span>
+                                <span style={orderBadgeStyle(order.status === 'OUT_FOR_DELIVERY' ? colors.success : colors.warning)}>
+                                    Status: {order.status.replace(/_/g, ' ')}
+                                </span>
+                            </div>
 
-                    <h2 style={{
-                        color: colors.darkText,
-                        marginBottom: '20px',
-                        fontSize: '22px',
-                        fontWeight: '700'
-                    }}>
-                        Order Details #{selectedOrder.id.substring(0, 8)}
-                    </h2>
-
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '20px' }}>
-                        <div style={{ backgroundColor: colors.chefCard, padding: '15px', borderRadius: '12px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
-                            <h3 style={{ color: colors.darkText, fontSize: '18px', marginBottom: '8px' }}>Chef Info</h3>
-                            <p style={{ margin: '5px 0', fontSize: '15px', color: colors.darkText }}><strong>{selectedOrder.chef.name}</strong></p>
-                            <p style={{ margin: '5px 0', fontSize: '15px', color: colors.darkText }}>{selectedOrder.chef.location}</p>
-                            <p style={{ margin: '5px 0', fontSize: '15px', color: colors.darkText }}>{selectedOrder.chef.phone}</p>
-                            {selectedOrder.chef.peerId && (
+                            {/* View Details Button */}
+                            <div style={{ marginTop: '15px' }}>
                                 <button
-                                    onClick={() => startPeerCall(selectedOrder.chef.peerId, selectedOrder.chef.name, 'chef', selectedOrder.chef.phone)}
-                                    style={{ ...buttonStyles.base, ...buttonStyles.accent, width: '100%', marginTop: '10px', fontSize: '14px' }}
-                                >
-                                    📞 Call Chef
-                                </button>
-                            )}
-                        </div>
-                        <div style={{ backgroundColor: colors.riderCard, padding: '15px', borderRadius: '12px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
-                            <h3 style={{ color: colors.darkText, fontSize: '18px', marginBottom: '8px' }}>Customer Info</h3>
-                            <p style={{ margin: '5px 0', fontSize: '15px', color: colors.darkText }}><strong>{selectedOrder.customer.name}</strong></p>
-                            <p style={{ margin: '5px 0', fontSize: '15px', color: colors.darkText }}>{selectedOrder.customer.address}</p>
-                            <p style={{ margin: '5px 0', fontSize: '15px', color: colors.darkText }}>{selectedOrder.customer.phone}</p>
-                            {selectedOrder.customer.peerId && (
-                                <button
-                                    onClick={() => startPeerCall(selectedOrder.customer.peerId, selectedOrder.customer.name, 'customer', selectedOrder.customer.phone)}
-                                    style={{ ...buttonStyles.base, ...buttonStyles.accent, width: '100%', marginTop: '10px', fontSize: '14px' }}
-                                >
-                                    📞 Call Customer
-                                </button>
-                            )}
-                        </div>
-                    </div>
-
-                    <div style={{ marginBottom: '20px' }}>
-                        <h3 style={{ color: colors.darkText, fontSize: '18px', marginBottom: '10px' }}>Food Items</h3>
-                        <div style={{ backgroundColor: colors.lightBackground, padding: '15px', borderRadius: '12px', boxShadow: '0 2px 4px rgba(0,0,0,0.03)' }}>
-                            <p style={{ margin: '5px 0', fontSize: '16px', color: colors.darkText }}>
-                                <strong>{selectedOrder.food.title}</strong> - KSH {selectedOrder.food.price.toFixed(2)}
-                            </p>
-                            <p style={{ margin: '5px 0', fontSize: '14px', color: colors.placeholderText }}>
-                                {selectedOrder.food.description}
-                            </p>
-                        </div>
-                    </div>
-
-                    <div style={{ marginBottom: '20px' }}>
-                        <h3 style={{ color: colors.darkText, fontSize: '18px', marginBottom: '10px' }}>Delivery Details</h3>
-                        <div style={{ backgroundColor: colors.lightBackground, padding: '15px', borderRadius: '12px', boxShadow: '0 2px 4px rgba(0,0,0,0.03)' }}>
-                            <p style={{ margin: '5px 0', fontSize: '16px', color: colors.darkText }}>
-                                Pickup: {selectedOrder.chef.location}
-                            </p>
-                            <p style={{ margin: '5px 0', fontSize: '16px', color: colors.darkText }}>
-                                Dropoff: {selectedOrder.customer.address}
-                            </p>
-                            <p style={{ margin: '5px 0', fontSize: '16px', color: colors.darkText }}>
-                                Total Amount: <strong style={{ color: colors.primary }}>KSH {selectedOrder.payment.amount.toFixed(2)}</strong> ({selectedOrder.payment.method})
-                            </p>
-                            <p style={{ margin: '5px 0', fontSize: '16px', color: colors.darkText }}>
-                                OTP: <strong style={{ color: colors.accent }}>{selectedOrder.otp}</strong> (for delivery completion)
-                            </p>
-                        </div>
-                    </div>
-
-                    {selectedOrder.status === 'assigned' && (
-                        <button
-                            onClick={() => startDelivery(selectedOrder.id)}
-                            style={{ ...buttonStyles.base, ...buttonStyles.primary, width: '100%', marginBottom: '15px' }}
-                        >
-                            Start Delivery
-                        </button>
-                    )}
-
-                    {selectedOrder.status === 'in-transit' && (
-                        <>
-                            <button
-                                onClick={() => openNavigation(selectedOrder, 'google')}
-                                style={{ ...buttonStyles.base, ...buttonStyles.info, width: '100%', marginBottom: '15px' }}
-                            >
-                                Navigate to Customer (Google Maps)
-                            </button>
-                            <div style={{ marginBottom: '15px' }}>
-                                <input
-                                    type="text"
-                                    placeholder="Enter OTP to complete delivery"
-                                    value={otpInput}
-                                    onChange={(e) => setOtpInput(e.target.value)}
-                                    style={{
-                                        width: 'calc(100% - 20px)',
-                                        padding: '12px 10px',
-                                        borderRadius: '8px',
-                                        border: `1px solid ${colors.borderColor}`,
-                                        fontSize: '16px',
-                                        marginBottom: '10px'
+                                    onClick={() => openOrderDetails(order)}
+                                    style={{ 
+                                        ...getButtonStyle('outline'),
+                                        width: '100%',
+                                        padding: '10px',
+                                        fontSize: '15px'
                                     }}
-                                />
-                                <button
-                                    onClick={completeDelivery}
-                                    style={{ ...buttonStyles.base, ...buttonStyles.success, width: '100%' }}
                                 >
-                                    Complete Delivery
+                                    <span role="img" aria-label="details">🔍</span> View Full Order Details
                                 </button>
                             </div>
-                        </>
-                    )}
 
-                    {selectedOrder.status === 'delivered' && (
-                        <p style={{ textAlign: 'center', color: colors.success, fontSize: '18px', fontWeight: '600' }}>
-                            ✅ Order Delivered!
-                        </p>
-                    )}
-                </div>
-            )}
+                            <div style={{ ...orderActionsStyle, marginTop: '20px' }}>
+                                {order.customer.phone && (
+                                    <a href={`tel:${order.customer.phone}`} style={{ textDecoration: 'none' }}>
+                                        <button style={{ ...getButtonStyle('accent'), padding: '10px 15px' }}>
+                                            <span role="img" aria-label="call customer">📞</span> Call Customer
+                                        </button>
+                                    </a>
+                                )}
+                                {order.chef.phone && (
+                                    <a href={`tel:${order.chef.phone}`} style={{ textDecoration: 'none' }}>
+                                        <button style={{ ...getButtonStyle('accent'), padding: '10px 15px' }}>
+                                            <span role="img" aria-label="call chef">📞</span> Call Chef
+                                        </button>
+                                    </a>
+                                )}
+                                {myPeerId && order.customer.peerId && order.customer.peerId !== myPeerId && (
+                                    <button
+                                        onClick={() => startPeerCall(order.customer.peerId, order.customer.name, 'Customer', order.customer.phone)}
+                                        disabled={callStatus !== 'idle'}
+                                        style={{ ...getButtonStyle('info'), padding: '10px 15px' }}
+                                    >
+                                        <span role="img" aria-label="video call">🌐</span> App Call Customer
+                                    </button>
+                                )}
+                                {myPeerId && order.chef.peerId && order.chef.peerId !== myPeerId && (
+                                    <button
+                                        onClick={() => startPeerCall(order.chef.peerId, order.chef.name, 'Chef', order.chef.phone)}
+                                        disabled={callStatus !== 'idle'}
+                                        style={{ ...getButtonStyle('info'), padding: '10px 15px' }}
+                                    >
+                                        <span role="img" aria-label="video call">🌐</span> App Call Chef
+                                    </button>
+                                )}
+                            </div>
+
+                            <div style={{ ...orderActionsStyle, marginTop: '10px', flexDirection: 'column', gap: '10px' }}>
+                                <button
+                                    onClick={() => showNavigationModal('chef', order)}
+                                    style={getButtonStyle('info')}
+                                >
+                                    <span role="img" aria-label="navigate to chef">👨‍🍳</span> Navigate to Chef
+                                </button>
+                                <button
+                                    onClick={() => showNavigationModal('customer', order)}
+                                    style={getButtonStyle('info')}
+                                >
+                                    <span role="img" aria-label="navigate to customer">👤</span> Navigate to Customer
+                                </button>
+                                {order.status === 'ASSIGNED' && (
+                                    <button
+                                        onClick={() => handleStartDeliveryClick(order)}
+                                        style={getButtonStyle('primary')}
+                                    >
+                                        <span role="img" aria-label="start delivery">📦</span> Start Delivery
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+                    ))
+                )}
+            </div>
+            {/* Custom Keyframe Styles */}
+            <style>
+                {`
+                @keyframes fadeInScale {
+                    from { opacity: 0; transform: scale(0.9); }
+                    to { opacity: 1; transform: scale(1); }
+                }
+
+                @keyframes pulse {
+                    0% { transform: scale(1); }
+                    50% { transform: scale(1.08); }
+                    100% { transform: scale(1); }
+                }
+
+                .checkmark {
+                    width: 56px;
+                    height: 56px;
+                    border-radius: 50%;
+                    display: block;
+                    stroke-width: 2;
+                    stroke: #fff;
+                    stroke-miterlimit: 10;
+                    margin: 0 auto;
+                    box-shadow: inset 0px 0px 0px ${colors.success};
+                    animation: fill .4s ease-in-out .4s forwards, scale .3s ease-in-out .9s both;
+                }
+
+                .checkmark__circle {
+                    stroke-dasharray: 166;
+                    stroke-dashoffset: 166;
+                    stroke-width: 2;
+                    stroke-miterlimit: 10;
+                    stroke: ${colors.success};
+                    fill: none;
+                    animation: stroke 0.6s cubic-bezier(0.650, 0.000, 0.450, 1.000) forwards;
+                }
+
+                .checkmark__check {
+                    transform-origin: 50% 50%;
+                    stroke-dasharray: 48;
+                    stroke-dashoffset: 48;
+                    animation: stroke 0.3s cubic-bezier(0.650, 0.000, 0.450, 1.000) 0.8s forwards;
+                }
+
+                @keyframes stroke {
+                    100% {
+                        stroke-dashoffset: 0;
+                    }
+                }
+
+                @keyframes fill {
+                    100% {
+                        box-shadow: inset 0px 0px 0px 30px ${colors.success};
+                    }
+                }
+
+                @keyframes scale {
+                    0%, 100% {
+                        transform: none;
+                    }
+                    50% {
+                        transform: scale3d(1.1, 1.1, 1);
+                    }
+                }
+                `}
+            </style>
+
         </div>
     );
 };
 
 export default RiderDashboard;
+
+// --- Inline Styles for Reusability ---
+const summaryCardStyle = {
+    backgroundColor: colors.cardBackground,
+    padding: '15px',
+    borderRadius: '15px',
+    textAlign: 'center',
+    boxShadow: '0 2px 8px rgba(0,0,0,0.05)'
+};
+
+const summaryCardLabelStyle = {
+    color: colors.placeholderText,
+    fontSize: '14px',
+    marginBottom: '5px'
+};
+
+const summaryCardValueStyle = {
+    color: colors.darkText,
+    fontSize: '24px',
+    fontWeight: 'bold',
+    margin: 0
+};
+
+const orderCardStyle = {
+    backgroundColor: colors.cardBackground,
+    padding: '20px',
+    borderRadius: '15px',
+    marginBottom: '15px',
+    boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+    borderLeft: `5px solid ${colors.primary}`,
+    transition: 'transform 0.2s ease-in-out',
+    '&:hover': {
+        transform: 'translateY(-3px)'
+    }
+};
+
+const orderHeaderStyle = {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: '10px'
+};
+
+const orderTitleStyle = {
+    color: colors.darkText,
+    fontSize: '20px',
+    fontWeight: '700',
+    margin: 0
+};
+
+const orderPayoutStyle = {
+    backgroundColor: colors.secondary,
+    color: 'white',
+    padding: '5px 10px',
+    borderRadius: '8px',
+    fontWeight: 'bold',
+    fontSize: '15px'
+};
+
+const orderDetailStyle = {
+    color: colors.darkText,
+    fontSize: '15px',
+    marginBottom: '5px',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px'
+};
+
+const orderActionsStyle = {
+    display: 'flex',
+    flexWrap: 'wrap',
+    gap: '10px',
+    marginTop: '15px'
+};
+
+const orderBadgeStyle = (backgroundColor) => ({
+    backgroundColor: backgroundColor + '20',
+    color: backgroundColor,
+    padding: '5px 10px',
+    borderRadius: '5px',
+    fontSize: '12px',
+    fontWeight: '600',
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '5px',
+    marginRight: '8px',
+    marginBottom: '5px'
+});
+
+const modalOverlayStyle = {
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 1000
+};
+
+const modalContentStyle = {
+    backgroundColor: colors.cardBackground,
+    padding: '35px',
+    borderRadius: '20px',
+    textAlign: 'center',
+    width: '90%',
+    maxWidth: '450px',
+    boxShadow: '0 15px 40px rgba(0,0,0,0.3)',
+    animation: 'fadeInScale 0.3s ease-out'
+};

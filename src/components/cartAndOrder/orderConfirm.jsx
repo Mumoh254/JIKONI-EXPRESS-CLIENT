@@ -350,7 +350,8 @@ const OrderConfirmation = ({ cart, location, onConfirm, onBack, chefLocation }) 
   const [isExpiryDateValid, setIsExpiryDateValid] = useState(false);
   const [isCvcValid, setIsCvcValid] = useState(false);
 
-  const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+const subtotal = (cart || []).reduce((sum, item) => sum + (Number(item.price) * Number(item.quantity)), 0);
+
   const total = subtotal + deliveryFee + HANDLING_FEE;
 
   // Validation functions (simple for demonstration)
@@ -367,9 +368,9 @@ const OrderConfirmation = ({ cart, location, onConfirm, onBack, chefLocation }) 
     setIsCardNameValid(validateCardName(cardName));
   }, [cardName]);
 
-  useEffect(() => {
-    setIsExpiryDateValid(validateExpiryDate(expiryDate));
-  }, [expiryDate]);
+useEffect(() => {
+  setIsExpiryDateValid(validateExpiryDate(expiryDate));
+}, [expiryDate]);
 
   useEffect(() => {
     setIsCvcValid(validateCvc(cvc));
@@ -518,15 +519,15 @@ const OrderConfirmation = ({ cart, location, onConfirm, onBack, chefLocation }) 
                 <FiShoppingCart /> Order Summary
               </SectionTitle>
               <StyledListGroup variant="flush">
-                {cart.map(item => (
-                  <SummaryItem key={item.id}>
-                    <div>
-                      {item.title}
-                      {item.isPreOrder && (
-                        <Badge bg="info" className="ms-2">
-                          Pre-Order
-                        </Badge>
-                      )}
+              {(cart || []).map(item => (
+  <SummaryItem key={item.id}>
+    <div>
+      {item.title}
+      {item.isPreOrder && (
+        <Badge bg="info" className="ms-2">
+          Pre-Order
+        </Badge>
+      )}
                       <span className="text-muted d-block">x {item.quantity}</span>
                     </div>
                     <div>

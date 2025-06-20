@@ -288,7 +288,8 @@ const CartSidebar = ({
   onConfirmDelivery,
   userType
 }) => {
-  const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+const subtotal = (cart ?? []).reduce((sum, item) => sum + (item.price * item.quantity), 0);
+
   const [activeTab, setActiveTab] = useState('cart');
   const [showCallModal, setShowCallModal] = useState(false);
   const [callRecipient, setCallRecipient] = useState(null);
@@ -426,9 +427,14 @@ const CartSidebar = ({
           <Offcanvas.Title className="d-flex align-items-center gap-2">
             <CartPlus fontSize={24} style={{ color: colors.primary }} />
             <span className="fw-bold" style={{ color: colors.darkText }}>Your Food Cart</span>
-            <Badge bg="secondary" pill style={{ backgroundColor: colors.placeholderText }}>
-              {cart.length}
-            </Badge>
+           <Badge
+  bg="secondary"
+  pill
+  style={{ backgroundColor: colors.placeholderText }}
+>
+  {cart?.length ?? 0}
+</Badge>
+
           </Offcanvas.Title>
         </Offcanvas.Header>
 
@@ -441,12 +447,12 @@ const CartSidebar = ({
             variant="pills"
           >
             <Tab eventKey="cart" title="Current Order">
-              <div className="flex-grow-1 overflow-auto p-3">
-                {cart.length === 0 ? (
-                  <div className="text-center py-4" style={{ color: colors.placeholderText }}>
-                    Your cart is empty. Start adding delicious items!
-                  </div>
-                ) : (
+            <div className="flex-grow-1 overflow-auto p-3">
+  {(cart?.length ?? 0) === 0 ? (
+    <div className="text-center py-4" style={{ color: colors.placeholderText }}>
+      Your cart is empty. Start adding delicious items!
+    </div>
+         ) : (
                   <ListGroup variant="flush">
                     {cart.map(item => (
                       <CartItem key={item.id}>
@@ -533,9 +539,10 @@ const CartSidebar = ({
                 <div className="mb-3">
                   <div className="d-flex justify-content-between mb-2">
                     <span style={{ color: colors.placeholderText }}>Subtotal:</span>
-                    <span className="fw-semibold" style={{ color: colors.darkText }}>
-                      KSh {subtotal.toFixed(2)}
-                    </span>
+                   <span className="fw-semibold" style={{ color: colors.darkText }}>
+  KSh {(subtotal ?? 0).toFixed(2)}
+</span>
+
                   </div>
                   <div className="d-flex justify-content-between pt-2 border-top">
                     <span className="fw-bold" style={{ color: colors.darkText }}>Total:</span>
@@ -544,20 +551,15 @@ const CartSidebar = ({
                     </span>
                   </div>
                 </div>
-                <Button 
-                  size="lg" 
-                  className="w-100 fw-bold py-3 border-0"
-                  onClick={onCheckout}
-                  disabled={cart.length === 0}
-                  style={{ 
-                    backgroundColor: cart.length === 0 ? colors.disabledButton : colors.primary,
-                    '&:hover': {
-                      backgroundColor: cart.length === 0 ? colors.disabledButton : colors.buttonHover
-                    }
-                  }}
-                >
-                  Proceed to Checkout →
-                </Button>
+             <Button
+  size="lg"
+  className={`w-100 fw-bold py-3 border-0 ${cart?.length === 0 ? 'btn-disabled' : 'btn-primary'}`}
+  onClick={onCheckout}
+  disabled={!(cart?.length > 0)}
+>
+  Proceed to Checkout →
+</Button>
+
               </FixedFooter>
             </Tab>
             

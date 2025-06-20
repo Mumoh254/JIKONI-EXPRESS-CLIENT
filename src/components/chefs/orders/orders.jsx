@@ -16,7 +16,8 @@ const statusColors = {
   'Processing': 'primary',
   'Shipped': 'info',
   'Delivered': 'success',
-  'Cancelled': 'danger'
+  'Cancelled': 'danger',
+  'on-the-way':  'secondary'
 };
 
 const statusOptions = Object.keys(statusColors);

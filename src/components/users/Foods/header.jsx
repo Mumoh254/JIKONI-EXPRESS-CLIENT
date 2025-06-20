@@ -3,7 +3,7 @@ import { Button } from 'react-bootstrap';
 import { LuChefHat, LuScooter, LuShoppingCart } from 'react-icons/lu'; // Modern and sleek Lucide React icons
 import { GiKenya } from 'react-icons/gi'; // Keeping GiKenya as it's unique
 import styled, { css } from 'styled-components'; // Import css for conditional styling
-
+import { RiMotorbikeFill } from 'react-icons/ri';
 // --- Jikoni Express Color Palette (ensure this is consistent or imported globally) ---
 const colors = {
     primary: '#FF4532', // Jikoni Red

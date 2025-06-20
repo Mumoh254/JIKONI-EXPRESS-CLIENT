@@ -1,476 +1,463 @@
-import React, { useState } from 'react';
-import { Button, Nav, Navbar, Offcanvas, Badge, Dropdown } from 'react-bootstrap';
-import {
-  Bell, Gear, List, BoxSeam, CurrencyDollar, PersonCircle, GraphUp, Truck, PersonFill
-} from 'react-bootstrap-icons';
+import React, { useState, useEffect } from 'react';
+import { Button, Navbar, Offcanvas, Badge, Dropdown, Modal, Form } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
-import NotificationsPanel from './orders/notificationPanel'; // Assuming this path is correct
-import styled, { keyframes, css } from 'styled-components';
 
-// --- Jikoni Express Color Palette ---
+// --- Jikoni Express Color Palette --- (Keep this at the top or in a separate file)
 const colors = {
-  primary: '#FF4532',       // Jikoni Red
-  secondary: '#00C853',     // Jikoni Green
-  darkText: '#1A202C',      // Dark text
-  lightText: '#6C757D',     // Muted text
-  cardBackground: '#FFFFFF', // White for card background
-  borderColor: '#E0E6ED',   // Lighter border for sleekness
-  greenAccent: '#00B84D',   // Deep green for accents
-  // New header background colors (derived from your snippet's implied light background)
-  headerBackground: '#FFFFFF', // Explicitly white background as per snippet
-  errorText: '#dc3545', // Standard Bootstrap danger color, matching your example's implied 'colors.error'
-  disabledButton: '#CBD5E1', // For toggle background when offline
+    primary: '#FF4532',       // Jikoni Red
+    secondary: '#00C853',     // Jikoni Green
+    darkText: '#1A202C',      // Dark text (nearly black)
+    lightText: '#6C757D',     // Muted text
+    cardBackground: '#FFFFFF',// White for card background and header
+    borderColor: '#E0E6ED',   // Lighter border for sleekness
+    errorText: '#dc3545',     // Standard Bootstrap danger color
+    disabledState: '#D1D9E6', // For offline toggle background or muted states
+    lightBackground: '#F0F2F5',// A very light grey for subtle backgrounds/hovers
+    textPrimary: '#343A40',    // A slightly softer dark text
 };
 
-// --- Animations ---
-const fadeIn = keyframes`
-  from { opacity: 0; transform: translateY(-10px); }
-  to { opacity: 1; transform: translateY(0); }
-`;
+// --- Mock NotificationsPanel Component (for demonstration purposes) ---
+// In a real application, you would import your actual NotificationsPanel.
+const NotificationsPanel = ({ show, onHide, notifications, markNotificationAsRead }) => {
+    // Defining colors here again for this specific mock, in a real app, it would be shared
+    const panelColors = { // Renamed to avoid conflict with global colors
+        primary: '#FF4532',
+        darkText: '#1A202C',
+        lightText: '#6C757D',
+        cardBackground: '#FFFFFF',
+        lightBackground: '#F0F2F5',
+    };
 
-const pulseEffect = keyframes`
-  0% { transform: scale(1); }
-  50% { transform: scale(1.05); }
-  100% { transform: scale(1); }
-`;
-
-// --- Styled Components ---
-
-const StyledHeader = styled(Navbar)`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 25px; /* Adjust as needed for spacing from content below */
-  padding: 12px 15px; /* Compact padding as per snippet */
-  border-bottom: 1px solid ${colors.borderColor};
-  background-color: ${colors.headerBackground}; /* White background as per snippet */
-  border-radius: 10px;
-  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1); /* Subtle shadow as per snippet */
-  font-family: 'Inter', sans-serif; /* Consistent font */
-  animation: ${fadeIn} 0.6s ease-out; /* Smooth entrance */
-
-  @media (max-width: 992px) {
-    padding: 10px 15px;
-    margin-bottom: 20px;
-  }
-  @media (max-width: 768px) {
-    flex-wrap: nowrap; /* Prevent wrapping main header elements */
-    padding: 8px 12px;
-    border-radius: 8px;
-    margin-bottom: 15px;
-  }
-`;
-
-const LeftSection = styled.div`
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-`;
-
-const GreetingText = styled.h1`
-  color: ${colors.darkText};
-  margin: 0;
-  font-size: 24px; /* From snippet */
-  font-weight: 700;
-  letter-spacing: 0.5px;
-
-  @media (max-width: 768px) {
-    font-size: 20px;
-  }
-`;
-
-const BrandText = styled.p`
-  color: ${colors.primary}; /* From snippet */
-  font-size: 14px; /* From snippet */
-  font-weight: 600;
-  margin-top: 5px; /* From snippet */
-  margin-bottom: 0;
-`;
-
-const AvailabilityStatus = styled.p`
-  color: ${props => props.$available ? colors.primary : colors.errorText}; /* Using errorText for consistency */
-  margin-top: 4px; /* From snippet */
-  font-weight: 600;
-  font-size: 14px; /* From snippet */
-  display: flex;
-  align-items: center;
-  gap: 6px;
-
-  span {
-    font-size: 16px; /* From snippet */
-  }
-`;
-
-const RightSection = styled.div`
-  display: flex;
-  align-items: center;
-  /* Adjust margin for hamburger toggle on the far right */
-  gap: 15px; /* Spacing between profile/toggle and hamburger */
-
-  @media (max-width: 768px) {
-    gap: 10px;
-  }
-`;
-
-const ProfileImage = styled.img`
-  width: 50px; /* From snippet */
-  height: 50px; /* From snippet */
-  border-radius: 50%;
-  margin-right: 12px; /* From snippet */
-  border: 3px solid ${props => props.$available ? colors.primary : colors.errorText}; /* From snippet */
-  object-fit: cover;
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1); /* From snippet */
-  transition: border 0.3s ease;
-
-  @media (max-width: 768px) {
-    width: 40px;
-    height: 40px;
-    margin-right: 8px;
-  }
-`;
-
-const ToggleAndLabelWrapper = styled.div`
-  display: flex;
-  align-items: center;
-
-  @media (max-width: 768px) {
-    display: none; /* Hide toggle and label on mobile, keep hamburger */
-  }
-`;
-
-const ToggleContainer = styled.div`
-  position: relative;
-  width: 48px; /* From snippet */
-  height: 26px; /* From snippet */
-  margin-right: 10px; /* From snippet */
-
-  input {
-    opacity: 0;
-    width: 0;
-    height: 0;
-    position: absolute;
-    cursor: pointer;
-  }
-
-  span.slider {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: ${props => props.$available ? colors.primary : colors.disabledButton};
-    border-radius: 50px;
-    transition: 0.3s ease-in-out;
-    cursor: pointer;
-  }
-
-  span.knob {
-    position: absolute;
-    height: 20px; /* From snippet */
-    width: 20px; /* From snippet */
-    left: 3px;
-    bottom: 3px;
-    background-color: white;
-    border-radius: 50%;
-    transition: 0.3s ease-in-out;
-    transform: ${props => props.$available ? 'translateX(20px)' : 'translateX(0)'}; /* From snippet */
-    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-  }
-`;
-
-const ToggleLabel = styled.div`
-  font-size: 12px; /* From snippet */
-  color: ${colors.darkText};
-  font-weight: 600;
-  white-space: nowrap;
-`;
-
-// Stats Container to fill the middle space
-const HeaderStatsCompact = styled.div`
-  display: flex;
-  flex-grow: 1; /* Allows it to take up space in the middle */
-  justify-content: center; /* Center the stats */
-  gap: 30px; /* Space between stat items */
-  margin: 0 20px; /* Horizontal margin from sides */
-
-  @media (max-width: 992px) {
-    gap: 15px;
-    margin: 0 10px;
-  }
-  @media (max-width: 768px) {
-    display: none; /* Hidden on small mobile */
-  }
-`;
-
-const CompactStatItem = styled.div`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  color: ${colors.darkText};
-  
-  .icon {
-    font-size: 1.5rem; /* Smaller icon for compactness */
-    color: ${colors.greenAccent}; /* Jikoni Green */
-    margin-bottom: 5px;
-  }
-
-  .value {
-    font-weight: 700;
-    font-size: 1.2rem; /* Compact value font size */
-    color: ${colors.darkText};
-  }
-
-  .label {
-    font-size: 0.75rem; /* Compact label font size */
-    color: ${colors.lightText};
-    text-transform: uppercase;
-    white-space: nowrap;
-  }
-`;
-
-const StyledNavbarToggle = styled(Navbar.Toggle)`
-  border: none !important;
-  /* Color needs to be dark for light background, but default Bootstrap icon is dark */
-  /* If default icon is used, it will be visible. If custom icon, set color to colors.darkText */
-  .navbar-toggler-icon {
-    /* If you use a custom SVG for hamburger, you might style it here */
-    /* Example: background-image: url("data:image/svg+xml,%3csvg ... fill='${encodeURIComponent(colors.darkText)}' ...%3e"); */
-  }
-  color: ${colors.darkText} !important; /* Explicitly set color for potential custom icon/text */
-  padding: 0.5rem;
-  &:focus {
-    box-shadow: none !important;
-    background-color: rgba(0, 0, 0, 0.05); /* Light hover/focus effect */
-  }
-  .bi { /* For react-bootstrap-icons List */
-    font-size: 1.5rem;
-    color: ${colors.darkText}; /* Ensure List icon is dark */
-  }
-`;
-
-const StyledOffcanvas = styled(Navbar.Offcanvas)`
-  .offcanvas-header {
-    background-color: ${colors.primary}; /* Jikoni Red for Offcanvas header */
-    color: white;
-    border-bottom: none;
-    padding: 1rem 1.2rem;
-    .offcanvas-title {
-      font-weight: 700;
-      font-size: 1.4rem;
-    }
-    .btn-close {
-      filter: invert(1); /* Make close button white */
-    }
-  }
-  .offcanvas-body {
-    background-color: ${colors.cardBackground};
-    padding: 1.2rem;
-  }
-`;
-
-const NavItemButton = styled(Button)`
-  width: 100%;
-  text-align: left;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 0.7rem 1rem;
-  margin-bottom: 0.4rem;
-  font-weight: 500;
-  border-radius: 6px;
-  transition: all 0.2s ease;
-  border-color: ${colors.borderColor} !important;
-
-  &.btn-outline-primary {
-    color: ${colors.primary};
-    &:hover {
-      background-color: ${colors.primary};
-      color: white;
-    }
-  }
-
-  &.btn-outline-secondary {
-    color: ${colors.darkText};
-    &:hover {
-      background-color: ${colors.lightBackground};
-      color: ${colors.darkText};
-    }
-  }
-
-  .notification-badge {
-    position: static;
-    margin-left: auto;
-    font-size: 0.7rem;
-    padding: 0.3em 0.6em;
-    animation: ${pulseEffect} 1.5s infinite;
-  }
-
-  .bi {
-    font-size: 1.1rem;
-  }
-`;
-
-const StyledDropdownMenu = styled(Dropdown.Menu)`
-  border-radius: 8px;
-  box-shadow: 0 3px 10px rgba(0,0,0,0.1);
-  border: 1px solid ${colors.borderColor};
-  .dropdown-item {
-    font-weight: 500;
-    color: ${colors.darkText};
-    padding: 0.7rem 1.2rem;
-    &:hover {
-      background-color: ${colors.lightBackground};
-      color: ${colors.primary};
-    }
-  }
-`;
+    return (
+        <Offcanvas show={show} onHide={onHide} placement="end" style={{ width: '350px' }}>
+            <Offcanvas.Header closeButton style={{ backgroundColor: panelColors.primary, color: 'white', borderBottom: 'none', padding: '1.25rem 1.5rem' }}>
+                <Offcanvas.Title style={{ fontWeight: '700', fontSize: '1.5rem' }}>Notifications</Offcanvas.Title>
+            </Offcanvas.Header>
+            <Offcanvas.Body style={{ backgroundColor: panelColors.cardBackground, padding: '1rem', display: 'flex', flexDirection: 'column' }}>
+                {(notifications && notifications.length > 0) ? (
+                    notifications.map((notification) => (
+                        <div key={notification.id} style={{
+                            padding: '1rem',
+                            marginBottom: '0.75rem',
+                            backgroundColor: notification.read ? panelColors.lightBackground : '#FFF3F0', // Light red for unread
+                            borderRadius: '8px',
+                            boxShadow: '0 2px 5px rgba(0,0,0,0.05)',
+                            borderLeft: notification.read ? 'none' : `4px solid ${panelColors.primary}`,
+                            cursor: 'pointer',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '0.5rem',
+                            transition: 'background-color 0.2s ease',
+                            opacity: notification.read ? 0.8 : 1,
+                        }}
+                        onClick={() => markNotificationAsRead(notification.id)}
+                        >
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <strong style={{ color: panelColors.darkText, fontSize: '1rem' }}>{notification.title}</strong>
+                                {!notification.read && <Badge bg="primary">New</Badge>}
+                            </div>
+                            <p style={{ color: panelColors.lightText, fontSize: '0.9rem', margin: 0 }}>{notification.message}</p>
+                            <small style={{ color: panelColors.lightText, fontSize: '0.75rem', textAlign: 'right' }}>{notification.timestamp}</small>
+                        </div>
+                    ))
+                ) : (
+                    <div style={{ textAlign: 'center', color: panelColors.lightText, padding: '2rem' }}>
+                        <p>No new notifications.</p>
+                    </div>
+                )}
+            </Offcanvas.Body>
+        </Offcanvas>
+    );
+};
 
 
-/**
- * ChefMainHeader Component
- * A comprehensive header for the Chef Dashboard, combining navigation,
- * chef profile summary, and key performance metrics (orders and earnings).
- * Redesigned for a sleek, compact, and modern look, based on provided style snippet.
- *
- * @param {object} props - Component props.
- * @param {Array} props.notifications - List of notifications.
- * @param {function} props.markNotificationAsRead - Function to mark a notification as read.
- * @param {string} props.chefName - The name of the chef.
- * @param {string} [props.chefAvatarUrl] - URL to the chef's avatar image (optional).
- * @param {number} [props.totalOrdersMade=0] - The total number of orders made by the chef.
- * @param {number} [props.totalEarnings=0] - The total earnings of the chef.
- * @param {function} props.onShowAnalytics - Handler to show analytics.
- * @param {function} props.onShowRiders - Handler to show riders.
- * @param {function} props.onShowProfile - Handler to show chef profile.
- * @param {boolean} props.chefAvailable - Current availability status of the chef.
- * @param {function} props.toggleChefAvailability - Function to toggle chef's availability.
- */
+// --- ChefDetailsModal Component --- (Moved above ChefMainHeader)
+const ChefDetailsModal = ({ show, onHide, chefDetails, onUpdateChefDetails }) => {
+    const [formData, setFormData] = useState({});
+
+    useEffect(() => {
+        if (show) {
+            setFormData({
+                chefName: chefDetails?.chefName ?? '',
+                chefEmail: chefDetails?.chefEmail ?? '',
+                chefPhone: chefDetails?.chefPhone ?? '',
+                chefAvailable: chefDetails?.chefAvailable ?? false,
+            });
+        }
+    }, [chefDetails, show]);
+
+    const handleChange = (e) => {
+        const { name, value, type, checked } = e.target;
+        setFormData(prev => ({
+            ...prev,
+            [name]: type === 'checkbox' ? checked : value
+        }));
+    };
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        if (typeof onUpdateChefDetails === 'function') {
+            onUpdateChefDetails(formData);
+        }
+        onHide();
+    };
+
+    return (
+        <Modal show={show} onHide={onHide} centered>
+            <Modal.Header style={{ backgroundColor: colors.primary, color: 'white', borderBottom: 'none', padding: '1.5rem' }} closeButton>
+                <Modal.Title style={{ fontWeight: '600', fontSize: '1.5rem' }}>
+                    {/* PersonCircle Icon (inline SVG) */}
+                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="me-2"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> Chef Profile
+                </Modal.Title>
+            </Modal.Header>
+            <Form onSubmit={handleSubmit}>
+                <Modal.Body style={{ padding: '25px', backgroundColor: colors.cardBackground }}>
+                    <Form.Group className="mb-3" controlId="chefName">
+                        <Form.Label style={{ fontWeight: '600', color: colors.textPrimary, marginBottom: '8px', fontSize: '0.9rem' }}>Full Name</Form.Label>
+                        <Form.Control type="text" placeholder="Enter your name" name="chefName" value={formData.chefName || ''} onChange={handleChange} style={{ borderRadius: '8px', border: `1px solid ${colors.borderColor}`, padding: '0.75rem 1rem', fontSize: '1rem' }}/>
+                    </Form.Group>
+                    <Form.Group className="mb-3" controlId="chefEmail">
+                        <Form.Label style={{ fontWeight: '600', color: colors.textPrimary, marginBottom: '8px', fontSize: '0.9rem' }}>Email Address</Form.Label>
+                        <Form.Control type="email" placeholder="Enter your email" name="chefEmail" value={formData.chefEmail || ''} onChange={handleChange} style={{ borderRadius: '8px', border: `1px solid ${colors.borderColor}`, padding: '0.75rem 1rem', fontSize: '1rem' }}/>
+                    </Form.Group>
+                    <Form.Group className="mb-3" controlId="chefPhone">
+                        <Form.Label style={{ fontWeight: '600', color: colors.textPrimary, marginBottom: '8px', fontSize: '0.9rem' }}>Phone Number</Form.Label>
+                        <Form.Control type="text" placeholder="Enter your phone number" name="chefPhone" value={formData.chefPhone || ''} onChange={handleChange} style={{ borderRadius: '8px', border: `1px solid ${colors.borderColor}`, padding: '0.75rem 1rem', fontSize: '1rem' }}/>
+                    </Form.Group>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginTop: '25px', marginBottom: '20px', padding: '1rem', backgroundColor: colors.lightBackground, borderRadius: '8px' }}>
+                        <Form.Check
+                            type="switch"
+                            id="chefAvailabilitySwitch"
+                            label="Availability"
+                            name="chefAvailable"
+                            checked={formData.chefAvailable || false}
+                            onChange={handleChange}
+                            // Inline styling for the switch to mimic styled-component behavior
+                            style={{
+                                // These custom properties are only for Bootstrap 5's custom switches.
+                                // If your Bootstrap version is older or these don't render,
+                                // you might need custom CSS classes for the switch thumb.
+                                '--bs-form-switch-bg-image': `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='rgba%280, 0, 0, 0.25%29'/%3e%3c/svg%3e")`,
+                                '--bs-form-switch-checked-bg-image': `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%23fff'/%3e%3c/svg%3e")`,
+                                '--bs-form-switch-focus-shadow': 'none',
+                                '--bs-form-switch-checked-bg': colors.secondary, // Green for checked
+                                width: '50px',
+                                height: '28px',
+                                backgroundColor: formData.chefAvailable ? colors.secondary : colors.disabledState,
+                                border: 'none',
+                                transition: 'background-color 0.3s ease-in-out',
+                                cursor: 'pointer',
+                                position: 'relative',
+                            }}
+                        />
+                        <span style={{ fontWeight: '600', color: formData.chefAvailable ? colors.secondary : colors.errorText, marginLeft: 'auto' }}>
+                            {formData.chefAvailable ? 'Online' : 'Offline'}
+                        </span>
+                    </div>
+                </Modal.Body>
+                <Modal.Footer style={{ borderTop: `1px solid ${colors.borderColor}`, backgroundColor: colors.lightBackground, padding: '1rem 1.5rem' }}>
+                    <Button variant="light" onClick={onHide} style={{ borderRadius: '8px', fontWeight: '600', padding: '0.6rem 1.2rem' }}>Cancel</Button>
+                    <Button variant="primary" type="submit" style={{ borderRadius: '8px', fontWeight: '600', padding: '0.6rem 1.2rem' }}>Save Changes</Button>
+                </Modal.Footer>
+            </Form>
+        </Modal>
+    );
+};
+
+// --- Custom Toggle Component for Profile Dropdown --- (Keep this before ChefMainHeader)
+const CustomProfileToggle = React.forwardRef(({ onClick, chefAvatarUrl, chefAvailable }, ref) => (
+    <div
+        ref={ref}
+        onClick={e => { e.preventDefault(); onClick(e); }}
+        style={{ position: 'relative', cursor: 'pointer' }}
+    >
+        <img
+            src={chefAvatarUrl || 'https://placehold.co/42x42/DDDDDD/A0AEC0?text=C'}
+            alt="Chef Profile"
+            style={{
+                width: '42px',
+                height: '42px',
+                borderRadius: '50%',
+                objectFit: 'cover',
+                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+                transition: 'transform 0.2s ease',
+            }}
+            onMouseEnter={(e) => e.target.style.transform = 'scale(1.05)'}
+            onMouseLeave={(e) => e.target.style.transform = 'scale(1)'}
+        />
+        <div style={{
+            width: '12px',
+            height: '12px',
+            borderRadius: '50%',
+            backgroundColor: chefAvailable ? colors.secondary : colors.errorText,
+            border: `2px solid ${colors.cardBackground}`,
+            position: 'absolute',
+            bottom: '0',
+            right: '0',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+        }}></div>
+    </div>
+));
+
+
 export default function ChefMainHeader({
-  notifications,
-  markNotificationAsRead,
-  chefName = '', // Added default value to prevent undefined errors
-  chefAvatarUrl,
-  totalOrdersMade = 0,
-  totalEarnings = 0,
-  onShowAnalytics,
-  onShowRiders,
-  onShowProfile,
-  chefAvailable = true, // Default to true if not provided for profile dot
-  toggleChefAvailability = () => console.log('Toggle availability not implemented') // Placeholder
+    notifications,
+    markNotificationAsRead,
+    chefName = 'Chef',
+    chefAvatarUrl,
+    chefAvailable = true,
+    chefDetails = {},
+    onUpdateChefDetails,
 }) {
-  const [showNotifications, setShowNotifications] = useState(false);
-  const navigate = useNavigate();
-  const unreadNotifications = (notifications || []).filter(n => !n.read).length;
+    const [showNotifications, setShowNotifications] = useState(false);
+    const [showChefDetailsModal, setShowChefDetailsModal] = useState(false);
+    const [showOffcanvas, setShowOffcanvas] = useState(false);
+    const navigate = useNavigate();
+    const unreadNotifications = (notifications || []).filter(n => !n.read).length;
 
-  return (
-    <StyledHeader expand="lg">
-      <LeftSection>
-        <GreetingText>Hello, {chefName.split(' ')[0]}!</GreetingText>
-        <BrandText>Jikoni Express</BrandText>
-        <AvailabilityStatus $available={chefAvailable}>
-          <span>●</span> {chefAvailable ? 'Online' : 'Offline'}
-        </AvailabilityStatus>
-      </LeftSection>
+    const handleOffcanvasToggle = () => setShowOffcanvas(prev => !prev);
+    const handleOffcanvasClose = () => setShowOffcanvas(false);
 
-      <HeaderStatsCompact>
-        <CompactStatItem>
-          <BoxSeam className="icon" />
-          <div className="value">{totalOrdersMade}</div>
-          <div className="label">Orders</div>
-        </CompactStatItem>
-        <CompactStatItem>
-          <CurrencyDollar className="icon" />
-          <div className="value">KES {totalEarnings.toFixed(2)}</div>
-          <div className="label">Earnings</div>
-        </CompactStatItem>
-      </HeaderStatsCompact>
+    const handleShowChefDetails = () => {
+        setShowChefDetailsModal(true);
+        handleOffcanvasClose();
+    };
 
-      <RightSection>
-        <ProfileImage src={chefAvatarUrl || 'https://placehold.co/50x50/DDDDDD/A0AEC0?text=P'} alt="Chef Profile" $available={chefAvailable} />
-        <ToggleAndLabelWrapper>
-          <ToggleContainer $available={chefAvailable}>
-            <input
-              type="checkbox"
-              checked={chefAvailable}
-              onChange={toggleChefAvailability}
+    const handleLogout = () => {
+        console.log('Logout Clicked'); // Replace with actual logout logic
+        handleOffcanvasClose();
+        // navigate('/logout'); // Example usage, uncomment if you have a logout route
+    };
+
+    const handleDashboardClick = () => {
+        navigate('/chef-dashboard');
+        handleOffcanvasClose();
+    };
+
+    return (
+        <>
+            {/* Main Navbar Header */}
+            <Navbar expand={false} style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center', // Ensures vertical alignment
+                padding: '12px 25px',
+                backgroundColor: colors.cardBackground,
+                borderBottom: `1px solid ${colors.borderColor}`,
+                fontFamily: 'Inter, sans-serif',
+                minHeight: '70px',
+                transition: 'opacity 0.6s ease-out, transform 0.6s ease-out', // Basic transition
+            }}>
+                {/* Brand Logo */}
+                <Navbar.Brand onClick={handleDashboardClick} style={{
+                    color: colors.primary,
+                    fontSize: '26px',
+                    fontWeight: '800',
+                    letterSpacing: '-0.5px',
+                    cursor: 'pointer',
+                }}>
+                    Jikoni Express Chef
+                </Navbar.Brand>
+
+                {/* Right Actions - Notification, Profile Dropdown, Hamburger */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+                    {/* Notification Icon */}
+                    <div
+                        style={{
+                            position: 'relative',
+                            cursor: 'pointer',
+                            padding: '8px',
+                            borderRadius: '50%',
+                            transition: 'background-color 0.2s ease'
+                        }}
+                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = colors.lightBackground}
+                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                        onClick={() => setShowNotifications(true)}
+                    >
+                        {/* Bell Icon (inline SVG) */}
+                        <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: colors.darkText }}><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+                        {unreadNotifications > 0 && (
+                            <Badge pill bg="danger" style={{
+                                position: 'absolute',
+                                top: '0px',
+                                right: '0px',
+                                fontSize: '0.65rem',
+                                padding: '0.35em 0.55em',
+                                // Pulse effect requires CSS @keyframes or JavaScript animation library.
+                                // Not possible with pure inline styles.
+                            }}>
+                                {unreadNotifications}
+                            </Badge>
+                        )}
+                    </div>
+
+                    {/* Profile Dropdown for Desktop */}
+                    <Dropdown align="end" className="d-none d-lg-block">
+                        <Dropdown.Toggle as={CustomProfileToggle} id="profile-dropdown" chefAvatarUrl={chefAvatarUrl} chefAvailable={chefAvailable} />
+                        <Dropdown.Menu>
+                            <Dropdown.Item onClick={handleShowChefDetails}>
+                                {/* GearFill Icon (inline SVG) */}
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="me-2"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.78 1.22a2 2 0 0 0 .73 2.73l.04.02a2 2 0 0 1 .91 1.07l.1.43a2 2 0 0 1 0 2l-.1.43a2 2 0 0 1-.91 1.07l-.04.02a2 2 0 0 0-.73 2.73l.78 1.22a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.78-1.22a2 2 0 0 0-.73-2.73l-.04-.02a2 2 0 0 1-.91-1.07l-.1-.43a2 2 0 0 1 0-2l.1-.43a2 2 0 0 1 .91-1.07l.04-.02a2 2 0 0 0 .73-2.73l-.78-1.22a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg> Profile Settings
+                            </Dropdown.Item>
+                            <Dropdown.Divider />
+                            <Dropdown.Item onClick={handleLogout}>
+                                {/* BoxArrowRight Icon (inline SVG) */}
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="me-2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" x2="3" y1="12" y2="12"/></svg> Logout
+                            </Dropdown.Item>
+                        </Dropdown.Menu>
+                    </Dropdown>
+
+                    {/* Hamburger Toggle for Mobile/Tablet */}
+                    <Navbar.Toggle aria-controls="offcanvasNavbar" onClick={handleOffcanvasToggle} className="d-lg-none" style={{ border: 'none', backgroundColor: 'transparent', padding: '0' }}>
+                        {/* List Icon (inline SVG) */}
+                        <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: colors.darkText }}><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></svg>
+                    </Navbar.Toggle>
+                </div>
+
+                {/* Offcanvas Menu for Mobile/Tablet */}
+                <Offcanvas
+                    id="offcanvasNavbar"
+                    aria-labelledby="offcanvasNavbarLabel"
+                    placement="end"
+                    show={showOffcanvas}
+                    onHide={handleOffcanvasClose}
+                    style={{ width: '300px' }}
+                >
+                    <Offcanvas.Header closeButton style={{ backgroundColor: colors.primary, color: 'white', borderBottom: 'none', padding: '1rem 1.5rem' }}>
+                        <Offcanvas.Title id="offcanvasNavbarLabel" style={{ fontWeight: '600', fontSize: '1rem' }}>
+                            Jikoni Chef
+                        </Offcanvas.Title>
+                    </Offcanvas.Header>
+                    <Offcanvas.Body style={{ backgroundColor: colors.cardBackground, padding: '1rem', display: 'flex', flexDirection: 'column' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '15px', padding: '1rem', marginBottom: '1rem' }}>
+                            <img
+                                src={chefAvatarUrl || 'https://placehold.co/55x55/DDDDDD/A0AEC0?text=C'}
+                                alt="Chef Profile"
+                                style={{
+                                    width: '55px',
+                                    height: '55px',
+                                    borderRadius: '50%',
+                                    objectFit: 'cover',
+                                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+                                }}
+                            />
+                            <div>
+                                <h5 style={{ color: colors.darkText, margin: 0, fontWeight: '600', fontSize: '1.1rem' }}>{chefName}</h5>
+                                <p style={{ color: chefAvailable ? colors.secondary : colors.errorText, margin: '4px 0 0', fontWeight: '600', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '6px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                                    <span>●</span> {chefAvailable ? 'Online' : 'Offline'}
+                                </p>
+                            </div>
+                        </div>
+
+                        <hr style={{ borderColor: colors.borderColor, margin: '0 1rem 1rem' }} />
+
+                        {/* Offcanvas Nav Items */}
+                        <div
+                            onClick={handleDashboardClick}
+                            style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '15px',
+                                padding: '0.9rem 1rem',
+                                fontWeight: '500',
+                                borderRadius: '8px',
+                                transition: 'all 0.2s ease',
+                                cursor: 'pointer',
+                                color: colors.darkText,
+                                marginBottom: '5px'
+                            }}
+                            onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = colors.lightBackground; e.currentTarget.style.color = colors.primary; e.currentTarget.querySelector('svg').style.color = colors.primary; }}
+                            onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = colors.darkText; e.currentTarget.querySelector('svg').style.color = colors.lightText; }}
+                        >
+                            {/* Grid3x3GapFill Icon (inline SVG) */}
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: colors.lightText }}><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></svg> Dashboard
+                        </div>
+                        <div
+                            onClick={() => { setShowNotifications(true); handleOffcanvasClose(); }}
+                            style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '15px',
+                                padding: '0.9rem 1rem',
+                                fontWeight: '500',
+                                borderRadius: '8px',
+                                transition: 'all 0.2s ease',
+                                cursor: 'pointer',
+                                color: colors.darkText,
+                                marginBottom: '5px'
+                            }}
+                            onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = colors.lightBackground; e.currentTarget.style.color = colors.primary; e.currentTarget.querySelector('svg').style.color = colors.primary; }}
+                            onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = colors.darkText; e.currentTarget.querySelector('svg').style.color = colors.lightText; }}
+                        >
+                            {/* Bell Icon (inline SVG) */}
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+                            Notifications
+                            {unreadNotifications > 0 && (
+                                <Badge pill bg="danger" className="notification-badge">
+                                    {unreadNotifications}
+                                </Badge>
+                            )}
+                        </div>
+                        <div
+                            onClick={handleShowChefDetails}
+                            style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '15px',
+                                padding: '0.9rem 1rem',
+                                fontWeight: '500',
+                                borderRadius: '8px',
+                                transition: 'all 0.2s ease',
+                                cursor: 'pointer',
+                                color: colors.darkText,
+                                marginBottom: '5px'
+                            }}
+                            onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = colors.lightBackground; e.currentTarget.style.color = colors.primary; e.currentTarget.querySelector('svg').style.color = colors.primary; }}
+                            onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; e.currentTarget.style.color = colors.darkText; e.currentTarget.querySelector('svg').style.color = colors.lightText; }}
+                        >
+                            {/* GearFill Icon (inline SVG) */}
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="me-2"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.78 1.22a2 2 0 0 0 .73 2.73l.04.02a2 2 0 0 1 .91 1.07l.1.43a2 2 0 0 1 0 2l-.1.43a2 2 0 0 1-.91 1.07l-.04.02a2 2 0 0 0-.73 2.73l.78 1.22a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.78-1.22a2 2 0 0 0-.73-2.73l-.04-.02a2 2 0 0 1-.91-1.07l-.1-.43a2 2 0 0 1 0-2l.1-.43a2 2 0 0 1 .91-1.07l.04-.02a2 2 0 0 0 .73-2.73l-.78-1.22a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg> Profile Settings
+                        </div>
+
+                        <div
+                            onClick={handleLogout}
+                            style={{
+                                marginTop: 'auto',
+                                background: colors.lightBackground,
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '15px',
+                                padding: '0.9rem 1rem',
+                                fontWeight: '500',
+                                borderRadius: '8px',
+                                transition: 'all 0.2s ease',
+                                cursor: 'pointer',
+                                color: colors.darkText
+                            }}
+                            onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#E6E8EB'; e.currentTarget.style.color = colors.primary; e.currentTarget.querySelector('svg').style.color = colors.primary; }}
+                            onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = colors.lightBackground; e.currentTarget.style.color = colors.darkText; e.currentTarget.querySelector('svg').style.color = colors.lightText; }}
+                        >
+                            {/* BoxArrowRight Icon (inline SVG) */}
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="me-2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" x2="3" y1="12" y2="12"/></svg> Logout
+                        </div>
+                    </Offcanvas.Body>
+                </Offcanvas>
+            </Navbar>
+
+            {/* Reusable Modals and Panels */}
+            <NotificationsPanel
+                show={showNotifications}
+                onHide={() => setShowNotifications(false)}
+                notifications={notifications}
+                markNotificationAsRead={markNotificationAsRead}
             />
-            <span className="slider">
-              <span className="knob" />
-            </span>
-          </ToggleContainer>
-          <ToggleLabel>{chefAvailable ? 'Available' : 'Busy'}</ToggleLabel>
-        </ToggleAndLabelWrapper>
-
-        <StyledNavbarToggle aria-controls="offcanvasNavbar">
-          <List />
-        </StyledNavbarToggle>
-      </RightSection>
-
-      {/* Offcanvas and NotificationsPanel remain the same */}
-      <StyledOffcanvas
-        id="offcanvasNavbar"
-        aria-labelledby="offcanvasNavbarLabel"
-        placement="end"
-      >
-        <Offcanvas.Header closeButton>
-          <Offcanvas.Title id="offcanvasNavbarLabel">
-            <PersonCircle size={24} className="me-2" /> Chef's Menu
-          </Offcanvas.Title>
-        </Offcanvas.Header>
-        <Offcanvas.Body>
-          <Nav className="flex-column">
-            <NavItemButton
-              variant="outline-primary"
-              onClick={() => setShowNotifications(true)}
-            >
-              <Bell size={20} />
-              Notifications
-              {unreadNotifications > 0 && (
-                <Badge pill bg="danger" className="notification-badge">
-                  {unreadNotifications}
-                </Badge>
-              )}
-            </NavItemButton>
-
-            <NavItemButton
-              variant="outline-secondary"
-              onClick={onShowAnalytics}
-            >
-              <GraphUp size={20} /> Analytics
-            </NavItemButton>
-            <NavItemButton
-              variant="outline-secondary"
-              onClick={onShowRiders}
-            >
-              <Truck size={20} /> Riders
-            </NavItemButton>
-
-            <Dropdown as={Nav.Item} className="w-100">
-              <NavItemButton
-                as="div"
-                variant="outline-secondary"
-                className="dropdown-toggle"
-              >
-                <Gear size={20} /> Settings
-              </NavItemButton>
-              <StyledDropdownMenu>
-                <Dropdown.Item onClick={onShowProfile}>
-                    <PersonFill size={18} className="me-2" /> Chef Profile
-                </Dropdown.Item>
-                <Dropdown.Item>Availability</Dropdown.Item>
-                <Dropdown.Item>Payments</Dropdown.Item>
-              </StyledDropdownMenu>
-            </Dropdown>
-          </Nav>
-        </Offcanvas.Body>
-      </StyledOffcanvas>
-
-      <NotificationsPanel
-        show={showNotifications}
-        onHide={() => setShowNotifications(false)}
-        notifications={notifications}
-        markNotificationAsRead={markNotificationAsRead}
-      />
-    </StyledHeader>
-  );
+            <ChefDetailsModal
+                show={showChefDetailsModal}
+                onHide={() => setShowChefDetailsModal(false)}
+                chefDetails={chefDetails}
+                onUpdateChefDetails={onUpdateChefDetails}
+            />
+        </>
+    );
 }
