@@ -9,7 +9,7 @@ import { FaStore } from 'react-icons/fa';
 import styled from 'styled-components';
 import { useAuth } from './Context/authContext';
 import { getUserNameFromToken, getUserIdFromToken } from './handler/tokenDecorder';
-
+import   JikoniDashboard  from './components/admin/jikoniAnalytics'
 // Components
 import LandingPage from './landingPage';
 import Register from './components/auth/register';
@@ -33,7 +33,7 @@ import   AdminRegister   from     './components/admin/adminRegistration'
 // Firebase
 import { app, VAPID_KEY } from './utilities/firebaseUtilities';
 import { getMessaging, getToken, onMessage, isSupported } from "firebase/messaging";
-
+import    AdminDashboardHeader   from './components/admin/adminDashboard'
 // --- Styled Components ---
 const AppContainer = styled.div`
     min-height: 100vh;
@@ -186,8 +186,9 @@ function App() {
     const { logout } = useAuth();
     const [username, setUsername] = useState('');
     const [isChefMode, setIsChefMode] = useState(false);
+     const [isVendorMode, setIsVendorMode] = useState(false); // Declare the state here
     const [isRiderMode, setIsRiderMode] = useState(false);
-    const [isVendorMode, setIsVendorMode] = useState(false);
+
     const [showNotifications, setShowNotifications] = useState(false);
     const [fcmToken, setFcmToken] = useState(null);
     const [userId, setUserId] = useState(null);
@@ -446,6 +447,11 @@ const unsubscribeOnMessage = onMessage(messaging, (payload) => {
                     <Route path="/chef/:id" element={<ChefProfile />} />
                      <Route path="/foods/:id" element={<ChefProfile />} />
                       <Route path="/admin/register" element={<AdminRegister  />} />
+<Route path="/admin-dashboard" element={<AdminDashboardHeader  />} />
+
+<Route path="/jikoni-express/analytics" element={<JikoniDashboard  />} />
+
+                      
                       
                      
                     <Route path="/liqour/:id" element={<LiqourProfile />} />

@@ -3,11 +3,11 @@ import { createRoot } from 'react-dom/client';
 import './index.css';
 import App from './App.jsx';
 import { AuthProvider } from './Context/authContext.jsx';
-import { BrowserRouter } from 'react-router-dom';
+import { HashRouter } from 'react-router-dom'; // ✅ Use HashRouter
 import ScrollToTop from './handler/goToTop.jsx';
 import { ThemeProvider } from 'styled-components';
 
-// Optional: Unregister old service workers to avoid stale cache
+// ✅ Unregister any existing service workers to avoid stale cache
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.getRegistrations().then((registrations) => {
     registrations.forEach((registration) => registration.unregister());
@@ -28,15 +28,16 @@ const theme = {
   },
 };
 
-// ✅ Mount the app to root
+// ✅ Get the root element
 const rootElement = document.getElementById('root');
 if (!rootElement) {
   throw new Error("Root element not found");
 }
 
+// ✅ Render your app
 createRoot(rootElement).render(
   <StrictMode>
-    <BrowserRouter>
+    <HashRouter> {/* ✅ Switched from BrowserRouter to HashRouter */}
       <ScrollToTop />
       <AuthProvider>
         <ThemeProvider theme={theme}>
@@ -45,6 +46,6 @@ createRoot(rootElement).render(
           </Suspense>
         </ThemeProvider>
       </AuthProvider>
-    </BrowserRouter>
+    </HashRouter>
   </StrictMode>
 );

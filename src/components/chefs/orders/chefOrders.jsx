@@ -158,7 +158,7 @@ const CallActions = styled.div`
 const DashboardContainer = styled.div`
   background-color: ${colors.lightBackground};
   min-height: 100vh;
-  padding: 30px;
+  padding: 10px;
 `;
 
 const DashboardHeader = styled.div`
@@ -166,7 +166,7 @@ const DashboardHeader = styled.div`
   justify-content: space-between;
   align-items: center;
   margin-bottom: 30px;
-  padding: 15px 20px;
+  padding: 5px 10px;
   background-color: ${colors.cardBackground};
   border-radius: 15px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
@@ -239,7 +239,7 @@ const OrderCardHeader = styled(Card.Header)`
 `;
 
 const CardBodyStyled = styled(Card.Body)`
-  padding: 20px;
+  padding: 10px;
 `;
 
 const PreorderAlert = styled(Alert)`
@@ -354,13 +354,13 @@ const ProgressSection = styled.div`
 
   .section-title {
     color: ${colors.darkText};
-    font-weight: 700;
-    font-size: 1.1rem;
+    font-weight: 800;
+    font-size: 1.5rem;
     margin-bottom: 15px;
   }
 
   .order-progress-bar {
-    height: 10px;
+    height: 12px;
     border-radius: 5px;
     background-color: ${colors.borderColor};
   }
@@ -368,10 +368,11 @@ const ProgressSection = styled.div`
   .progress-labels {
     display: flex;
     justify-content: space-between;
-    font-size: 0.8rem;
+    font-size: 0.9rem;
     color: ${colors.placeholderText};
     margin-top: 5px;
-    font-weight: 500;
+    font-weight: 700;
+   
   }
 `;
 
@@ -1257,7 +1258,7 @@ const ChefOrders = () => {
       </DashboardHeader>
 
       {loading ? (
-        <div className="text-center py-5">
+        <div className="text-center py-1">
           <Spinner animation="border" role="status">
             <span className="visually-hidden">Loading Orders...</span>
           </Spinner>

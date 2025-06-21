@@ -48,11 +48,11 @@ const StyledDashboardContainer = styled.div`
   font-family: 'Inter', sans-serif;
   background: linear-gradient(150deg, ${colors.lightBackground} 0%, #E6EBF0 100%);
   min-height: 100vh;
-  padding: 0rem 7rem;
+  padding: 0rem 1rem;
   animation: ${fadeIn} 0.6s ease-out;
 
   @media (max-width: 768px) {
-    padding: 1.5rem;
+    padding: 0.85rem;
   }
 `;
 

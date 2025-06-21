@@ -47,6 +47,7 @@ const PageWrapper = styled.div`
   justify-content: center;
   padding: 2rem 1rem;
   animation: ${fadeIn} 0.8s ease-out;
+  flex-direction: column; /* Added for vertical alignment of loader/text */
 `;
 
 const OtpContainer = styled.div`
@@ -268,6 +269,7 @@ const VerifyOtp = () => {
   const [verified, setVerified] = useState(false); // New state for verification status
   const [advertMessage, setAdvertMessage] = useState(''); // New state for advert message
   const [showAdvertModal, setShowAdvertModal] = useState(false); // State for advert modal visibility
+  const [initialRedirectCheckComplete, setInitialRedirectCheckComplete] = useState(false); // New state to control rendering after initial checks
   const otpInputRefs = useRef([]); // To manage focus for OTP inputs
 
   const showAlert = (type, message) => {
@@ -283,23 +285,38 @@ const VerifyOtp = () => {
   };
 
   useEffect(() => {
+    // 1. Check for existing admin session and redirect immediately
+    const userRole = localStorage.getItem('userRole');
+    if (userRole && userRole.toLowerCase() === 'admin') {
+      setLoading(true); // Indicate loading for the redirect
+      showAlert('info', 'Admin session detected. Redirecting to admin dashboard...');
+      setTimeout(() => {
+        window.location.href = '/admin-dashboard';
+      }, 2000); // 2-second delay before redirecting
+      return; // IMPORTANT: Prevent further execution of this effect and component rendering logic if redirecting
+    }
+
+    // 2. If no admin session, proceed with regular OTP flow checks
     if (!storedEmail) {
       showAlert('error', 'Please log in first to verify your account.');
       navigate('/login');
-      return;
+      return; // Prevent execution of subsequent logic if redirection occurs
     }
+
+    // Set initial redirect check as complete only if no admin session was found and no login redirect happened
+    setInitialRedirectCheckComplete(true);
 
     const timer = setInterval(() => {
       setTimeLeft((prev) => (prev > 0 ? prev - 1 : 0));
     }, 1000);
 
-    // Initial focus on the first input
+    // Initial focus on the first input, but only if not redirecting
     if (otpInputRefs.current[0]) {
       otpInputRefs.current[0].focus();
     }
 
     return () => clearInterval(timer);
-  }, [navigate, storedEmail]);
+  }, [navigate, storedEmail]); // Dependencies remain the same
 
   const handleInputChange = (index, value) => {
     if (/^\d?$/.test(value)) { // Only allow single digit or empty string
@@ -358,7 +375,7 @@ const VerifyOtp = () => {
 
       localStorage.removeItem('userEmail'); // Clean up temporary email
       localStorage.setItem('token', response.data.token);
-      localStorage.setItem('userRole', response.data.role);
+      localStorage.setItem('userRole', response.data.role); // Store the user's role here
       localStorage.setItem('authVerified', 'true'); // Indicate successful verification
 
       setVerified(true); // Set verified to true to show success message and icon
@@ -420,6 +437,28 @@ const VerifyOtp = () => {
     const secs = seconds % 60;
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
+
+  // Conditional rendering for initial checks or loading states
+  if (!initialRedirectCheckComplete && !loading) {
+    // Show a loading spinner or a blank page while initial checks are running
+    // This state will quickly become true unless an admin redirect happens
+    return (
+      <PageWrapper>
+        <ClockLoader size={50} color={colors.primary} />
+        <p style={{ color: colors.darkText, marginLeft: '1rem', marginTop: '1rem' }}>Checking session...</p>
+      </PageWrapper>
+    );
+  }
+
+  // If loading is true due to an admin redirect, show a more specific message/loader
+  if (loading && !verified) { // 'verified' is false until actual OTP verification is done
+    return (
+      <PageWrapper>
+        <ClockLoader size={50} color={colors.primary} />
+        <p style={{ color: colors.darkText, marginLeft: '1rem', marginTop: '1rem' }}>Redirecting to admin dashboard...</p>
+      </PageWrapper>
+    );
+  }
 
   return (
     <PageWrapper>

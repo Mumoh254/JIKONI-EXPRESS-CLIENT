@@ -100,7 +100,7 @@ const StyledModalHeader = styled(Modal.Header)`
 
 const StyledModalBody = styled(Modal.Body)`
   background-color: ${colors.darkBackground}; /* Main Jikoni green background for view details */
-  padding: 35px; /* More padding for a spacious feel */
+  padding: 5px; /* More padding for a spacious feel */
   color: ${colors.lightText}; /* Light text on dark green */
 `;
 
@@ -108,7 +108,7 @@ const ModalSection = styled.div`
   background-color: ${colors.cardBackground}; /* Slightly lighter dark for sections */
   border: 1px solid ${colors.borderColor};
   border-radius: 12px;
-  padding: 25px; /* Generous padding */
+  padding: 15px; /* Generous padding */
   margin-bottom: 25px; /* Spacing between sections */
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2); /* Subtle shadow for depth */
 
@@ -184,7 +184,7 @@ const ItemListGroup = styled(ListGroup)`
     background-color: transparent !important; /* No background for items */
     border: none !important;
     border-bottom: 1px dashed ${colors.borderColor} !important; /* Dashed separator */
-    padding: 15px 0;
+    padding: 10px 0;
     display: flex;
     justify-content: space-between;
     align-items: center;
