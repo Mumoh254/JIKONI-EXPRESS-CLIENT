@@ -565,7 +565,7 @@ const ChefProfile = () => {
     });
 
     const navigate = useNavigate();
-    const BASE_URL = "hhttps://neuro-apps-api-express-js-production-redy.onrender.com/apiV1/smartcity-ke";
+    const BASE_URL = "https://neuro-apps-api-express-js-production-redy.onrender.com/apiV1/smartcity-ke";
     const [userId, setUserId] = useState(null);
     const [showPreOrderModal, setShowPreOrderModal] = useState(false);
     const [selectedFood, setSelectedFood] = useState(null);
