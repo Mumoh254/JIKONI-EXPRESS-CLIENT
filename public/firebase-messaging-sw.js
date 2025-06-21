@@ -74,7 +74,7 @@ self.addEventListener('message', (event) => {
 });
 
 // --- PWA Caching Logic ---
-const CACHE_VERSION = 'v2'; // This will be compared against the version from /api/version
+const CACHE_VERSION = 'v1'; // This will be compared against the version from /api/version
 const CACHE_NAME = `jikoni-express-${CACHE_VERSION}`;
 const OFFLINE_URL = '/offline.html';
 

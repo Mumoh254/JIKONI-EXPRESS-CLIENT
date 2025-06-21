@@ -1,11 +1,18 @@
-import { StrictMode, Suspense } from 'react';
+import React, { StrictMode, Suspense } from 'react';
 import { createRoot } from 'react-dom/client';
 import './index.css';
 import App from './App.jsx';
 import { AuthProvider } from './Context/authContext.jsx';
-import { HashRouter } from 'react-router-dom';
+import { BrowserRouter } from 'react-router-dom';
 import ScrollToTop from './handler/goToTop.jsx';
 import { ThemeProvider } from 'styled-components';
+
+// Optional: Unregister old service workers to avoid stale cache
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.getRegistrations().then((registrations) => {
+    registrations.forEach((registration) => registration.unregister());
+  });
+}
 
 // ✅ Define your theme
 const theme = {
@@ -21,7 +28,7 @@ const theme = {
   },
 };
 
-// ✅ Create and mount the root
+// ✅ Mount the app to root
 const rootElement = document.getElementById('root');
 if (!rootElement) {
   throw new Error("Root element not found");
@@ -29,7 +36,7 @@ if (!rootElement) {
 
 createRoot(rootElement).render(
   <StrictMode>
-    <HashRouter>
+    <BrowserRouter>
       <ScrollToTop />
       <AuthProvider>
         <ThemeProvider theme={theme}>
@@ -38,6 +45,6 @@ createRoot(rootElement).render(
           </Suspense>
         </ThemeProvider>
       </AuthProvider>
-    </HashRouter>
+    </BrowserRouter>
   </StrictMode>
 );
